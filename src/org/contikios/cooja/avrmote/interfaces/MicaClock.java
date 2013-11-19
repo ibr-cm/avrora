@@ -28,7 +28,7 @@
  *
  */
 
-package se.sics.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote.interfaces;
 
 import java.util.Collection;
 
@@ -37,11 +37,11 @@ import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.ClassDescription;
-import se.sics.cooja.Mote;
-import se.sics.cooja.Simulation;
-import se.sics.cooja.avrmote.MicaZMote;
-import se.sics.cooja.interfaces.Clock;
+import org.contikios.cooja.ClassDescription;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.Simulation;
+import org.contikios.cooja.avrmote.MicaZMote;
+import org.contikios.cooja.interfaces.Clock;
 
 /**
  * @author Fredrik Osterlind, Joakim Eriksson

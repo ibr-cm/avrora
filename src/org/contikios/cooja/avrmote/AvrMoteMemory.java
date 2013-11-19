@@ -26,15 +26,15 @@
  *
  */
 
-package se.sics.cooja.avrmote;
+package org.contikios.cooja.avrmote;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
-import se.sics.cooja.AddressMemory;
-import se.sics.cooja.MoteMemory;
+import org.contikios.cooja.AddressMemory;
+import org.contikios.cooja.MoteMemory;
 import avrora.arch.avr.AVRProperties;
 import avrora.core.SourceMapping;
 import avrora.core.SourceMapping.Location;

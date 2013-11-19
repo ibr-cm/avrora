@@ -28,7 +28,7 @@
  *
  */
 
-package se.sics.cooja.avrmote;
+package org.contikios.cooja.avrmote;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,13 +37,13 @@ import java.util.Collection;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.Mote;
-import se.sics.cooja.MoteInterface;
-import se.sics.cooja.MoteInterfaceHandler;
-import se.sics.cooja.MoteMemory;
-import se.sics.cooja.MoteType;
-import se.sics.cooja.Simulation;
-import se.sics.cooja.motes.AbstractEmulatedMote;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.MoteInterface;
+import org.contikios.cooja.MoteInterfaceHandler;
+import org.contikios.cooja.MoteMemory;
+import org.contikios.cooja.MoteType;
+import org.contikios.cooja.Simulation;
+import org.contikios.cooja.motes.AbstractEmulatedMote;
 import avrora.arch.avr.AVRProperties;
 import avrora.core.LoadableProgram;
 import avrora.sim.AtmelInterpreter;

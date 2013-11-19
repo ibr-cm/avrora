@@ -28,7 +28,7 @@
  *
  */
 
-package se.sics.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote.interfaces;
 
 import java.util.Collection;
 import java.util.Vector;
@@ -41,13 +41,13 @@ import org.jdom.Element;
 import avrora.sim.State;
 import avrora.sim.Simulator.Watch;
 
-import se.sics.cooja.Mote;
-import se.sics.cooja.MoteTimeEvent;
-import se.sics.cooja.Simulation;
-import se.sics.cooja.TimeEvent;
-import se.sics.cooja.avrmote.AvrMoteMemory;
-import se.sics.cooja.avrmote.MicaZMote;
-import se.sics.cooja.interfaces.MoteID;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.MoteTimeEvent;
+import org.contikios.cooja.Simulation;
+import org.contikios.cooja.TimeEvent;
+import org.contikios.cooja.avrmote.AvrMoteMemory;
+import org.contikios.cooja.avrmote.MicaZMote;
+import org.contikios.cooja.interfaces.MoteID;
 
 public class MicaZID extends MoteID {
 

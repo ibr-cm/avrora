@@ -28,7 +28,7 @@
  *
  */
 
-package se.sics.cooja.avrmote;
+package org.contikios.cooja.avrmote;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -48,25 +48,25 @@ import javax.swing.JTextArea;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.AbstractionLevelDescription;
-import se.sics.cooja.ClassDescription;
-import se.sics.cooja.Cooja;
-import se.sics.cooja.Mote;
-import se.sics.cooja.MoteInterface;
-import se.sics.cooja.MoteType;
-import se.sics.cooja.ProjectConfig;
-import se.sics.cooja.Simulation;
-import se.sics.cooja.avrmote.interfaces.MicaClock;
-import se.sics.cooja.avrmote.interfaces.MicaSerial;
-import se.sics.cooja.avrmote.interfaces.MicaZID;
-import se.sics.cooja.avrmote.interfaces.MicaZLED;
-import se.sics.cooja.avrmote.interfaces.MicaZRadio;
-import se.sics.cooja.dialogs.CompileContiki;
-import se.sics.cooja.dialogs.MessageList;
-import se.sics.cooja.dialogs.MessageList.MessageContainer;
-import se.sics.cooja.interfaces.Mote2MoteRelations;
-import se.sics.cooja.interfaces.MoteAttributes;
-import se.sics.cooja.interfaces.Position;
+import org.contikios.cooja.AbstractionLevelDescription;
+import org.contikios.cooja.ClassDescription;
+import org.contikios.cooja.Cooja;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.MoteInterface;
+import org.contikios.cooja.MoteType;
+import org.contikios.cooja.ProjectConfig;
+import org.contikios.cooja.Simulation;
+import org.contikios.cooja.avrmote.interfaces.MicaClock;
+import org.contikios.cooja.avrmote.interfaces.MicaSerial;
+import org.contikios.cooja.avrmote.interfaces.MicaZID;
+import org.contikios.cooja.avrmote.interfaces.MicaZLED;
+import org.contikios.cooja.avrmote.interfaces.MicaZRadio;
+import org.contikios.cooja.dialogs.CompileContiki;
+import org.contikios.cooja.dialogs.MessageList;
+import org.contikios.cooja.dialogs.MessageList.MessageContainer;
+import org.contikios.cooja.interfaces.Mote2MoteRelations;
+import org.contikios.cooja.interfaces.MoteAttributes;
+import org.contikios.cooja.interfaces.Position;
 
 /**
  * AVR-based MicaZ mote types emulated in Avrora.

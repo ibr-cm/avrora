@@ -1,10 +1,10 @@
-package se.sics.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote.interfaces;
 
 import avrora.sim.mcu.AtmelMicrocontroller;
 import avrora.sim.platform.MicaZ;
-import se.sics.cooja.Mote;
-import se.sics.cooja.avrmote.MicaZMote;
-import se.sics.cooja.dialogs.SerialUI;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.avrmote.MicaZMote;
+import org.contikios.cooja.dialogs.SerialUI;
 
 public class MicaSerial extends SerialUI {
 

@@ -27,18 +27,18 @@
  * SUCH DAMAGE.
  */
 
-package se.sics.cooja.avrmote;
+package org.contikios.cooja.avrmote;
 
 import java.awt.Container;
 import java.io.File;
 
 import org.apache.log4j.Logger;
 
-import se.sics.cooja.Cooja;
-import se.sics.cooja.MoteInterface;
-import se.sics.cooja.MoteType;
-import se.sics.cooja.Simulation;
-import se.sics.cooja.dialogs.AbstractCompileDialog;
+import org.contikios.cooja.Cooja;
+import org.contikios.cooja.MoteInterface;
+import org.contikios.cooja.MoteType;
+import org.contikios.cooja.Simulation;
+import org.contikios.cooja.dialogs.AbstractCompileDialog;
 
 public class MicaZCompileDialog extends AbstractCompileDialog {
   private static Logger logger = Logger.getLogger(MicaZCompileDialog.class);

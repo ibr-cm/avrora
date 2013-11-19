@@ -28,15 +28,15 @@
  *
  */
 
-package se.sics.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote.interfaces;
 
 import org.apache.log4j.Logger;
 
-import se.sics.cooja.ClassDescription;
-import se.sics.cooja.Mote;
-import se.sics.cooja.avrmote.MicaZMote;
-import se.sics.cooja.emulatedmote.Radio802154;
-import se.sics.cooja.interfaces.CustomDataRadio;
+import org.contikios.cooja.ClassDescription;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.avrmote.MicaZMote;
+import org.contikios.cooja.emulatedmote.Radio802154;
+import org.contikios.cooja.interfaces.CustomDataRadio;
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.FiniteStateMachine.Probe;
 import avrora.sim.platform.MicaZ;

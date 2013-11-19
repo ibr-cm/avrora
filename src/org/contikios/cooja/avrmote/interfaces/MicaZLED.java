@@ -28,7 +28,7 @@
  *
  */
 
-package se.sics.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote.interfaces;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -42,10 +42,10 @@ import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.ClassDescription;
-import se.sics.cooja.Mote;
-import se.sics.cooja.avrmote.MicaZMote;
-import se.sics.cooja.interfaces.LED;
+import org.contikios.cooja.ClassDescription;
+import org.contikios.cooja.Mote;
+import org.contikios.cooja.avrmote.MicaZMote;
+import org.contikios.cooja.interfaces.LED;
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.platform.MicaZ;
 
