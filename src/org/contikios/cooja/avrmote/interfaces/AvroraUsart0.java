@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Swedish Institute of Computer Science.
+ * Copyright (c) 2012, The Contiki OS (www.contiki-os.org).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,39 +25,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-package org.contikios.cooja.avrmote;
+package org.contikios.cooja.avrmote.interfaces;
 
-import org.contikios.cooja.Simulation;
-import avrora.sim.platform.MicaZ;
+import org.contikios.cooja.Mote;
 
-/**
- * AVR-based MicaZ mote emulated in Avrora.
- *
- * @author Joakim Eriksson, Fredrik Osterlind, David Kopf
- */
-public class MicaZMote extends AvroraMote {
-  // 7372800 Hz according to contiki-conf.h
-  public static int F_CPU = 7372800;
-
-  // Delegate the mote production to the AvroraMote class
-  public MicaZMote(Simulation simulation, MicaZMoteType type) {
-    super(simulation, type, new MicaZ.Factory());
+public class AvroraUsart0 extends AvroraUsart1 {
+  public AvroraUsart0(Mote mote) {
+    super(mote);
   }
 
-  public MicaZ getMicaZ() {
-    return (MicaZ) getPlatform();
-  }
-
-  // Return unique Mote name
-  public String toString() {
-    return "MicaZ " + getID();
-  }
-
-  // Return CPU frequency TODO:get current frequency
-  public int getCPUFrequency() {
-    return F_CPU;
+  public String getUsart() {
+    return "usart0";
   }
 }

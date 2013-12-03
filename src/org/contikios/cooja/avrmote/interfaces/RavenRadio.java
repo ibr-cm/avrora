@@ -34,43 +34,37 @@ import org.apache.log4j.Logger;
 
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Mote;
-import org.contikios.cooja.avrmote.MicaZMote;
-import org.contikios.cooja.avrmote.MicaZMoteType;
-import avrora.sim.radio.CC2420Radio;
+import org.contikios.cooja.avrmote.RavenMote;
+import avrora.sim.radio.AT86RF231Radio;
 import avrora.sim.radio.Radio;
 
 /**
- * Cooja support for Avrora's CC2420Radio.
+ * Cooja support for Avrora's Atmel AT86RF230 radio (AT86RF231).
  *
- * @see MicaZMoteType
- * @author Joakim Eriksson, Fredrik Osterlind
+ * @author David Kopf, Fredrik Osterlind
  */
-@ClassDescription("CC2420")
-public class MicaZRadio extends Avrora802154Radio {
-  private static Logger logger = Logger.getLogger(MicaZRadio.class);
+@ClassDescription("AT86RF230 Radio")
+public class RavenRadio extends Avrora802154Radio {
+  private static Logger logger = Logger.getLogger(RavenRadio.class);
+  private final static boolean DEBUG = false;
 
-  /* Avrora's FSM for CC2420Radio:
-   * 0: Power Off:
-   * 1: Power Down:
-   * 2: Idle:
-   * 3: Receive (Rx):
-   * 4: Transmit (Tx):        0:
-   * ...
-   * 259: Transmit (Tx):        255:
-   * 260: null
-   * 261: null
-   */
+  /* TODO XXX Verify states */
   private final static int STATE_POWEROFF = 0;
   private final static int STATE_POWERDOWN = 1;
   private final static int STATE_IDLE = 2;
 
-  private CC2420Radio cc2420;
+  private AT86RF231Radio rf231radio;
 
-  public MicaZRadio(Mote mote) {
+  public RavenRadio(Mote mote) {
     super(mote,
-        ((Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio")),
-        ((CC2420Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio")).getFiniteStateMachine());
-    cc2420 = (CC2420Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio");
+        ((Radio) ((RavenMote)mote).getRaven().getDevice("radio")),
+        ((AT86RF231Radio) ((RavenMote)mote).getRaven().getDevice("radio")).getFiniteStateMachine());
+    rf231radio = (AT86RF231Radio) ((RavenMote)mote).getRaven().getDevice("radio");
+  }
+
+  public double getFrequency() {
+    if (DEBUG) System.out.println("Raven getFrequency " +  rf231radio.getFrequency());
+    return rf231radio.getFrequency();
   }
 
   protected boolean isRadioOn(int state) {
@@ -84,23 +78,21 @@ public class MicaZRadio extends Avrora802154Radio {
       return false;
     }
 
-    /* XXX What if state is above 260 ("null")? On or off? */
     return true;
   }
 
-  public double getFrequency() {
-    return cc2420.getFrequency();
-  }
-
   public double getCurrentOutputPower() {
-    return cc2420.getPower();
+    if (DEBUG) System.out.println("Raven getCurrentOutputPower " + rf231radio.getPower());
+    return rf231radio.getPower();
   }
 
   public int getCurrentOutputPowerIndicator() {
-    return cc2420.readRegister(CC2420Radio.TXCTRL) & 0x1f;
+    if (DEBUG) System.out.println("Raven getOutputPowerIndicator" );
+    return 0x0f - (rf231radio.readRegister(AT86RF231Radio.PHY_TX_PWR) & 0x0f); /* 0: max power */
   }
 
   public int getOutputPowerIndicatorMax() {
-    return 0x1f;
+    if (DEBUG) System.out.println("Raven getOutputPowerIndicatorMax" );
+    return 0x0f;
   }
 }

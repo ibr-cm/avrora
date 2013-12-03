@@ -31,29 +31,28 @@
 package org.contikios.cooja.avrmote;
 
 import org.contikios.cooja.Simulation;
-import avrora.sim.platform.MicaZ;
+import avrora.sim.platform.Tiny85;
 
 /**
- * AVR-based MicaZ mote emulated in Avrora.
+ * AVR-based ATTiny85 chip emulated in Avrora.
  *
- * @author Joakim Eriksson, Fredrik Osterlind, David Kopf
+ * @author David Kopf
  */
-public class MicaZMote extends AvroraMote {
-  // 7372800 Hz according to contiki-conf.h
-  public static int F_CPU = 7372800;
+public class ATTiny85Mote extends AvroraMote {
+  public static int F_CPU = 1000000;
 
   // Delegate the mote production to the AvroraMote class
-  public MicaZMote(Simulation simulation, MicaZMoteType type) {
-    super(simulation, type, new MicaZ.Factory());
+  public ATTiny85Mote(Simulation simulation, ATTiny85MoteType type) {
+    super(simulation, type, new Tiny85.Factory());
   }
 
-  public MicaZ getMicaZ() {
-    return (MicaZ) getPlatform();
+  public Tiny85 getTiny85() {
+    return (Tiny85) getPlatform();
   }
 
   // Return unique Mote name
   public String toString() {
-    return "MicaZ " + getID();
+    return "Tiny85 " + getID();
   }
 
   // Return CPU frequency TODO:get current frequency

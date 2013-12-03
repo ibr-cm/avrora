@@ -37,18 +37,13 @@ import org.contikios.cooja.AbstractionLevelDescription;
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Mote;
 import org.contikios.cooja.MoteInterface;
-import org.contikios.cooja.MoteInterfaceHandler;
-import org.contikios.cooja.MoteMemory;
-import org.contikios.cooja.MoteType;
 import org.contikios.cooja.ProjectConfig;
 import org.contikios.cooja.Simulation;
+import org.contikios.cooja.avrmote.interfaces.ATTiny85ID;
 import org.contikios.cooja.avrmote.interfaces.AvrDebugger;
 import org.contikios.cooja.avrmote.interfaces.AvroraADC;
 import org.contikios.cooja.avrmote.interfaces.AvroraClock;
 import org.contikios.cooja.avrmote.interfaces.AvroraLED;
-import org.contikios.cooja.avrmote.interfaces.AvroraUsart0;
-import org.contikios.cooja.avrmote.interfaces.MicaZID;
-import org.contikios.cooja.avrmote.interfaces.MicaZRadio;
 import org.contikios.cooja.interfaces.IPAddress;
 import org.contikios.cooja.interfaces.Mote2MoteRelations;
 import org.contikios.cooja.interfaces.MoteAttributes;
@@ -61,36 +56,34 @@ import org.jdom.Element;
  *
  * @author Joakim Eriksson, Fredrik Osterlind
  */
-@ClassDescription("MicaZ mote")
+@ClassDescription("ATTiny85 Mote Type")
 @AbstractionLevelDescription("Emulated level")
-public class MicaZMoteType extends AvroraMoteType {
+public class ATTiny85MoteType extends AvroraMoteType {
 
   // The returned string is used for mote type name and icon jpg file
   public final String getMoteName() {
-    return ("MicaZ");
+    return ("Tiny85");
   }
   // The returned string is used for firmware file extension
   public final String getMoteContikiTarget() {
-    return ("micaz");
+    return ("tiny85");
   }
 
   public final Mote generateMote(Simulation simulation) {
-    MicaZMote mote = new MicaZMote(simulation, this);
+    ATTiny85Mote mote = new ATTiny85Mote(simulation, this);
     mote.initMote();
     return mote;
   }
 
   @SuppressWarnings("unchecked")
-  public Class<? extends MoteInterface>[] getAllMoteInterfaceClasses() {
+  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
     return new Class[] {
         Position.class,
-        MicaZID.class,
+        ATTiny85ID.class,
         AvroraLED.class,
-        MicaZRadio.class,
-        AvroraClock.class,
-        AvroraUsart0.class,
-        AvrDebugger.class,
         AvroraADC.class,
+        AvroraClock.class,
+        AvrDebugger.class,
         MoteAttributes.class,
         Mote2MoteRelations.class,
         RimeAddress.class,
@@ -98,10 +91,6 @@ public class MicaZMoteType extends AvroraMoteType {
     };
   }
 
-  @Override
-  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
+ 
 
 }

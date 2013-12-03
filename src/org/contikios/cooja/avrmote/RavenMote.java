@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Swedish Institute of Computer Science.
+ * Copyright (c) 2012, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,66 +28,36 @@
  *
  */
 
-package org.contikios.cooja.avrmote.interfaces;
+package org.contikios.cooja.avrmote;
 
-import java.util.Collection;
-
-import javax.swing.JPanel;
-
-import org.apache.log4j.Logger;
-import org.jdom.Element;
-
-import org.contikios.cooja.ClassDescription;
-import org.contikios.cooja.Mote;
 import org.contikios.cooja.Simulation;
-import org.contikios.cooja.avrmote.MicaZMote;
-import org.contikios.cooja.interfaces.Clock;
+import avrora.sim.platform.Raven;
 
 /**
- * @author Fredrik Osterlind, Joakim Eriksson
+ * AVR-based Raven mote emulated in Avrora.
+ *
+ * @author David Kopf
  */
-@ClassDescription("Cycle clock")
-public class MicaClock extends Clock {
-  private static Logger logger = Logger.getLogger(MicaClock.class);
+public class RavenMote extends AvroraMote {
+  // 8MHz in the default Contiki build
+  public static int F_CPU = 8000000;
 
-  private Simulation simulation;
-  private MicaZMote myMote;
-
-  private long timeDrift; /* Microseconds */
-  
-  public MicaClock(Mote mote) {
-    simulation = mote.getSimulation();
-    myMote = (MicaZMote) mote;
+  // Delegate the mote production to the AvroraMote class
+  public RavenMote(Simulation simulation, RavenMoteType type) {
+    super(simulation, type, new Raven.Factory());
   }
 
-  public void setTime(long newTime) {
-    logger.fatal("Can't change emulated CPU time");
+  public Raven getRaven() {
+    return (Raven) getPlatform();
   }
 
-  public long getTime() {
-    return simulation.getSimulationTime() + timeDrift;
+  // Return unique Mote name
+  public String toString() {
+    return "Raven " + getID();
   }
 
-  public void setDrift(long drift) {
-    timeDrift = drift;
+  // Return CPU frequency TODO:get current frequency
+  public int getCPUFrequency() {
+    return F_CPU;
   }
-
-  public long getDrift() {
-    return timeDrift;
-  }
-
-  public JPanel getInterfaceVisualizer() {
-    return null;
-  }
-
-  public void releaseInterfaceVisualizer(JPanel panel) {
-  }
-
-  public Collection<Element> getConfigXML() {
-    return null;
-  }
-
-  public void setConfigXML(Collection<Element> configXML, boolean visAvailable) {
-  }
-
 }

@@ -34,43 +34,36 @@ import org.apache.log4j.Logger;
 
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Mote;
-import org.contikios.cooja.avrmote.MicaZMote;
-import org.contikios.cooja.avrmote.MicaZMoteType;
-import avrora.sim.radio.CC2420Radio;
+import org.contikios.cooja.avrmote.RFA1Mote;
+import avrora.sim.radio.ATmega128RFA1Radio;
 import avrora.sim.radio.Radio;
 
 /**
- * Cooja support for Avrora's CC2420Radio.
+ * Cooja support for Avrora's ATMega128RFA1.
  *
- * @see MicaZMoteType
- * @author Joakim Eriksson, Fredrik Osterlind
+ * @author Joakim Eriksson, David Kopf, Fredrik Osterlind
  */
-@ClassDescription("CC2420")
-public class MicaZRadio extends Avrora802154Radio {
-  private static Logger logger = Logger.getLogger(MicaZRadio.class);
+@ClassDescription("RFA1 Radio")
+public class RFA1Radio extends Avrora802154Radio {
+  private static Logger logger = Logger.getLogger(RFA1Radio.class);
 
-  /* Avrora's FSM for CC2420Radio:
-   * 0: Power Off:
-   * 1: Power Down:
-   * 2: Idle:
-   * 3: Receive (Rx):
-   * 4: Transmit (Tx):        0:
-   * ...
-   * 259: Transmit (Tx):        255:
-   * 260: null
-   * 261: null
-   */
+  /* Radio is idle in state 2, receiver in state 3-5, and a transmitter for > 5 */
+  /* See ATmega128RFA1Energy.java for the power consumptions */
   private final static int STATE_POWEROFF = 0;
   private final static int STATE_POWERDOWN = 1;
   private final static int STATE_IDLE = 2;
 
-  private CC2420Radio cc2420;
+  private ATmega128RFA1Radio rfa1radio;
 
-  public MicaZRadio(Mote mote) {
+  public RFA1Radio(Mote mote) {
     super(mote,
-        ((Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio")),
-        ((CC2420Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio")).getFiniteStateMachine());
-    cc2420 = (CC2420Radio) ((MicaZMote)mote).getMicaZ().getDevice("radio");
+        ((Radio) ((RFA1Mote)mote).getRFA1().getDevice("radio")),
+        ((ATmega128RFA1Radio) ((RFA1Mote)mote).getRFA1().getDevice("radio")).getFiniteStateMachine());
+    rfa1radio = (ATmega128RFA1Radio) ((RFA1Mote)mote).getRFA1().getDevice("radio");
+  }
+
+  public double getFrequency() {
+      return rfa1radio.getFrequency();
   }
 
   protected boolean isRadioOn(int state) {
@@ -80,27 +73,24 @@ public class MicaZRadio extends Avrora802154Radio {
     if (state == STATE_POWERDOWN) {
       return false;
     }
+    /* Idle uses about half the power of the rx state. Return on to err on the high side of enery consumption.
     if (state == STATE_IDLE) {
       return false;
     }
+    */
 
-    /* XXX What if state is above 260 ("null")? On or off? */
     return true;
   }
 
-  public double getFrequency() {
-    return cc2420.getFrequency();
-  }
-
   public double getCurrentOutputPower() {
-    return cc2420.getPower();
+    return rfa1radio.getPower();
   }
 
   public int getCurrentOutputPowerIndicator() {
-    return cc2420.readRegister(CC2420Radio.TXCTRL) & 0x1f;
+    return 0x0f - rfa1radio.getPowerIndicator(); /* 0: max power */
   }
 
   public int getOutputPowerIndicatorMax() {
-    return 0x1f;
+    return 0x0f;
   }
 }

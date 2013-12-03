@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Swedish Institute of Computer Science.
+ * Copyright (c) 2012, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,145 +29,17 @@
  */
 
 package org.contikios.cooja.avrmote.interfaces;
-
-import java.util.Collection;
-import java.util.Vector;
-
-import javax.swing.JPanel;
-
-import org.apache.log4j.Logger;
-import org.jdom.Element;
-
-import avrora.sim.State;
-import avrora.sim.Simulator.Watch;
-
 import org.contikios.cooja.Mote;
-import org.contikios.cooja.MoteTimeEvent;
-import org.contikios.cooja.Simulation;
-import org.contikios.cooja.TimeEvent;
-import org.contikios.cooja.avrmote.AvrMoteMemory;
-import org.contikios.cooja.avrmote.MicaZMote;
-import org.contikios.cooja.interfaces.MoteID;
 
-public class MicaZID extends MoteID {
-
-    private static final boolean PERSISTENT_SET_ID = true;
-
-    private static Logger logger = Logger.getLogger(MicaZID.class);
-
-    private int moteID = -1; /* TODO Implement */
-
-    private AvrMoteMemory moteMem;
-    boolean tosID = false;
-    boolean contikiID = false;
-    private MicaZMote mote;
-    private int persistentSetIDCounter = 1000;
-
-    TimeEvent persistentSetIDEvent = new MoteTimeEvent(mote, 0) {
-        public void execute(long t) {
-            if (persistentSetIDCounter-- > 0) {
-                setMoteID(moteID);
-                if (t + mote.getInterfaces().getClock().getDrift() < 0) {
-                    /* Wait until node is booting */
-                    mote.getSimulation().scheduleEvent(this, -mote.getInterfaces().getClock().getDrift());
-                } else {
-                    mote.getSimulation().scheduleEvent(this, t + Simulation.MILLISECOND / 16);
-                }
-            }
-        }
-    };
-
+public class MicaZID extends AvroraMoteID {
 
     public MicaZID(Mote mote) {
-        this.mote = (MicaZMote) mote;
-        this.moteMem = (AvrMoteMemory) mote.getMemory();
+      super(mote);
 
-        if (moteMem.variableExists("node_id")) {
-            contikiID = true;
-
-            int addr = moteMem.getVariableAddress("node_id");
-            moteMem.insertWatch(new Watch() {
-                public void fireAfterRead(State arg0, int arg1, byte arg2) {
-                    System.out.println("Read from node_id: " + arg2);
-                }
-                public void fireAfterWrite(State arg0, int arg1, byte arg2) {
-                }
-                public void fireBeforeRead(State arg0, int arg1) {
-                }
-                public void fireBeforeWrite(State arg0, int arg1, byte arg2) {
-                    System.out.println("Writing to node_id: " + arg2);
-                }}, addr);
-        }
-
-        if (moteMem.variableExists("TOS_NODE_ID")) {
-            tosID = true;
-        }
-
-
-        if (PERSISTENT_SET_ID) {
-            mote.getSimulation().invokeSimulationThread(new Runnable() {
-                public void run() {
-                    persistentSetIDEvent.execute(MicaZID.this.mote.getSimulation().getSimulationTime());
-                };
-            });
-        }
-    }
-
-    public int getMoteID() {
-        if (contikiID) {
-            return moteMem.getIntValueOf("node_id");
-        }
-
-        if (tosID) {
-            return moteMem.getIntValueOf("TOS_NODE_ID");
-        }     
-        return moteID;
-    }
-
-    public void setMoteID(int newID) {
-        moteID = newID;
-        if (contikiID) {
-            mote.setEEPROM(0, 0xad);
-            mote.setEEPROM(1, 0xde);
-            mote.setEEPROM(2, newID);
-            mote.setEEPROM(3, newID >> 8);
-            System.out.println("Setting node id: " + newID);
-            moteMem.setIntValueOf("node_id", newID);
-        }
-        if (tosID) {
-            moteMem.setIntValueOf("TOS_NODE_ID", newID);
-            moteMem.setIntValueOf("ActiveMessageAddressC$addr", newID);
-        }
-        setChanged();
-        notifyObservers();
-        return;
-    }
-
-
-    public JPanel getInterfaceVisualizer() {
-        return null;
-    }
-
-    public void releaseInterfaceVisualizer(JPanel panel) {
-    }
-
-    public Collection<Element> getConfigXML() {
-        Vector<Element> config = new Vector<Element>();
-        Element element;
-
-        // Infinite boolean
-        element = new Element("id");
-        element.setText(Integer.toString(getMoteID()));
-        config.add(element);
-
-        return config;
-    }
-
-    public void setConfigXML(Collection<Element> configXML, boolean visAvailable) {
-        for (Element element : configXML) {
-            if (element.getName().equals("id")) {
-                setMoteID(Integer.parseInt(element.getText()));
-            }
-        }
+      /* TODO Write EEPROM? */
+//    mote.setEEPROM(0, 0xad);
+//    mote.setEEPROM(1, 0xde);
+//    mote.setEEPROM(2, newID);
+//    mote.setEEPROM(3, newID >> 8);
     }
 }

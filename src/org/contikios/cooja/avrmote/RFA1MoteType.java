@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * Copyright (c) 2012, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,78 +30,69 @@
 
 package org.contikios.cooja.avrmote;
 
-import java.io.File;
-import java.util.Collection;
-import javax.swing.JComponent;
 import org.contikios.cooja.AbstractionLevelDescription;
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Mote;
 import org.contikios.cooja.MoteInterface;
-import org.contikios.cooja.MoteInterfaceHandler;
-import org.contikios.cooja.MoteMemory;
-import org.contikios.cooja.MoteType;
-import org.contikios.cooja.ProjectConfig;
 import org.contikios.cooja.Simulation;
 import org.contikios.cooja.avrmote.interfaces.AvrDebugger;
 import org.contikios.cooja.avrmote.interfaces.AvroraADC;
 import org.contikios.cooja.avrmote.interfaces.AvroraClock;
 import org.contikios.cooja.avrmote.interfaces.AvroraLED;
+import org.contikios.cooja.avrmote.interfaces.AvroraMoteID;
 import org.contikios.cooja.avrmote.interfaces.AvroraUsart0;
-import org.contikios.cooja.avrmote.interfaces.MicaZID;
-import org.contikios.cooja.avrmote.interfaces.MicaZRadio;
+import org.contikios.cooja.avrmote.interfaces.RFA1Radio;
 import org.contikios.cooja.interfaces.IPAddress;
 import org.contikios.cooja.interfaces.Mote2MoteRelations;
 import org.contikios.cooja.interfaces.MoteAttributes;
 import org.contikios.cooja.interfaces.Position;
 import org.contikios.cooja.interfaces.RimeAddress;
-import org.jdom.Element;
 
 /**
- * AVR-based MicaZ mote types emulated in Avrora.
+ * Bare AVR atmega128rfa1 mote types emulated in Avrora.
  *
- * @author Joakim Eriksson, Fredrik Osterlind
+ * @author Joakim Eriksson, Fredrik Osterlind, David Kopf
  */
-@ClassDescription("MicaZ mote")
+@ClassDescription("RFA1 Mote Type")
 @AbstractionLevelDescription("Emulated level")
-public class MicaZMoteType extends AvroraMoteType {
+public class RFA1MoteType extends AvroraMoteType {
 
   // The returned string is used for mote type name and icon jpg file
   public final String getMoteName() {
-    return ("MicaZ");
+    return ("RFA1");
   }
   // The returned string is used for firmware file extension
   public final String getMoteContikiTarget() {
-    return ("micaz");
+    return ("avr-atmega128rfa1");
   }
 
   public final Mote generateMote(Simulation simulation) {
-    MicaZMote mote = new MicaZMote(simulation, this);
+    RFA1Mote mote = new RFA1Mote(simulation, this);
     mote.initMote();
     return mote;
   }
 
-  @SuppressWarnings("unchecked")
-  public Class<? extends MoteInterface>[] getAllMoteInterfaceClasses() {
+  /* Note the ADC and Debugger interfaces are also an extension of Clock and
+   * will get the setDrift/getDrift calls for random startup if included before
+   * the Clock interface. The clock would then show zero drift.
+   */
+ @SuppressWarnings("unchecked")
+ public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
     return new Class[] {
         Position.class,
-        MicaZID.class,
+        AvroraMoteID.class,
         AvroraLED.class,
-        MicaZRadio.class,
+        RFA1Radio.class,
         AvroraClock.class,
         AvroraUsart0.class,
         AvrDebugger.class,
         AvroraADC.class,
-        MoteAttributes.class,
         Mote2MoteRelations.class,
+        MoteAttributes.class,
         RimeAddress.class,
         IPAddress.class
     };
-  }
 
-  @Override
-  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-
 
 }
