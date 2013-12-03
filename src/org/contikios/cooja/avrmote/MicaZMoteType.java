@@ -98,10 +98,9 @@ public class MicaZMoteType extends AvroraMoteType {
     };
   }
 
-  @Override
-  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+
+
+  
 
 
 }

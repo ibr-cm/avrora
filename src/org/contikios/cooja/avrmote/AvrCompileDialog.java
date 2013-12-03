@@ -92,12 +92,12 @@ public class AvrCompileDialog extends AbstractCompileDialog {
   }
 
   public Class<? extends MoteInterface>[] getDefaultMoteInterfaces() {
-    return ((AvroraMoteType)moteType).getMoteInterfaceClasses();
+    return ((AvroraMoteType)moteType).getAllMoteInterfaceClasses();
   }
 
-  @Override
+ 
   public Class<? extends MoteInterface>[] getAllMoteInterfaces() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return ((AvroraMoteType)moteType).getAllMoteInterfaceClasses();
   }
 
 }

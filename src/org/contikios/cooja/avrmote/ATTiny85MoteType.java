@@ -76,7 +76,7 @@ public class ATTiny85MoteType extends AvroraMoteType {
   }
 
   @SuppressWarnings("unchecked")
-  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
+  public Class<? extends MoteInterface>[] getAllMoteInterfaceClasses() {
     return new Class[] {
         Position.class,
         ATTiny85ID.class,

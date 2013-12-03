@@ -36,6 +36,7 @@ import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.swing.Icon;
@@ -70,11 +71,22 @@ import org.jdom.Element;
 public abstract class AvroraMoteType extends AbstractEmulatedMote implements MoteType {
   public static Logger logger = Logger.getLogger(AvroraMoteType.class);
 
+  private Class<? extends MoteInterface>[] moteInterfaceClasses = null;
+
   protected Simulation simulation;
+  protected String identifier = null;
+  protected String description = null;
+
+
+  /* If source file is defined, the firmware is recompiled when loading simulations */
+  private File fileFirmware = null;
+  private File fileSource = null;
+  private String compileCommands = null;
+
 
   public abstract String getMoteName();
   public abstract String getMoteContikiTarget();
-
+  public abstract Class<? extends MoteInterface>[] getAllMoteInterfaceClasses();
   public abstract Mote generateMote(Simulation simulation);
 
   public boolean configureAndInit(Container parentContainer, Simulation simulation, boolean visAvailable)
@@ -191,10 +203,120 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
     String sourceNoExtension = source.getName().substring(0, source.getName().length()-2);
     return new File(parentDir, sourceNoExtension + "." + getMoteContikiTarget());
   }
-
-  //public abstract Class<? extends MoteInterface>[] getAllMoteInterfaceClasses();
   
+  
+
   @Override
+  public Collection<Element> getConfigXML(Simulation simulation) {
+    ArrayList<Element> config = new ArrayList<Element>();
+
+    Element element;
+
+    // Identifier
+    element = new Element("identifier");
+    element.setText(getIdentifier());
+    config.add(element);
+
+    // Description
+    element = new Element("description");
+    element.setText(getDescription());
+    config.add(element);
+
+    // Source file
+    if (fileSource != null) {
+      element = new Element("source");
+      File file = simulation.getCooja().createPortablePath(fileSource);
+      element.setText(file.getPath().replaceAll("\\\\", "/"));
+      config.add(element);
+      element = new Element("commands");
+      element.setText(compileCommands);
+      config.add(element);
+    }
+
+    // Firmware file
+    element = new Element("firmware");
+    File file = simulation.getCooja().createPortablePath(fileFirmware);
+    element.setText(file.getPath().replaceAll("\\\\", "/"));
+    config.add(element);
+
+    // Mote interfaces
+    for (Class<? extends MoteInterface> moteInterface : getMoteInterfaceClasses()) {
+      element = new Element("moteinterface");
+      element.setText(moteInterface.getName());
+      config.add(element);
+    }
+
+    return config;
+  }
+
+
+  
+
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  @Override
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  @Override
+  public String getIdentifier() {
+    return identifier;
+  }
+
+  @Override
+  public void setIdentifier(String identifier) {
+    this.identifier = identifier;
+  }
+
+  @Override
+  public File getContikiSourceFile() {
+    return fileSource;
+  }
+
+  @Override
+  public void setContikiSourceFile(File file) {
+    this.fileSource = file;
+  }
+
+  @Override
+  public File getContikiFirmwareFile() {
+    return fileFirmware;
+  }
+
+  @Override
+  public void setContikiFirmwareFile(File file) {
+    this.fileFirmware = file;
+  }
+
+  @Override
+  public String getCompileCommands() {
+    return compileCommands;
+  }
+
+  @Override
+  public void setCompileCommands(String commands) {
+    this.compileCommands = commands;
+  }
+
+
+  @Override
+  public void setMoteInterfaceClasses(Class<? extends MoteInterface>[] classes) {
+    this.moteInterfaceClasses = classes;
+  }
+
+  
+
+  @Override
+  public Class<? extends MoteInterface>[] getMoteInterfaceClasses() {
+    return moteInterfaceClasses;
+  }
+
+    @Override
   public void execute(long time) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
@@ -230,73 +352,14 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
   }
 
   @Override
-  public String getDescription() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public void setDescription(String description) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public String getIdentifier() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public void setIdentifier(String identifier) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public File getContikiSourceFile() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public void setContikiSourceFile(File file) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public File getContikiFirmwareFile() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public void setContikiFirmwareFile(File file) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public String getCompileCommands() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public void setCompileCommands(String commands) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-
-  @Override
-  public void setMoteInterfaceClasses(Class<? extends MoteInterface>[] classes) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
   public JComponent getTypeVisualizer() {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public ProjectConfig getConfig() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+     logger.warn("MicaZ mote type project config not implemented");
+    return null;
 
-  @Override
-  public Collection<Element> getConfigXML(Simulation simulation) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 }
