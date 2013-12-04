@@ -50,6 +50,7 @@
       <manifest>
         <attribute name="Class-Path" value="."/>
       </manifest>
+      <fileset dir="." includes="images/*.jpg"/>
     </jar>
   </target>
 

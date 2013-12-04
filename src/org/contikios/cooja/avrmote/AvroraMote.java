@@ -134,24 +134,30 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
   public void setEEPROM(int address, int i) {
     byte[] eedata = EEPROM.getContent();
     eedata[address] = (byte) i;
+    EEPROM.setContent(eedata);
   }
 
+  @Override
   public int getID() {
     return getInterfaces().getMoteID().getMoteID();
   }
 
+  @Override
   public MoteType getType() {
     return moteType;
   }
+  @Override
   public MoteMemory getMemory() {
     return memory;
   }
+  @Override
   public MoteInterfaceHandler getInterfaces() {
     return moteInterfaceHandler;
   }
 
   private long cyclesExecuted = 0;
   private long cyclesUntil = 0;
+  @Override
   public void execute(long t) {
     /* Wait until mote boots */
     if (moteInterfaceHandler.getClock().getTime() < 0) {
@@ -184,6 +190,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
   }
 
   @SuppressWarnings("unchecked")
+  @Override
   public boolean setConfigXML(Simulation simulation, Collection<Element> configXML, boolean visAvailable) {
     setSimulation(simulation);
     initEmulator(moteType.getContikiFirmwareFile());
@@ -215,8 +222,9 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
     return true;
   }
 
+  @Override
   public Collection<Element> getConfigXML() {
-    ArrayList<Element> config = new ArrayList<Element>();
+    ArrayList<Element> config = new ArrayList<>();
     Element element;
 
     /* Breakpoints */
@@ -241,7 +249,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
 
   /* WatchpointMote */
   public Collection<Element> getWatchpointConfigXML() {
-    ArrayList<Element> config = new ArrayList<Element>();
+    ArrayList<Element> config = new ArrayList<>();
     Element element;
 
     for (AvrBreakpoint breakpoint: watchpoints) {
@@ -252,6 +260,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
 
     return config;
   }
+
   public boolean setWatchpointConfigXML(Collection<Element> configXML, boolean visAvailable) {
     for (Element element : configXML) {
       if (element.getName().equals("breakpoint")) {
@@ -266,18 +275,25 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
     return true;
   }
 
-  private ArrayList<WatchpointListener> watchpointListeners = new ArrayList<WatchpointListener>();
-  private ArrayList<AvrBreakpoint> watchpoints = new ArrayList<AvrBreakpoint>();
+  private ArrayList<WatchpointListener> watchpointListeners = new ArrayList<>();
+  private ArrayList<AvrBreakpoint> watchpoints = new ArrayList<>();
 
+  @Override
   public void addWatchpointListener(WatchpointListener listener) {
     watchpointListeners.add(listener);
   }
+
+  @Override
   public void removeWatchpointListener(WatchpointListener listener) {
     watchpointListeners.remove(listener);
   }
+
+  @Override
   public WatchpointListener[] getWatchpointListeners() {
     return watchpointListeners.toArray(new WatchpointListener[0]);
   }
+
+  @Override
   public Watchpoint addBreakpoint(File codeFile, int lineNr, int address) {
     AvrBreakpoint bp = new AvrBreakpoint(this, address, codeFile, new Integer(lineNr));
     watchpoints.add(bp);
@@ -287,6 +303,8 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
     }
     return bp;
   }
+  
+  @Override
   public void removeBreakpoint(Watchpoint watchpoint) {
     ((AvrBreakpoint)watchpoint).unregisterBreakpoint();
     watchpoints.remove(watchpoint);
@@ -295,9 +313,13 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
       listener.watchpointsChanged();
     }
   }
+
+  @Override
   public AvrBreakpoint[] getBreakpoints() {
     return watchpoints.toArray(new AvrBreakpoint[0]);
   }
+
+  @Override
   public boolean breakpointExists(int address) {
     if (address < 0) {
       return false;
@@ -309,6 +331,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
     }
     return false;
   }
+  @Override
   public boolean breakpointExists(File file, int lineNr) {
     return breakpointExists(getExecutableAddressOf(file, lineNr));
   }
@@ -346,6 +369,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
     return null;
   }
 
+  @Override
   public int getExecutableAddressOf(File file, int lineNr) {
     try {
       File firmwareFile = ((AvroraMoteType)getType()).getContikiFirmwareFile();

@@ -30,7 +30,9 @@
 
 package org.contikios.cooja.avrmote;
 
+import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
@@ -38,17 +40,21 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import org.apache.log4j.Logger;
 
 import org.contikios.cooja.AbstractionLevelDescription;
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Cooja;
-import org.contikios.cooja.Mote;
 import org.contikios.cooja.MoteInterface;
 import org.contikios.cooja.MoteInterfaceHandler;
 import org.contikios.cooja.MoteMemory;
@@ -73,7 +79,6 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
 
   private Class<? extends MoteInterface>[] moteInterfaceClasses = null;
 
-  protected Simulation simulation;
   protected String identifier = null;
   protected String description = null;
 
@@ -87,8 +92,8 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
   public abstract String getMoteName();
   public abstract String getMoteContikiTarget();
   public abstract Class<? extends MoteInterface>[] getAllMoteInterfaceClasses();
-  public abstract Mote generateMote(Simulation simulation);
 
+  @Override
   public boolean configureAndInit(Container parentContainer, Simulation simulation, boolean visAvailable)
   throws MoteTypeCreationException {
     this.simulation = simulation;
@@ -182,7 +187,7 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
 
   public Icon getMoteTypeIcon() {
     Toolkit toolkit = Toolkit.getDefaultToolkit();
-    URL imageURL = this.getClass().getClassLoader().getResource("images/"+this.getMoteName()+".jpg");
+    URL imageURL = this.getClass().getClassLoader().getResource("images/" + this.getMoteName() + ".jpg");
     if (imageURL == null) return null;
     Image image = toolkit.getImage(imageURL);
     MediaTracker tracker = new MediaTracker(Cooja.getTopParentContainer());
@@ -192,7 +197,7 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
     } catch (InterruptedException ex) {
     }
     if (image.getHeight(Cooja.getTopParentContainer()) > 0 && image.getWidth(Cooja.getTopParentContainer()) > 0) {
-      image = image.getScaledInstance((200*image.getWidth(Cooja.getTopParentContainer())/image.getHeight(Cooja.getTopParentContainer())), 200, Image.SCALE_DEFAULT);
+      image = image.getScaledInstance((200 * image.getWidth(Cooja.getTopParentContainer()) / image.getHeight(Cooja.getTopParentContainer())), 200, Image.SCALE_DEFAULT);
       return new ImageIcon(image);
     }
     return null;
@@ -208,7 +213,7 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
 
   @Override
   public Collection<Element> getConfigXML(Simulation simulation) {
-    ArrayList<Element> config = new ArrayList<Element>();
+    ArrayList<Element> config = new ArrayList<>();
 
     Element element;
 
@@ -248,10 +253,6 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
 
     return config;
   }
-
-
-  
-
 
   @Override
   public String getDescription() {
@@ -352,8 +353,75 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
   }
 
   @Override
-  public JComponent getTypeVisualizer() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public JPanel getTypeVisualizer() {
+    /* TODO Move to emulated layer */
+    JPanel panel = new JPanel();
+    JLabel label;
+    JPanel smallPane;
+
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+    // Identifier
+    smallPane = new JPanel(new BorderLayout());
+    label = new JLabel("Identifier");
+    smallPane.add(BorderLayout.WEST, label);
+    label = new JLabel(getIdentifier());
+    smallPane.add(BorderLayout.EAST, label);
+    panel.add(smallPane);
+
+    // Description
+    smallPane = new JPanel(new BorderLayout());
+    label = new JLabel("Description");
+    smallPane.add(BorderLayout.WEST, label);
+    label = new JLabel(getDescription());
+    smallPane.add(BorderLayout.EAST, label);
+    panel.add(smallPane);
+
+    /* Contiki source */
+    smallPane = new JPanel(new BorderLayout());
+    label = new JLabel("Contiki source");
+    smallPane.add(BorderLayout.WEST, label);
+    if (getContikiSourceFile() != null) {
+      label = new JLabel(getContikiSourceFile().getName());
+      label.setToolTipText(getContikiSourceFile().getPath());
+    } else {
+      label = new JLabel("[not specified]");
+    }
+    smallPane.add(BorderLayout.EAST, label);
+    panel.add(smallPane);
+
+    /* Contiki firmware */
+    smallPane = new JPanel(new BorderLayout());
+    label = new JLabel("Contiki firmware");
+    smallPane.add(BorderLayout.WEST, label);
+    label = new JLabel(getContikiFirmwareFile().getName());
+    label.setToolTipText(getContikiFirmwareFile().getPath());
+    smallPane.add(BorderLayout.EAST, label);
+    panel.add(smallPane);
+
+    /* Compile commands */
+    smallPane = new JPanel(new BorderLayout());
+    label = new JLabel("Compile commands");
+    smallPane.add(BorderLayout.WEST, label);
+    JTextArea textArea = new JTextArea(getCompileCommands());
+    textArea.setEditable(false);
+    textArea.setBorder(BorderFactory.createEmptyBorder());
+    smallPane.add(BorderLayout.EAST, textArea);
+    panel.add(smallPane);
+
+    /* Icon (if available) */
+    if (!Cooja.isVisualizedInApplet()) {
+      Icon moteTypeIcon = getMoteTypeIcon();
+      if (moteTypeIcon != null) {
+        smallPane = new JPanel(new BorderLayout());
+        label = new JLabel(moteTypeIcon);
+        smallPane.add(BorderLayout.CENTER, label);
+        panel.add(smallPane);
+      }
+    }
+
+    panel.add(Box.createRigidArea(new Dimension(0, 5)));
+    return panel;
   }
 
   @Override

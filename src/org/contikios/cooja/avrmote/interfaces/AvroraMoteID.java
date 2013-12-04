@@ -141,11 +141,10 @@ public class AvroraMoteID extends MoteID {
 
   @Override
   public JPanel getInterfaceVisualizer() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return null;
   }
 
   @Override
   public void releaseInterfaceVisualizer(JPanel panel) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 }
