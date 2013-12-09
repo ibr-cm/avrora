@@ -56,15 +56,12 @@ import org.contikios.cooja.AbstractionLevelDescription;
 import org.contikios.cooja.ClassDescription;
 import org.contikios.cooja.Cooja;
 import org.contikios.cooja.MoteInterface;
-import org.contikios.cooja.MoteInterfaceHandler;
-import org.contikios.cooja.MoteMemory;
 import org.contikios.cooja.MoteType;
 import org.contikios.cooja.ProjectConfig;
 import org.contikios.cooja.Simulation;
 import org.contikios.cooja.dialogs.CompileContiki;
 import org.contikios.cooja.dialogs.MessageList;
 import org.contikios.cooja.dialogs.MessageList.MessageContainer;
-import org.contikios.cooja.motes.AbstractEmulatedMote;
 import org.jdom.Element;
 
 /**
@@ -74,14 +71,14 @@ import org.jdom.Element;
  */
 @ClassDescription("Avrora Mote Type")
 @AbstractionLevelDescription("Emulated level")
-public abstract class AvroraMoteType extends AbstractEmulatedMote implements MoteType {
+public abstract class AvroraMoteType implements MoteType {
   public static Logger logger = Logger.getLogger(AvroraMoteType.class);
 
   private Class<? extends MoteInterface>[] moteInterfaceClasses = null;
 
   protected String identifier = null;
   protected String description = null;
-
+  protected Simulation simulation = null;
 
   /* If source file is defined, the firmware is recompiled when loading simulations */
   private File fileFirmware = null;
@@ -317,39 +314,60 @@ public abstract class AvroraMoteType extends AbstractEmulatedMote implements Mot
     return moteInterfaceClasses;
   }
 
-    @Override
-  public void execute(long time) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
   @Override
-  public int getID() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+   public boolean setConfigXML(Simulation simulation, Collection<Element> configXML, boolean visAvailable) throws MoteTypeCreationException {
 
-  @Override
-  public MoteInterfaceHandler getInterfaces() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+    ArrayList<Class<? extends MoteInterface>> intfClassList = new ArrayList<>();
+    for (Element element : configXML) {
+      String name = element.getName();
+      switch (name) {
+        case "identifier":
+          identifier = element.getText();
+          break;
+        case "description":
+          description = element.getText();
+          break;
+        case "source":
+          fileSource = new File(element.getText());
+          if (!fileSource.exists()) {
+            fileSource = simulation.getCooja().restorePortablePath(fileSource);
+          } break;
+        case "commands":
+          compileCommands = element.getText();
+          break;
+        case "firmware":
+          fileFirmware = new File(element.getText());
+          if (!fileFirmware.exists()) {
+            fileFirmware = simulation.getCooja().restorePortablePath(fileFirmware);
+          } break;
+        case "moteinterface":
+          String intfClass = element.getText().trim();
+          /* Backwards compatibility: se.sics -> org.contikios */
+          if (intfClass.startsWith("se.sics")) {
+            intfClass = intfClass.replaceFirst("se\\.sics", "org.contikios");
+          } Class<? extends MoteInterface> moteInterfaceClass =
+                simulation.getCooja().tryLoadClass(this, MoteInterface.class, intfClass);
+        if (moteInterfaceClass == null) {
+          logger.warn("Can't find mote interface class: " + intfClass);
+        } else {
+          intfClassList.add(moteInterfaceClass);
+        } break;
+        default:
+          logger.fatal("Unrecognized entry in loaded configuration: " + name);
+          throw new MoteTypeCreationException(
+                  "Unrecognized entry in loaded configuration: " + name);
+      }
+    }
 
-  @Override
-  public MoteMemory getMemory() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+    Class<? extends MoteInterface>[] intfClasses = intfClassList.toArray(new Class[0]);
 
-  @Override
-  public MoteType getType() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+    setMoteInterfaceClasses(intfClasses);
 
-  @Override
-  public Collection<Element> getConfigXML() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+    if (fileFirmware == null || fileSource == null) {
+      throw new MoteTypeCreationException("Either source or firmware not specified");
+    }
 
-  @Override
-  public boolean setConfigXML(Simulation simulation, Collection<Element> configXML, boolean visAvailable) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return configureAndInit(Cooja.getTopParentContainer(), simulation, visAvailable);
   }
 
   @Override
