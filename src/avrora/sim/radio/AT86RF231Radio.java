@@ -693,9 +693,9 @@ public class AT86RF231Radio implements Radio {
                 case CMD_W_BUF:
                     return writeFIFO(trxFIFO, val, true);
                 case CMD_R_RAM:
-                    return trxFIFO.peek(configRAMAddr++);
+                    return trxFIFO.getAbsoluteByte(configRAMAddr++);
                 case CMD_W_RAM:
-                     return trxFIFO.poke(configRAMAddr++, val);
+                     return trxFIFO.setAbsoluteByte(configRAMAddr++, val);
             }
         }
         return 0;
@@ -1421,10 +1421,10 @@ public class AT86RF231Radio implements Radio {
                     } else if (rf231Status == STATE_TX_ARET_ON) {
                             System.out.println("TX_ARET state in receiver here");
                     }
-                    if (lastCRCok && (rf231Status == STATE_BUSY_RX_AACK) && (trxFIFO.peek(1) & 0x20) == 0x20) {
+                    if (lastCRCok && (rf231Status == STATE_BUSY_RX_AACK) && (trxFIFO.getRelativeByte(1) & 0x20) == 0x20) {
                         //send ack if we are not receiving ack frame
                         if ((registers[CSMA_SEED_1] & 0x10) == 0) {
-                            if ((trxFIFO.peek(1) & 0x07) != 2) {
+                            if ((trxFIFO.getRelativeByte(1) & 0x07) != 2) {
                                 sendingAck = true;
                                 handledAck = false;
                             }
@@ -1465,41 +1465,41 @@ public class AT86RF231Radio implements Radio {
         }
 
         private boolean matchAddress(byte b, int counter) {
-            if (counter > 1 && (trxFIFO.peek(1) & 0x04) == 4) {
+            if (counter > 1 && (trxFIFO.getRelativeByte(1) & 0x04) == 4) {
                 // no further address decoding is done for reserved frames
                 return true;
             }
             switch (counter) {
                 case 1://frame type subfield contents an illegal frame type?
-                    if ((trxFIFO.peek(1) & 0x04) == 4)
+                    if ((trxFIFO.getRelativeByte(1) & 0x04) == 4)
                         return false;
                     break;
                 case 3://Sequence number
-                    if ((trxFIFO.peek(1) & 0x07) != 0 && (trxFIFO.peek(1) & 0x04) != 4) {
+                    if ((trxFIFO.getRelativeByte(1) & 0x07) != 0 && (trxFIFO.getRelativeByte(1) & 0x04) != 4) {
                         DSN = b;
                         lastCRCok = false;  // we have a new DSN now. Therefore, we cannot send an ACK for the last frame any more.
                     }
                     break;
                 case 5:
-                    PANId = trxFIFO.peekField(4, 6);
+                    PANId = trxFIFO.getRelativeField(4, 6);
                     macPANId[0] = registers[PAN_ID_0];
                     macPANId[1] = registers[PAN_ID_1];
                   //  printer.println("PANId " + PANId[0] + " " +PANId[1]);
                   //  printer.println("macPANId " + macPANId[0]+" "+macPANId[1]);
-                    if (((trxFIFO.peek(2) >> 2) & 0x02) != 0) {//DestPANId present?
+                    if (((trxFIFO.getRelativeByte(2) >> 2) & 0x02) != 0) {//DestPANId present?
                         if (!Arrays.equals(PANId, macPANId) && !Arrays.equals(PANId, SHORT_BROADCAST_ADDR)) {
                             if (DEBUGRX && printer!=null) printer.println("RF231: Not broadcast and PANid does not match");
                             return false;
                         }
                     } else
-                    if (((trxFIFO.peek(2) >> 2) & 0x03) == 0) {//DestPANId and dest addresses are not present
-                        if (((trxFIFO.peek(2) >> 6) & 0x02) != 0) {//SrcPANId present
-                            if ((trxFIFO.peek(1) & 0x07) == 0) {//beacon frame: SrcPANid shall match macPANId unless macPANId = 0xffff
+                    if (((trxFIFO.getRelativeByte(2) >> 2) & 0x03) == 0) {//DestPANId and dest addresses are not present
+                        if (((trxFIFO.getRelativeByte(2) >> 6) & 0x02) != 0) {//SrcPANId present
+                            if ((trxFIFO.getRelativeByte(1) & 0x07) == 0) {//beacon frame: SrcPANid shall match macPANId unless macPANId = 0xffff
                               //  if (!Arrays.equals(PANId, macPANId) && !Arrays.equals(macPANId, SHORT_BROADCAST_ADDR) && !BCN_ACCEPT.getValue())
                                 if (!Arrays.equals(PANId, macPANId) && !Arrays.equals(macPANId, SHORT_BROADCAST_ADDR))
                                     return false;
                             } else
-                            if (((trxFIFO.peek(1) & 0x07) == 1) || ((trxFIFO.peek(1) & 0x07) == 3)) {//data or mac command
+                            if (((trxFIFO.getRelativeByte(1) & 0x07) == 1) || ((trxFIFO.getRelativeByte(1) & 0x07) == 3)) {//data or mac command
                                 if (rf231Status == STATE_BUSY_RX_AACK) {
                                     // is AACK_I_AM_COORD set?
                                     if ((registers[CSMA_SEED_1] & 0x04) == 0) return false;
@@ -1510,8 +1510,8 @@ public class AT86RF231Radio implements Radio {
                     }
                     break;
                 case 7://If 32-bit Destination Address exits check if  match
-                    if (((trxFIFO.peek(2) >> 2) & 0x03) == 2) {
-                        ShortAddr = trxFIFO.peekField(6, 8);
+                    if (((trxFIFO.getRelativeByte(2) >> 2) & 0x03) == 2) {
+                        ShortAddr = trxFIFO.getRelativeField(6, 8);
                         macShortAddr[0] = registers[SHORT_ADDR_0];
                         macShortAddr[1] = registers[SHORT_ADDR_1];
                      //   printer.println("shortadr " + ShortAddr[0]+ShortAddr[1]);
@@ -1523,9 +1523,9 @@ public class AT86RF231Radio implements Radio {
              // case 12://If 64-bit Destination Address exits check if match
                 //dak bumped this up a byte, works with sky. The SFD change caused this?
                 case 13://If 64-bit Destination Address exits check if match
-                    if (((trxFIFO.peek(2) >> 2) & 0x03) == 3) {
+                    if (((trxFIFO.getRelativeByte(2) >> 2) & 0x03) == 3) {
                      // LongAdr = rxFIFO.peekField(8, 16);
-                        LongAdr = trxFIFO.peekField(6, 14);//dak
+                        LongAdr = trxFIFO.getRelativeField(6, 14);//dak
                         IEEEAdr[0] = registers[IEEE_ADDR_0];
                         IEEEAdr[1] = registers[IEEE_ADDR_1];
                         IEEEAdr[2] = registers[IEEE_ADDR_2];

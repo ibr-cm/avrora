@@ -664,9 +664,9 @@ public class CC2420Radio implements Radio {
                 case CMD_R_RAM:
                     byte retval;
                     if (configRAMBank == 0x00)
-                        retval = txFIFO.peek(configRAMAddr);
+                        retval = txFIFO.getAbsoluteByte(configRAMAddr);
                     else if (configRAMBank == 0x01)
-                        retval = rxFIFO.peek(configRAMAddr);
+                        retval = rxFIFO.getAbsoluteByte(configRAMAddr);
                     else if (configRAMBank == 0x02)
                         retval = ReadSecurityBank(configRAMAddr);
                     else
@@ -675,10 +675,10 @@ public class CC2420Radio implements Radio {
                     return retval;
                 case CMD_W_RAM:
                     if (configRAMBank == 0x00) {
-                        retval = txFIFO.poke(configRAMAddr, val);
+                        retval = txFIFO.setAbsoluteByte(configRAMAddr, val);
                     }
                     else if (configRAMBank == 0x01)
-                        retval = rxFIFO.poke(configRAMAddr, val);
+                        retval = rxFIFO.setAbsoluteByte(configRAMAddr, val);
                     else if (configRAMBank == 0x02)
                         retval = WriteSecurityBank(configRAMAddr, val);
                     else
@@ -1275,7 +1275,7 @@ public class CC2420Radio implements Radio {
                     }
                     else {
                         // sequence number - save it outside of address recognition since it is needed for SACK/SACKPEND commands as well
-                        if (counter == 3 && (rxFIFO.peek(1) & 0x07) != 0 && (rxFIFO.peek(1) & 0x04) != 4) {
+                        if (counter == 3 && (rxFIFO.getRelativeByte(1) & 0x07) != 0 && (rxFIFO.getRelativeByte(1) & 0x04) != 4) {
                             DSN = b;
                             lastCRCok = false;  // we have a new DSN now. Therefore, we cannot send an ACK for the last frame any more.
                         }
@@ -1338,9 +1338,9 @@ public class CC2420Radio implements Radio {
                         // signal FIFOP and unsignal SFD
                         FIFOP_pin.setLevel(FIFOP_active);
                         SFD_value.setValue(!SFD_active);
-                        if (lastCRCok && autoACK.getValue() && (rxFIFO.peek(1) & 0x20) == 0x20) {//autoACK
+                        if (lastCRCok && autoACK.getValue() && (rxFIFO.getRelativeByte(1) & 0x20) == 0x20) {//autoACK
                             //send ack if we are not receiving ack frame
-                            if ((rxFIFO.peek(1) & 0x07) != 2) {
+                            if ((rxFIFO.getRelativeByte(1) & 0x07) != 2) {
                                 // the type of the ACK only depends on a previous received SACK or SACKPEND
                                 SendAck = AutoAckPend ? SENDACK_PEND : SENDACK_NORMAL;
                             }
@@ -1390,40 +1390,40 @@ public class CC2420Radio implements Radio {
         }
 
         private boolean matchAddress(byte b, int counter) {
-            if (counter > 1 && (rxFIFO.peek(1) & 0x04) == 4 && RESERVED_FRAME_MODE.getValue()) {
+            if (counter > 1 && (rxFIFO.getRelativeByte(1) & 0x04) == 4 && RESERVED_FRAME_MODE.getValue()) {
                 // no further address decoding is done for reserved frames
                 return true;
             }
             switch (counter) {
                 case 1://frame type subfield contents an illegal frame type?
-                    if ((rxFIFO.peek(1) & 0x04) == 4 && !(RESERVED_FRAME_MODE.getValue()))
+                    if ((rxFIFO.getRelativeByte(1) & 0x04) == 4 && !(RESERVED_FRAME_MODE.getValue()))
                         return false;
                     break;
                 case 3://Sequence number
-                    if ((rxFIFO.peek(1) & 0x07) != 0 && (rxFIFO.peek(1) & 0x04) != 4) DSN = b;
+                    if ((rxFIFO.getRelativeByte(1) & 0x07) != 0 && (rxFIFO.getRelativeByte(1) & 0x04) != 4) DSN = b;
                     break;
                 case 5:
-                    PANId = rxFIFO.peekField(4, 6);
+                    PANId = rxFIFO.getRelativeField(4, 6);
                     macPANId = ByteFIFO.copyOfRange(RAMSecurityRegisters, 104, 106);
-                    if (((rxFIFO.peek(2) >> 2) & 0x02) != 0) {//DestPANId present?
+                    if (((rxFIFO.getRelativeByte(2) >> 2) & 0x02) != 0) {//DestPANId present?
                         if (!Arrays.equals(PANId, macPANId) && !Arrays.equals(PANId, SHORT_BROADCAST_ADDR))
                             return false;
                     } else
-                    if (((rxFIFO.peek(2) >> 2) & 0x03) == 0) {//DestPANId and dest addresses are not present
-                        if (((rxFIFO.peek(2) >> 6) & 0x02) != 0) {//SrcPANId present
-                            if ((rxFIFO.peek(1) & 0x07) == 0) {//beacon frame: SrcPANid shall match macPANId unless macPANId = 0xffff
+                    if (((rxFIFO.getRelativeByte(2) >> 2) & 0x03) == 0) {//DestPANId and dest addresses are not present
+                        if (((rxFIFO.getRelativeByte(2) >> 6) & 0x02) != 0) {//SrcPANId present
+                            if ((rxFIFO.getRelativeByte(1) & 0x07) == 0) {//beacon frame: SrcPANid shall match macPANId unless macPANId = 0xffff
                                 if (!Arrays.equals(PANId, macPANId) && !Arrays.equals(macPANId, SHORT_BROADCAST_ADDR) && !BCN_ACCEPT.getValue())
                                     return false;
                             } else
-                            if (((rxFIFO.peek(1) & 0x07) == 1) || ((rxFIFO.peek(1) & 0x07) == 3)) {//data or mac command
+                            if (((rxFIFO.getRelativeByte(1) & 0x07) == 1) || ((rxFIFO.getRelativeByte(1) & 0x07) == 3)) {//data or mac command
                                 if (!PAN_COORDINATOR.getValue() || !Arrays.equals(PANId,macPANId)) return false;
                             }
                         }
                     }
                     break;
                 case 7://If 32-bit Destination Address exits check if  match
-                    if (((rxFIFO.peek(2) >> 2) & 0x03) == 2) {
-                        ShortAddr = rxFIFO.peekField(6, 8);
+                    if (((rxFIFO.getRelativeByte(2) >> 2) & 0x03) == 2) {
+                        ShortAddr = rxFIFO.getRelativeField(6, 8);
                         macShortAddr = ByteFIFO.copyOfRange(RAMSecurityRegisters, 106, 108);
                        //myprinter.println("shortadr " + ShortAddr[0]+ShortAddr[1]);
                        //myprinter.println("macshortaddr " + macShortAddr[0]+" "+macShortAddr[1]);
@@ -1434,9 +1434,9 @@ public class CC2420Radio implements Radio {
              // case 12://If 64-bit Destination Address exits check if match
                 //dak bumped this up a byte, works with sky. The SFD change caused this?
                 case 13://If 64-bit Destination Address exits check if match
-                    if (((rxFIFO.peek(2) >> 2) & 0x03) == 3) {
+                    if (((rxFIFO.getRelativeByte(2) >> 2) & 0x03) == 3) {
                      // LongAdr = rxFIFO.peekField(8, 16);
-                        LongAdr = rxFIFO.peekField(6, 14);//dak
+                        LongAdr = rxFIFO.getRelativeField(6, 14);//dak
                         IEEEAdr = ByteFIFO.copyOfRange(RAMSecurityRegisters, 96, 104);
                         if (!Arrays.equals(LongAdr, IEEEAdr) && !Arrays.equals(LongAdr, LONG_BROADCAST_ADDR)) {
                        //     myprinter.println(" longadr " + LongAdr[0]+LongAdr[1]+LongAdr[2]+LongAdr[3]+LongAdr[4]+LongAdr[5]+LongAdr[6]+LongAdr[7]);

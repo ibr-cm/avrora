@@ -98,11 +98,45 @@ public class ByteFIFO {
         return b;
     }
 
-    public byte peek(int ind) {
+    /**
+     * Gets the byte at absolute position in FIFO
+     * @param ind Absolute position
+     * @return byte at position ind from beginning of FIFO
+     */
+    public byte getAbsoluteByte(int ind) {
+        return data[ind];
+    }
+    
+    /**
+     * Sets the byte at absolute position in FIFO and returns old value
+     * @param ind Absolute position
+     * @param val New value
+     * @return Old values
+     */
+    public byte setAbsoluteByte(int ind, byte val) {
+    	byte prev = data[ind];
+        data[ind] = val;
+        return prev;
+    }
+    
+    /**
+     * Get the byte relative to a packet, which starts at the saved head.
+     * Thus, clear() or saveState() has to be used at the beginning of a packet.
+     * @param ind Position relative to saved head
+     * @return byte at the given position
+     */
+    public byte getRelativeByte(int ind) {
         return data[wrap(head + ind)];
     }
 
-    public byte[] peekField(int from, int to) {
+    /**
+     * Get a series of bytes relative to a packet, which starts at the saved head.
+     * Thus, clear() or saveState() has to be used at the beginning of a packet.
+     * @param from Start position relative to saved head
+     * @param to End position relative to saved head
+     * @return byte array with the values in the given range
+     */
+    public byte[] getRelativeField(int from, int to) {
         if (((head + from) < data.length) && ((head + to) == (data.length)))
             return copyOfRange(data, wrap(head + from), (head + to));
         else if (((head + from) < data.length) && ((head + to) > (data.length))) {
@@ -111,13 +145,6 @@ public class ByteFIFO {
             System.arraycopy(data, 0, r, (data.length - (head + from)), wrap(head + to));
             return r;
         } else return copyOfRange(data, wrap(head + from), wrap(head + to));
-    }
-
-    public byte poke(int ind, byte val) {
-        int indx = wrap(head + ind);
-        byte prev = data[indx];
-        data[indx] = val;
-        return prev;
     }
 
     /**
