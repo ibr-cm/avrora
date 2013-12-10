@@ -259,7 +259,6 @@ public class SensorSimulation extends Simulation {
 
         private void updateVariable(SourceMapping smap, String name, int value) {
             SourceMapping.Location location = smap.getLocation(name);
-            if ( location == null ) location = smap.getLocation("node_address");
             if ( location != null ) {
                 AtmelInterpreter bi = (AtmelInterpreter)simulator.getInterpreter();
                 bi.writeFlashByte(location.lma_addr, Arithmetic.low(value));
