@@ -1488,7 +1488,8 @@ public class CC2420Radio implements Radio {
             state = RECV_SFD_SCAN;
             clearBER();
             beginReceive(getFrequency());
-            clock.insertEvent(rssiValidEvent, 4*cyclesPerByte);  // 8 symbols = 4 bytes
+            // according to measurements, the CCA pin is set approx. 2 bits earlier than 8 symbols (4 bytes) = 118ms
+            clock.insertEvent(rssiValidEvent, 4*cyclesPerByte-2*cyclesPerBit);
             if (printer!=null) {
                 printer.println("CC2420 RX started");
             }
