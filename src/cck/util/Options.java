@@ -37,7 +37,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Properties;
 
 /**
@@ -48,12 +47,12 @@ import java.util.Properties;
  */
 public class Options {
 
-    protected final HashMap knownValues;
+    protected final HashMap<String, Option> knownValues;
 
     protected String[] arguments;
 
     public Options() {
-        knownValues = new HashMap();
+        knownValues = new HashMap<String, Option>();
     }
 
     public Option.Bool newOption(String name, boolean val, String desc) {
@@ -154,25 +153,20 @@ public class Options {
         option.set(value);
     }
 
-    public Collection getAllOptions() {
+    public Collection<Option> getAllOptions() {
         return knownValues.values();
     }
 
     public void process(Options o) {
-        Iterator i = o.knownValues.keySet().iterator();
-
-        while (i.hasNext()) {
-            String name = (String) i.next();
-            String val = ((Option) o.knownValues.get(name)).stringValue();
+        for (String name : o.knownValues.keySet()) {
+            String val = o.knownValues.get(name).stringValue();
             setOption(name, val);
         }
     }
 
     public void process(Properties p) {
-        Iterator i = p.keySet().iterator();
-
-        while (i.hasNext()) {
-            String name = (String) i.next();
+        for (Object o  : p.keySet()) {
+            String name = (String) o;
             String val = p.getProperty(name);
             setOption(name, val);
         }

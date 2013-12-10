@@ -17,7 +17,7 @@ public class MSP430Symbol {
     public int getEncodingValue() { return value; }
     
     public static class GPR extends MSP430Symbol {
-        private static HashMap set = new HashMap();
+        private static HashMap<String, GPR> set = new HashMap<String, GPR>();
         private static GPR newGPR(String n, int v) {
             GPR obj = new GPR(n, v);
             set.put(n, obj);

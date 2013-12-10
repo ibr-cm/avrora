@@ -761,20 +761,10 @@ public class ISDLParserTokenManager implements ISDLParserConstants {
         } while (start++ != end);
     }
 
-    private void jjCheckNAddTwoStates(int state1, int state2) {
-        jjCheckNAdd(state1);
-        jjCheckNAdd(state2);
-    }
-
     private void jjCheckNAddStates(int start, int end) {
         do {
             jjCheckNAdd(jjnextStates[start]);
         } while (start++ != end);
-    }
-
-    private void jjCheckNAddStates(int start) {
-        jjCheckNAdd(jjnextStates[start]);
-        jjCheckNAdd(jjnextStates[start + 1]);
     }
 
     static final long[] jjbitVec0 = { 0x0L, 0x0L, 0xffffffffffffffffL, 0xffffffffffffffffL };

@@ -44,8 +44,6 @@ import jintgen.isdl.parser.ParseException;
 import jintgen.isdl.verifier.Verifier;
 import jintgen.isdl.verifier.VerifierTestHarness;
 import java.io.*;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * This is the main entrypoint to Jintgen. It is responsible for parsing the options to the main program and
@@ -320,10 +318,8 @@ public class Main {
         mainOptions.parseCommandLine(args);
         Terminal.useColors = COLORS.get();
         Terminal.htmlColors = HTML.get();
-        List verbose = VERBOSE.get();
-        Iterator i = verbose.iterator();
-        while (i.hasNext())
-            Verbose.setVerbose((String)i.next(), true);
+        for (String str : VERBOSE.get())
+            Verbose.setVerbose(str, true);
     }
 
     public static void checkFilesExist(String[] files) {

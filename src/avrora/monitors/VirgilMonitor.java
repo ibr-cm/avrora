@@ -37,7 +37,6 @@ package avrora.monitors;
 import avrora.sim.Simulator;
 import avrora.sim.State;
 import avrora.sim.output.SimPrinter;
-import avrora.sim.util.SimUtil;
 import avrora.core.SourceMapping;
 import avrora.core.Program;
 import avrora.arch.AbstractInstr;

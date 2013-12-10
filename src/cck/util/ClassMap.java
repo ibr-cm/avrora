@@ -59,23 +59,23 @@ public class ClassMap {
      * The <code>clazz</code> field stores a reference to the Java class of which the objects stored in this
      * map are instances of.
      */
-    protected final Class clazz;
+    protected final Class<?> clazz;
 
     /**
      * The <code>classMap</code> field is a hash map that maps a string to a Java class.
      */
-    protected final HashMap classMap;
+    protected final HashMap<String, Class<?>> classMap;
 
     /**
      * The <code>reverseMap</code> field is a hash map that maps a Java class back to its alias.
      */
-    protected final HashMap reverseMap;
+    protected final HashMap<Class<?>, String> reverseMap;
 
     /**
      * The <code>objMap</code> field is a hash map that maps a string to an instance of a particular class,
      * i.e. an object.
      */
-    protected final HashMap objMap;
+    protected final HashMap<String, Object> objMap;
 
     /**
      * The constructor for the <code>ClassMap</code> class creates a new class map with the specified type,
@@ -84,11 +84,11 @@ public class ClassMap {
      * @param t   the name of the type of this class as a string
      * @param clz the class which objects should be instances of
      */
-    public ClassMap(String t, Class clz) {
+    public ClassMap(String t, Class<?> clz) {
         clazz = clz;
-        classMap = new HashMap();
-        reverseMap = new HashMap();
-        objMap = new HashMap();
+        classMap = new HashMap<String, Class<?>>();
+        reverseMap = new HashMap<Class<?>, String>();
+        objMap = new HashMap<String, Object>();
         type = t;
     }
 
@@ -99,7 +99,7 @@ public class ClassMap {
      * @param alias the string representation of the alias of the class
      * @param clz   the class to which the alias maps
      */
-    public void addClass(String alias, Class clz) {
+    public void addClass(String alias, Class<?> clz) {
         classMap.put(alias, clz);
         reverseMap.put(clz, alias);
     }
@@ -113,13 +113,13 @@ public class ClassMap {
      *              parameters is equal to the alias.
      */
     public void addInstance(String alias, Object o) {
-        Class cz = o.getClass();
+        Class<?> cz = o.getClass();
         if (!(clazz.isAssignableFrom(cz)))
             throw Util.failure("Object of class " + StringUtil.quote(cz) + " is not an instance of " + clazz.getName());
 
         objMap.put(alias, o);
         classMap.put(alias, cz);
-        reverseMap.put(o, alias);
+        reverseMap.put(cz, alias);
     }
 
     /**
@@ -132,10 +132,10 @@ public class ClassMap {
      * @param shortName the short name of the class
      * @return a Java class representing the class for that alias or fully qualified name
      */
-    public Class getClass(String shortName) {
+    public Class<?> getClass(String shortName) {
         Object o = objMap.get(shortName);
         if (o != null) return o.getClass();
-        return (Class) classMap.get(shortName);
+        return (Class<?>) classMap.get(shortName);
     }
 
     /**
@@ -153,7 +153,7 @@ public class ClassMap {
 
         String clname = StringUtil.quote(name);
 
-        Class c = (Class) classMap.get(name);
+        Class<?> c = (Class<?>) classMap.get(name);
         if (c == null) {
             try {
                 c = Class.forName(name);
@@ -199,8 +199,8 @@ public class ClassMap {
      *
      * @return an alphabetically sorted list that contains all the aliases in this map
      */
-    public List getSortedList() {
-        List list = Collections.list(Collections.enumeration(classMap.keySet()));
+    public List<String> getSortedList() {
+        List<String> list = Collections.list(Collections.enumeration(classMap.keySet()));
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
         return list;
     }
@@ -211,7 +211,7 @@ public class ClassMap {
      *
      * @return an iterator over all the short names in this map
      */
-    public Iterator getIterator() {
+    public Iterator<String> getIterator() {
         return classMap.keySet().iterator();
     }
 
@@ -222,7 +222,7 @@ public class ClassMap {
      * @return an instance of <code>java.util.Iterator</code> which can be used to iterate over each alias in
      *         this map.
      */
-    public Iterator iterator() {
+    public Iterator<String> iterator() {
         return classMap.keySet().iterator();
     }
 }

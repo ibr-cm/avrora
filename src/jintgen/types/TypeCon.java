@@ -59,7 +59,7 @@ import java.util.*;
  */
 public class TypeCon {
 
-    protected static final HashMap<String, List> EMPTY_DIMS = new HashMap<String, List>();
+    protected static final HashMap<String, List<Object>> EMPTY_DIMS = new HashMap<String, List<Object>>();
     protected final String name;
     protected final HashMap<String, Dimension> dimensions;
     protected final HashMap<HashMap<String, Object>, Type> types;
@@ -84,7 +84,7 @@ public class TypeCon {
             name = n;
         }
 
-        public abstract Object build(TypeEnv env, List params);
+        public abstract Object build(TypeEnv env, List<Object> params);
     }
 
     public interface BinOp {
@@ -112,7 +112,7 @@ public class TypeCon {
         return newType(te, EMPTY_DIMS);
     }
 
-    public Type newType(TypeEnv te, HashMap<String, List> dims) {
+    public Type newType(TypeEnv te, HashMap<String, List<Object>> dims) {
         HashMap<String, Object> d = buildDimensions(te, dims);
         Type type = types.get(d);
         if ( type != null ) return type;
@@ -129,9 +129,9 @@ public class TypeCon {
         return other == this;
     }
 
-    protected HashMap<String, Object> buildDimensions(TypeEnv env, HashMap<String, List> dims) {
+    protected HashMap<String, Object> buildDimensions(TypeEnv env, HashMap<String, List<Object>> dims) {
         HashMap<String, Object> m = new HashMap<String, Object>();
-        for ( Map.Entry<String, List> e : dims.entrySet() ) {
+        for ( Map.Entry<String, List<Object>> e : dims.entrySet() ) {
             String name = e.getKey();
             Dimension d = dimensions.get(name);
             Object o = d.build(env, e.getValue());

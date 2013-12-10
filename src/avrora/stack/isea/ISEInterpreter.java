@@ -150,7 +150,7 @@ public class ISEInterpreter implements LegacyInstrVisitor {
     Item head;
     Item tail;
 
-    protected HashMap states;
+    protected HashMap<Integer, ISEState> states;
     protected final SummaryCache cache;
 
     protected void addToWorkList(String str, int pc, ISEState s) {
@@ -215,7 +215,7 @@ public class ISEInterpreter implements LegacyInstrVisitor {
 
     public ISEInterpreter(Program p, SummaryCache cs) {
         program = p;
-        states = new HashMap();
+        states = new HashMap<Integer, ISEState>();
         cache = cs;
     }
 
@@ -406,9 +406,8 @@ public class ISEInterpreter implements LegacyInstrVisitor {
     }
 
     public void visit(LegacyInstr.BST i) {
-        byte tmp0 = readRegister(i.r1);
+        readRegister(i.r1);
         writeSREG(ISEValue.UNKNOWN);
-        //T = Arithmetic.getBit(tmp0, i.imm1);
     }
 
     public void visit(LegacyInstr.CALL i) {
@@ -556,13 +555,11 @@ public class ISEInterpreter implements LegacyInstrVisitor {
     }
 
     public void visit(LegacyInstr.ICALL i) {
-        List iedges = program.getIndirectEdges(pc);
+        List<Integer> iedges = program.getIndirectEdges(pc);
         if (iedges == null)
             throw Util.failure("No control flow information for indirect call at: " +
                     StringUtil.addrToString(pc));
-        Iterator it = iedges.iterator();
-        while (it.hasNext()) {
-            int target_address = ((Integer)it.next()).intValue();
+        for (Integer target_address : iedges) {
             ISEState rs = cache.getProcedureSummary(target_address);
             ISEState fs = processReturnState(state, rs);
             addToWorkList("RET", nextPC, fs);
@@ -571,13 +568,11 @@ public class ISEInterpreter implements LegacyInstrVisitor {
     }
 
     public void visit(LegacyInstr.IJMP i) {
-        List iedges = program.getIndirectEdges(pc);
+        List<Integer> iedges = program.getIndirectEdges(pc);
         if (iedges == null)
             throw Util.failure("No control flow information for indirect call at: " +
                     StringUtil.addrToString(pc));
-        Iterator it = iedges.iterator();
-        while (it.hasNext()) {
-            int target_address = ((Integer)it.next()).intValue();
+        for (Integer target_address : iedges) {
             jump(target_address);
         }
     }

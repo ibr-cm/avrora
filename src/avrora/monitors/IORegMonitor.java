@@ -40,7 +40,6 @@ import avrora.sim.output.SimPrinter;
 import avrora.sim.mcu.Microcontroller;
 import cck.text.StringUtil;
 import cck.util.Option;
-import java.util.Iterator;
 
 /**
  * The <code>IORegMonitor</code> is a simple tracing mechanism that allows reads and writes of IO registers
@@ -84,9 +83,7 @@ public class IORegMonitor extends MonitorFactory {
         }
 
         private void insertSingleWatches(Microcontroller m, Simulator s) {
-            Iterator i = IOREGS.get().iterator();
-            while ( i.hasNext() ) {
-                String str = (String)i.next();
+            for (String str : IOREGS.get()) {
                 int ior;
                 if ( StringUtil.isHex(str) )
                     ior = StringUtil.evaluateIntegerLiteral(str) + LegacyState.IOREG_BASE;

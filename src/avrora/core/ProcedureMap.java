@@ -34,6 +34,8 @@ package avrora.core;
 
 import java.util.*;
 
+import avrora.core.ControlFlowGraph.Block;
+
 /**
  * The <code>ProcedureMap</code> class represents a mapping from basic blocks to the procedures that contain
  * them. Built by the <code>ProcedureMapBuilder</code> class and accessible through the
@@ -55,11 +57,11 @@ import java.util.*;
  */
 public class ProcedureMap {
 
-    protected final HashSet entryPoints;
-    protected final HashMap entryMap;
-    protected final HashMap procMap;
+    protected final HashSet<ControlFlowGraph.Block> entryPoints;
+    protected final HashMap<ControlFlowGraph.Block, Object> entryMap;
+    protected final HashMap<ControlFlowGraph.Block, Collection<Block>> procMap;
 
-    ProcedureMap(HashSet ep, HashMap em, HashMap pm) {
+    ProcedureMap(HashSet<Block> ep, HashMap<Block, Object> em, HashMap<Block, Collection<Block>> pm) {
         entryPoints = ep;
         entryMap = em;
         procMap = pm;
@@ -113,8 +115,8 @@ public class ProcedureMap {
      * @param entry the basic block representing the entrypoint of the procedure
      * @return a collection of the basic blocks contained in the procedure with the specified entrypoint
      */
-    public Collection getProcedureBlocks(ControlFlowGraph.Block entry) {
-        return (Collection)procMap.get(entry);
+    public Collection<Block> getProcedureBlocks(ControlFlowGraph.Block entry) {
+        return procMap.get(entry);
     }
 
     /**
@@ -123,7 +125,7 @@ public class ProcedureMap {
      *
      * @return a collection of basic blocks that are entrypoints to procedures
      */
-    public Collection getProcedureEntrypoints() {
+    public Collection<ControlFlowGraph.Block> getProcedureEntrypoints() {
         return entryPoints;
     }
 }

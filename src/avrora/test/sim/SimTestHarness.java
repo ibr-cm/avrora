@@ -65,8 +65,8 @@ public class SimTestHarness implements TestEngine.Harness {
 
         Module module;
         Simulator simulator;
-        List predicates;
-        List inits;
+        List<Predicate> predicates;
+        List<Predicate> inits;
         Tester tester;
         StateAccessor access;
 
@@ -107,11 +107,9 @@ public class SimTestHarness implements TestEngine.Harness {
             if (t != null) return super.match(t);
 
             State state = simulator.getState();
-            Iterator i = predicates.iterator();
 
             try {
-                while (i.hasNext()) {
-                    Predicate p = (Predicate)i.next();
+                for (Predicate p : predicates) {
                     if (!p.check(access))
                         return new StateMismatch(p, state);
                 }

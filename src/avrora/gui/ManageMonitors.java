@@ -36,7 +36,10 @@
 package avrora.gui;
 
 import avrora.sim.Simulation;
+import avrora.sim.Simulation.Node;
+
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -57,7 +60,7 @@ public class ManageMonitors {
 
     JDialog chooseMonitorsDialog;
     JButton monitorsDialogUpdate;
-    LinkedList checkBoxContainer;
+    LinkedList<JCheckBox> checkBoxContainer;
 
     /**
      * This should be called during the GUI init in order
@@ -85,7 +88,7 @@ public class ManageMonitors {
         //Make sure we have nice window decorations.
         JDialog.setDefaultLookAndFeelDecorated(true);
 
-        checkBoxContainer = new LinkedList();
+        checkBoxContainer = new LinkedList<JCheckBox>();
 
         chooseMonitorsDialog = new JDialog(AvroraGui.instance.masterFrame, "Add Monitors to Selected Nodes");
 
@@ -130,14 +133,11 @@ public class ManageMonitors {
      */
     private void addMonitorsFromClassMap(JPanel belowBannerPanel) {
         //Let's get a storted list of monitor names registered with the VisualAction
-        List monitorList = AvroraGui.instance.getMonitorList();
-        Iterator monitorIter = monitorList.iterator();
-
+        List<String> monitorList = AvroraGui.instance.getMonitorList();
         belowBannerPanel.setLayout(new GridLayout(monitorList.size(), 1));
 
         //Scroll through, adding all monitors...
-        while (monitorIter.hasNext()) {
-            String currentMonitor = (String) monitorIter.next();
+        for (String currentMonitor : monitorList) {
             //Add a checkbox representing this list
             JCheckBox theCheckBox = new JCheckBox(currentMonitor);
 
@@ -175,10 +175,8 @@ public class ManageMonitors {
 
             //We first begin by getting a vector of strings
             //that represent the names of the monitors we wish to add
-            Vector toMONITORS = new Vector();
-            Iterator checkBoxIter = checkBoxContainer.iterator();
-            while (checkBoxIter.hasNext()) {
-                JCheckBox currentBox = (JCheckBox)checkBoxIter.next();
+            Vector<String> toMONITORS = new Vector<String>();
+            for (JCheckBox currentBox : checkBoxContainer) {
                 if (currentBox.isSelected()) {
                     //it's selected, so add it to our list
                     toMONITORS.add(currentBox.getText());
@@ -186,10 +184,10 @@ public class ManageMonitors {
             }
 
             // for each selected monitor, give it a chance to attach to the nodes
-            LinkedList nodes = getNodeList();
+            LinkedList<Node> nodes = getNodeList();
             for (int j = 0; j < toMONITORS.size(); j++) {
                 String currentMonitor = (String)toMONITORS.elementAt(j);
-                Simulation.Monitor mf = getMonitorFactory(currentMonitor);
+                Simulation.GuiMonitor mf = getMonitorFactory(currentMonitor);
                 mf.attach(AvroraGui.instance.getSimulation(), nodes);
             }
 
@@ -205,16 +203,16 @@ public class ManageMonitors {
 
     }
 
-    private Simulation.Monitor getMonitorFactory(String n) {
+    private Simulation.GuiMonitor getMonitorFactory(String n) {
         return GUIDefaults.getMonitor(n);
     }
 
     /**
      * This gets a list of currently selected nodes from the topology window
      */
-    private LinkedList getNodeList() {
+    private LinkedList<Node> getNodeList() {
         Simulation sim = AvroraGui.instance.getSimulation();
-        LinkedList nodes = new LinkedList();
+        LinkedList<Node> nodes = new LinkedList<Node>();
         int[] selectedRows = AvroraGui.instance.topologyBox.table.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             //let's get the NID of that row

@@ -124,7 +124,7 @@ public abstract class Generator extends GenBase {
     }
 
     protected void generateJavaDoc(Printer printer, String p) {
-        List lines = StringUtil.trimLines(p, 0, 70);
+        List<String> lines = StringUtil.trimLines(p, 0, 70);
         printer.println("");
         printer.println("/**");
         for ( Object l : lines ) {

@@ -33,22 +33,14 @@ public class LossyModel implements Medium.Arbitrator {
 
     protected static final double Sensitivity = -95;
     protected int TimeBefore = 0;
-    protected final Map positions;
+    protected final Map<Object,Topology.Position> positions;
     protected final double lambda = Math.exp(-5D/6D);
     protected final double u = Math.sqrt((1-Math.pow(lambda,2D)));
     protected double Csf,Sf;
     protected boolean first = true;
 
-    public static final class Noise{
-        public final ArrayList Noise;
-
-        public Noise(ArrayList Noise){
-            this.Noise = Noise;
-        }
-    }
-
     public LossyModel() {
-        positions = new HashMap();
+        positions = new HashMap<Object, Topology.Position>();
     }
 
     public boolean lockTransmission(Medium.Receiver receiver, Medium.Transmission trans,int Milliseconds) {
@@ -60,13 +52,11 @@ public class LossyModel implements Medium.Arbitrator {
         }else return false;
     }
 
-    public char mergeTransmissions(Medium.Receiver receiver, List it, long bit,int Milliseconds) {
+    public char mergeTransmissions(Medium.Receiver receiver, List<Medium.Transmission> it, long bit,int Milliseconds) {
         assert it.size() > 0;
         boolean one = false;
         int value = 0;
-        Iterator i = it.iterator();
-        while ( i.hasNext() ) {
-            Medium.Transmission next = (Medium.Transmission)i.next();
+        for (Medium.Transmission next : it) {
             if (lockTransmission(receiver, next, Milliseconds)) {
                 if (one) {
                     int nval = 0xff & next.getByteAtTime(bit);
@@ -90,7 +80,7 @@ public class LossyModel implements Medium.Arbitrator {
 
     private double Rayleigh() {
         Complex c = new Complex(getGaussian(0,1),getGaussian(0,1));
-        return c.abs(c);
+        return Complex.abs(c);
     }
 
     private double Shadowing(double mean,double std,int Milliseconds){

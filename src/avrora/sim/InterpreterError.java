@@ -48,6 +48,8 @@ public class InterpreterError {
      * an instruction that does not exist (i.e. a section of the flash that is not initialized).
      */
     public static class NoSuchInstructionException extends Util.Error {
+
+        private static final long serialVersionUID = 1L;
         public final int badPc;
 
         protected NoSuchInstructionException(int pc) {
@@ -61,6 +63,8 @@ public class InterpreterError {
      * an instruction outside the bounds of the flash.
      */
     public static class PCOutOfBoundsException extends Util.Error {
+
+        private static final long serialVersionUID = 1L;
         public final int badPc;
 
         protected PCOutOfBoundsException(int pc) {
@@ -75,6 +79,8 @@ public class InterpreterError {
      * bugs.
      */
     public static class PCAlignmentException extends Util.Error {
+
+        private static final long serialVersionUID = 1L;
         public final int badPc;
 
         protected PCAlignmentException(int pc) {
@@ -88,6 +94,8 @@ public class InterpreterError {
      * bounds memory through the state interface.
      */
     public static class AddressOutOfBoundsException extends Util.Error {
+        
+        private static final long serialVersionUID = 1L;
         public final String segment;
         public final int data_addr;
         public final int badPc;

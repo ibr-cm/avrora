@@ -35,7 +35,6 @@ package avrora.monitors;
 import avrora.sim.*;
 import avrora.sim.output.SimPrinter;
 import avrora.sim.mcu.MCUProperties;
-import avrora.sim.util.SimUtil;
 import cck.stat.MinMaxMean;
 import cck.text.*;
 import cck.util.Option;

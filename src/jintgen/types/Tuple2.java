@@ -52,6 +52,7 @@ public class Tuple2<A, B> {
     public boolean equals(Object o) {
         if ( this == o ) return true;
         if ( !(o instanceof Tuple2) ) return false;
+        @SuppressWarnings("rawtypes")
         Tuple2 to = (Tuple2)o;
         return to.a.equals(a) && to.b.equals(b);
     }

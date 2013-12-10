@@ -66,13 +66,24 @@ public class InterruptScheduler {
             Terminal.println("Loading interrupt schedule from " + schedFile+"...");
             FileReader inf_reader = new FileReader(schedFile);
             tokens = new StreamTokenizer(inf_reader);
-            scheduleNextInterrupt();
         } catch ( IOException e ) {
             throw Util.unexpected(e);
         }
     }
-
-    private void scheduleNextInterrupt() {
+    
+    /**
+     * Starts this interrupt scheduler. This will schedule the first interrupt presented in the interrupt file,
+     * which will then consecutively cause all interrupts to be scheduled one after another.
+     * @returns {@code true} if at least one interrupt was found in the interrupt file
+     */
+    public boolean start() {
+        if (currentLine != 1) {
+            throw Util.failure("interrupt scheduler was started twice");
+        }
+        return scheduleNextInterrupt();
+    }
+    
+    private boolean scheduleNextInterrupt() {
         try {
             if (tokens.nextToken() != StreamTokenizer.TT_EOF) {
                 if (tokens.ttype != StreamTokenizer.TT_NUMBER) {
@@ -91,7 +102,9 @@ public class InterruptScheduler {
                 long time = (int) tokens.nval;
                 scheduleInterrupt(vec, time);
                 currentLine++;
+                return true;
             }
+            else return false;
         } catch (IOException e) {
             throw Util.unexpected(e);
         }
@@ -118,7 +131,7 @@ public class InterruptScheduler {
              * forceInterrupt method
              */
             simulator.forceInterrupt(vec);
-            scheduleNextInterrupt();
+            scheduleNextInterrupt(); // Schedule the next consecutive interrupt
         }
 
     }

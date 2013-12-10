@@ -2,7 +2,7 @@ package avrora.arch.msp430;
 import java.util.HashMap;
 public abstract class MSP430InstrBuilder {
     public abstract MSP430Instr build(int size, MSP430AddrMode am);
-    static final HashMap builders = new HashMap();
+    static final HashMap<String, MSP430InstrBuilder> builders = new HashMap<String, MSP430InstrBuilder>();
     static MSP430InstrBuilder add(String name, MSP430InstrBuilder b) {
         builders.put(name, b);
         return b;

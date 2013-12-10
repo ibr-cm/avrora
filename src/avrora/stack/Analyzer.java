@@ -35,6 +35,7 @@ package avrora.stack;
 import avrora.arch.legacy.LegacyInstr;
 import avrora.arch.legacy.LegacyRegister;
 import avrora.core.Program;
+import avrora.stack.StateCache.State;
 import avrora.stack.isea.*;
 import cck.stat.Distribution;
 import cck.text.*;
@@ -155,7 +156,7 @@ public class Analyzer {
     }
 
     private void analyzeAggregationPoints() {
-        Iterator i = graph.getStateCache().getStateIterator();
+        Iterator<State> i = graph.getStateCache().getStateIterator();
         Distribution sizeDist = new Distribution("Set Size Statistics", "Number of sets",
                 "Aggregate size", "Distribution of Set Size");
         while (i.hasNext()) {
@@ -169,7 +170,7 @@ public class Analyzer {
     }
 
     private void analyzeStates() {
-        Iterator i = graph.getStateCache().getStateIterator();
+        Iterator<State> i = graph.getStateCache().getStateIterator();
         Distribution pcDist = new Distribution("Distribution of program states over PC", "Number of unique instructions", null, "Distribution");
         while (i.hasNext()) {
             StateCache.State s = (StateCache.State)i.next();
@@ -353,11 +354,10 @@ public class Analyzer {
     }
 
     private void insertReturnEdges(StateCache.State caller, StateCache.Set prev, StateCache.Set rset) {
-        Iterator i = rset.iterator();
+        Iterator<State> i = rset.iterator();
         while (i.hasNext()) {
-            Object o = i.next();
-            if (!prev.contains(o)) {
-                StateCache.State rs = (StateCache.State)o;
+            State rs = i.next();
+            if (!prev.contains(rs)) {
                 insertReturnEdge(caller, rs.copy(), rs.getType() == RETI_STATE);
             }
         }
@@ -441,7 +441,7 @@ public class Analyzer {
     private void findMaximalPath() {
         // the stack hashmap contains a mapping between states on the stack
         // and the current stack depth at which they are being explored
-        HashMap stack = new HashMap(1000);
+        HashMap<State, Integer> stack = new HashMap<State, Integer>(1000);
         StateCache.State state = graph.getEdenState();
 
         try {
@@ -479,7 +479,7 @@ public class Analyzer {
      *         leading out of this state
      * @throws UnboundedStackException if a non-zero weight cycle exists in the graph
      */
-    protected Path findMaximalPath(StateCache.State s, HashMap stack, int depth) throws UnboundedStackException {
+    protected Path findMaximalPath(StateCache.State s, HashMap<State, Integer> stack, int depth) throws UnboundedStackException {
         // record this node and the stack depth at which we first encounter it
         stack.put(s, new Integer(depth));
 
@@ -544,6 +544,9 @@ public class Analyzer {
      * cycle means that the stack is unbounded.
      */
     private class UnboundedStackException extends Exception {
+  
+        private static final long serialVersionUID = 1L;
+        
         Path path;
 
         UnboundedStackException(Path p) {
@@ -627,10 +630,10 @@ public class Analyzer {
         //maskIORegister(IORegisterConstants.TIMSK, s, rs);
     }
 
-    private void maskIORegister(int ior, MutableState s, ISEState rs) {
+    /*private void maskIORegister(int ior, MutableState s, ISEState rs) {
         if ( !rs.isIORegisterRead(ior) )
             s.setIORegisterAV(ior, AbstractArithmetic.UNKNOWN);
-    }
+    }*/
 
     /**
      * The <code>ContextSensitive</code> class implements the context-sensitive analysis similar to 1-CFA. It
@@ -741,13 +744,11 @@ public class Analyzer {
          */
         public MutableState indirectCall(MutableState s, char addr_low, char addr_hi) {
             int callsite = s.pc;
-            List iedges = program.getIndirectEdges(callsite);
+            List<Integer> iedges = program.getIndirectEdges(callsite);
             if (iedges == null)
                 throw Util.failure("No control flow information for indirect call at: " +
                         StringUtil.addrToString(callsite));
-            Iterator i = iedges.iterator();
-            while (i.hasNext()) {
-                int target_address = ((Integer)i.next()).intValue();
+            for (Integer target_address : iedges) {
                 call(s, target_address);
             }
 
@@ -767,13 +768,11 @@ public class Analyzer {
          */
         public MutableState indirectJump(MutableState s, char addr_low, char addr_hi) {
             int callsite = s.pc;
-            List iedges = program.getIndirectEdges(callsite);
+            List<Integer> iedges = program.getIndirectEdges(callsite);
             if (iedges == null)
                 throw Util.failure("No control flow information for indirect jump at: " +
                         StringUtil.addrToString(callsite));
-            Iterator i = iedges.iterator();
-            while (i.hasNext()) {
-                int target_address = ((Integer)i.next()).intValue();
+            for (Integer target_address : iedges) {
                 s.setPC(target_address);
                 pushState(s);
             }

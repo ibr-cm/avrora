@@ -51,7 +51,7 @@ public class Program {
 
     private final AbstractArchitecture arch;
 
-    private final HashMap indirectEdges;
+    private final HashMap<Integer, List<Integer>> indirectEdges;
 
     private SourceMapping sourceMapping;
 
@@ -110,7 +110,7 @@ public class Program {
         flash_instrs = arch.newInstrArray(size);
         Arrays.fill(flash_data, (byte)0xff);
 
-        indirectEdges = new HashMap();
+        indirectEdges = new HashMap<Integer, List<Integer>>();
     }
 
     /**
@@ -247,8 +247,8 @@ public class Program {
      * @return a list of <code>java.lang.Integer</code> objects that represent the possible targets of the
      *         call or branch instruction
      */
-    public List getIndirectEdges(int callsite) {
-        return (List)indirectEdges.get(new Integer(callsite));
+    public List<Integer> getIndirectEdges(int callsite) {
+        return indirectEdges.get(new Integer(callsite));
     }
 
     /**
@@ -263,10 +263,10 @@ public class Program {
         Integer c = new Integer(callsite);
         Integer t = new Integer(target);
 
-        List l = (List)indirectEdges.get(c);
+        List<Integer> l = indirectEdges.get(c);
 
         if (l == null) {
-            l = new LinkedList();
+            l = new LinkedList<Integer>();
             l.add(t);
             indirectEdges.put(c, l);
         } else {

@@ -18,6 +18,9 @@ import java.util.Arrays;
  */
 public class MSP430Disassembler implements AbstractDisassembler {
     public static class InvalidInstruction extends Exception {
+        
+        private static final long serialVersionUID = 1L;
+
         InvalidInstruction(int pc)  {
             super("Invalid instruction at "+pc);
         }

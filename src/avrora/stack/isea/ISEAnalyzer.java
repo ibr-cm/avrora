@@ -33,6 +33,7 @@
 package avrora.stack.isea;
 
 import avrora.core.*;
+import avrora.core.ControlFlowGraph.Block;
 import cck.text.*;
 import cck.util.Util;
 import java.util.*;
@@ -53,9 +54,9 @@ public class ISEAnalyzer implements ISEInterpreter.SummaryCache {
     protected final SourceMapping smap;
     protected final ControlFlowGraph cfg;
     protected final ProcedureMap pmap;
-    protected final HashMap procedureSummaries;
-    protected final HashMap returnSummaries;
-    protected final Stack stack;
+    protected final HashMap<Block, ISEState> procedureSummaries;
+    protected final HashMap<Integer, ISEState> returnSummaries;
+    protected final Stack<Block> stack;
 
     protected final Verbose.Printer printer = Verbose.getVerbosePrinter("analysis.isea");
 
@@ -64,9 +65,9 @@ public class ISEAnalyzer implements ISEInterpreter.SummaryCache {
         smap = p.getSourceMapping();
         cfg = program.getCFG();
         pmap = cfg.getProcedureMap();
-        procedureSummaries = new HashMap();
-        returnSummaries = new HashMap();
-        stack = new Stack();
+        procedureSummaries = new HashMap<Block, ISEState>();
+        returnSummaries = new HashMap<Integer, ISEState>();
+        stack = new Stack<Block>();
     }
 
     class Item {
@@ -102,7 +103,7 @@ public class ISEAnalyzer implements ISEInterpreter.SummaryCache {
     }
 
     public void analyze() {
-        HashSet seen = new HashSet();
+        HashSet<Block> seen = new HashSet<Block>();
         Item head;
         Item tail = head = new Item(cfg.getBlockStartingAt(0x0000));
 
@@ -117,21 +118,19 @@ public class ISEAnalyzer implements ISEInterpreter.SummaryCache {
                 analyzeProcedure(block);
             } else {
                 // otherwise, look for successor blocks
-                Iterator i = block.getEdgeIterator();
+                Iterator<ControlFlowGraph.Edge> i = block.getEdgeIterator();
                 while ( i.hasNext() ) {
-                    ControlFlowGraph.Edge e = (ControlFlowGraph.Edge)i.next();
+                    ControlFlowGraph.Edge e = i.next();
                     ControlFlowGraph.Block target = e.getTarget();
                     tail = addToWorkList(seen, target, tail);
                 }
 
                 // are there any indirect edges that we should know about?
                 int lastAddr = block.getLastAddress();
-                List list = program.getIndirectEdges(lastAddr);
+                List<Integer> list = program.getIndirectEdges(lastAddr);
                 if ( list != null ) {
-                    Iterator iei = list.iterator();
-                    while ( iei.hasNext() ) {
+                    for (Integer taddr : list) {
                         // add the indirect target to the work list
-                        int taddr = ((Integer)iei.next()).intValue();
                         tail = addToWorkList(seen, cfg.getBlockStartingAt(taddr), tail);
                     }
                 }
@@ -141,7 +140,7 @@ public class ISEAnalyzer implements ISEInterpreter.SummaryCache {
         }
     }
 
-    private Item addToWorkList(HashSet seen, ControlFlowGraph.Block target, Item tail) {
+    private Item addToWorkList(HashSet<Block> seen, ControlFlowGraph.Block target, Item tail) {
         if ( target == null ) return tail;
         if ( !seen.contains(target) ) {
             // if we haven't seen this block before, add to worklist

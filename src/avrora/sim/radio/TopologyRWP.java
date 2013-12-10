@@ -39,8 +39,6 @@ import avrora.sim.Simulation;
 import avrora.sim.Simulator;
 import avrora.sim.clock.MainClock;
 import avrora.sim.output.SimPrinter;
-import avrora.sim.types.SensorSimulation;
-
 import cck.text.StringUtil;
 import cck.util.Option;
 import cck.util.Util;
@@ -90,7 +88,7 @@ public class TopologyRWP extends TopologyStatic {
         private SimPrinter printer;
         private double dirX, dirY, dirZ, newX, newY, newZ;
         protected long eventCycles;
-        private long allCycles, currStep;
+        private long allCycles;
         private boolean wasWaiting;
         
         public NodeMover(Simulation.Node n, Position p) {
@@ -194,7 +192,7 @@ public class TopologyRWP extends TopologyStatic {
         int nodenr = nodes.size()-1;  // nr of current node
         for (int i=0; i<mobileNodeIds.length; i++) {
             if (mobileNodeIds[i] == nodenr) {
-                NodeMover nm = new NodeMover(node, (Position)positions.get(nodenr));
+                NodeMover nm = new NodeMover(node, positions.get(nodenr));
                 node.getSimulator().getClock().insertEvent(nm, nm.eventCycles);
                 break;
             }
@@ -227,9 +225,7 @@ public class TopologyRWP extends TopologyStatic {
         if (!TOPOLOGY_FILE.isBlank()) {
             parseFile();
             // adjust the minimum and maximum coordinates
-            Iterator i = positions.iterator();
-            while (i.hasNext()) {
-                Position p = (Position)i.next();
+            for (Position p : positions){
                 if (p.x < minX) {
                     minX = p.x;
                 }
@@ -264,14 +260,14 @@ public class TopologyRWP extends TopologyStatic {
         if (granularity == 0.0) {
             Util.userError("Granularity cannot be 0");
         }
-        
-        // we can use this model also for just a random start topology, but no mobility...
+
+        // we can use this model also for just a random start topology, but no
+        // mobility...
         mobileNodeIds = new int[MOBILE_NODES.get().size()];
         int cnt = 0;
-        Iterator iter = MOBILE_NODES.get().iterator();
-        while (iter.hasNext()) {
-            String currentNode = (String) iter.next();
-            mobileNodeIds[cnt] = StringUtil.evaluateIntegerLiteral(currentNode.trim());
+        for (String currentNode : MOBILE_NODES.get()) {
+            mobileNodeIds[cnt] = StringUtil.evaluateIntegerLiteral(currentNode
+                    .trim());
             cnt++;
         }
     }

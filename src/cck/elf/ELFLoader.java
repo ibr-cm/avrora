@@ -106,8 +106,8 @@ public class ELFLoader {
      * @return a list of symbol tables that are contained in this ELF file
      * @throws IOException if an IO exception occurs
      */
-    public static List readSymbolTables(RandomAccessFile fis, ELFHeader header, ELFSectionHeaderTable sht) throws IOException {
-        List symbolTables = new LinkedList();
+    public static List<ELFSymbolTable> readSymbolTables(RandomAccessFile fis, ELFHeader header, ELFSectionHeaderTable sht) throws IOException {
+        List<ELFSymbolTable> symbolTables = new LinkedList<ELFSymbolTable>();
         for (int cntr = 0; cntr < sht.entries.length; cntr++) {
             ELFSectionHeaderTable.Entry32 e1 = sht.entries[cntr];
             if (e1.isSymbolTable()) {

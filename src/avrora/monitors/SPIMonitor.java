@@ -41,8 +41,6 @@ import avrora.sim.mcu.SPI;
 import avrora.sim.platform.SPIForwarder;
 import cck.util.*;
 import java.util.HashMap;
-import java.util.Iterator;
-
 
 /**
  * The <code>SerialMonitor</code> class is a monitor that that is capable of setting up a virtual
@@ -66,7 +64,7 @@ public class SPIMonitor extends MonitorFactory {
             "This option controls whether the SPI forwarder device will act as the " +
             "master or the slave in the SPI connection.");
 
-    HashMap portMap;
+    HashMap<Integer, SocketConnection> portMap;
 
     abstract class Connection {
         //int spi;
@@ -114,7 +112,7 @@ public class SPIMonitor extends MonitorFactory {
         super("The \"spi\" monitor allows the SPI of a node in the simulation to be " +
                 "connected to a socket so that data from the program running in the simulation can be " +
                 "outputted, and external data can be fed into the SPI of the simulated node.");
-        portMap = new HashMap();
+        portMap = new HashMap<Integer, SocketConnection>();
     }
 
     public void processOptions(Options o) {
@@ -124,9 +122,7 @@ public class SPIMonitor extends MonitorFactory {
     }
 
     private void processSocketConnections() {
-        Iterator i = PORTS.get().iterator();
-        while ( i.hasNext() ) {
-            String pid = (String)i.next();
+        for (String pid : PORTS.get()) {
             String[] str = pid.split(":");
             if ( str.length < 2 ) Util.userError("Format error in \"ports\" option");
             int nid = Integer.parseInt(str[0]);

@@ -116,7 +116,7 @@ public class CodeSimplifier extends StmtRebuilder<CGEnv> {
     }
 
     public Expr visit(BinOpExpr e, CGEnv env) {
-        BinOpExpr.BinOpImpl b = e.getBinOp();
+        e.getBinOp();
         // TODO: catch special cases of shifting, masking, etc
         // TODO: transform boolean operations to Java operations
         Expr nl = promote(e.left);

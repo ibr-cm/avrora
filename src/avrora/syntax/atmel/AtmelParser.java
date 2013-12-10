@@ -3,7 +3,6 @@ package avrora.syntax.atmel;
 
 import avrora.syntax.*;
 import java.io.InputStream;
-import java.io.Reader;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -2120,7 +2119,7 @@ public class AtmelParser extends AbstractParser implements AtmelParserConstants 
         else return jj_ntk = jj_nt.kind;
     }
 
-    private Vector jj_expentries = new Vector();
+    private Vector<int[]> jj_expentries = new Vector<int[]>();
     private int[] jj_expentry;
     private int jj_kind = -1;
     private int[] jj_lasttokens = new int[100];
@@ -2134,8 +2133,8 @@ public class AtmelParser extends AbstractParser implements AtmelParserConstants 
             jj_expentry = new int[jj_endpos];
             System.arraycopy(jj_lasttokens, 0, jj_expentry, 0, jj_endpos);
             boolean exists = false;
-            for (Enumeration enm = jj_expentries.elements(); enm.hasMoreElements();) {
-                int[] oldentry = (int[]) enm.nextElement();
+            for (Enumeration<int[]> enm = jj_expentries.elements(); enm.hasMoreElements();) {
+                int[] oldentry = enm.nextElement();
                 if (oldentry.length == jj_expentry.length) {
                     exists = true;
                     for (int i = 0; i < jj_expentry.length; i++) {
@@ -2198,7 +2197,7 @@ public class AtmelParser extends AbstractParser implements AtmelParserConstants 
         jj_add_error_token(0, 0);
         int[][] exptokseq = new int[jj_expentries.size()][];
         for (int i = 0; i < jj_expentries.size(); i++) {
-            exptokseq[i] = (int[])jj_expentries.elementAt(i);
+            exptokseq[i] = jj_expentries.elementAt(i);
         }
         return new ParseException(token, exptokseq, tokenImage);
     }

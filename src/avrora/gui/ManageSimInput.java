@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.Serializable;
 import java.util.*;
 
 
@@ -66,7 +67,7 @@ public class ManageSimInput {
     JButton backButton;
 
     JDialog setOptionsDialog;
-    LinkedList optionsDialogValues; //holds the current values we are setting in the options dialog
+    LinkedList<Serializable> optionsDialogValues; //holds the current values we are setting in the options dialog
     JButton optionsDialogUpdate;
 
     JDialog fileSelectionDialog;
@@ -114,11 +115,8 @@ public class ManageSimInput {
 
         //Now we go to VisualAction and grab a list of the options
         //that we can set
-        optionsDialogValues = new LinkedList();
-        Iterator optionIter = AvroraGui.instance.getOptionList().iterator();
-        Option currentOption;
-        while (optionIter.hasNext()) {
-            currentOption = (Option) optionIter.next();
+        optionsDialogValues = new LinkedList<Serializable>();
+        for (Option currentOption : AvroraGui.instance.getOptionList()) {
             //NOTE: YOU COULD DETECT SPECIAL CASE HERE (e.g. if(option.getName().equals("MY SPECIAL OPTION"));
             belowBannerPanel.add(addOption(currentOption));
         }
@@ -395,20 +393,18 @@ public class ManageSimInput {
         return true;
     }
 
-    private boolean setOptionsUpdate() {
+    // unused
+/*    private boolean setOptionsUpdate() {
         createSetOptionsDialog();
         setOptionsDialog.setLocationRelativeTo(null); //center on screen
         setOptionsDialog.setVisible(true);
         return true;
     }
-
+*/
     private boolean optionsUpdate() {
-        Iterator optionIter = AvroraGui.instance.getOptionList().iterator();
-        Option currentOption;
-        ListIterator componentIter = optionsDialogValues.listIterator(0);
+        ListIterator<Serializable> componentIter = optionsDialogValues.listIterator(0);
 
-        while (optionIter.hasNext()) {
-            currentOption = (Option) optionIter.next();
+        for (Option currentOption : AvroraGui.instance.getOptionList()) {
             //NOTE: YOU COULD DETECT SPECIAL CASE HERE (e.g. if(option.getName().equals("MY SPECIAL OPTION"));
 
             updateOption(currentOption, componentIter.next());
@@ -459,7 +455,7 @@ public class ManageSimInput {
         int max = ((Integer) numOfNodesSpinner.getValue()).intValue();
         for (int i = 0; i < max; i++) {
             //add the stuff to the sim
-            Simulation.Node n = s.createNode(pf, pp);
+            s.createNode(pf, pp);
         }
 
         //We should redraw the table

@@ -36,7 +36,6 @@
 
 package avrora.sim.energy;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -48,16 +47,16 @@ public class EnergyControl {
 
     //consumer list
     // e.g. list of devices which consume energy
-    public final LinkedList consumer;
+    public final LinkedList<Energy> consumer;
 
     //list of monitors which want to be informed about
     //energy consumption
-    private final LinkedList subscriber;
+    private final LinkedList<EnergyObserver> subscriber;
     private boolean active;
 
     public EnergyControl() {
-        consumer = new LinkedList();
-        subscriber = new LinkedList();
+        consumer = new LinkedList<Energy>();
+        subscriber = new LinkedList<EnergyObserver>();
     }
 
     /**
@@ -74,7 +73,7 @@ public class EnergyControl {
      *
      * @return consumer list
      */
-    public LinkedList getConsumers() {
+    public LinkedList<Energy> getConsumers() {
         return consumer;
     }
 
@@ -84,18 +83,16 @@ public class EnergyControl {
      * @param energy the energy model of the device
      */
     public void stateChange(Energy energy) {
-        Iterator it = subscriber.iterator();
-        while (it.hasNext()) {
-            ((EnergyObserver) it.next()).stateChange(energy);
+        for (EnergyObserver eo : subscriber) {
+            eo.stateChange(energy);
         }
     }
 
     public void activate() {
         if (!active) {
             active = true;
-            Iterator it = consumer.iterator();
-            while (it.hasNext()) {
-                ((Energy) it.next()).activate();
+            for (Energy en : consumer) {
+                en.activate();
             }
         }
     }

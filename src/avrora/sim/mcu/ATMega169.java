@@ -106,9 +106,9 @@ public class ATMega169 extends ATMegaFamilyNew {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
+        HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
         RegisterLayout rl = new RegisterLayout(ATMEGA169_IOREG_SIZE, 8);
-        HashMap interruptAssignments = new HashMap(30);
+        HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(30);
 
         addPin(pinAssignments, 1, "LCDCAP");
         addPin(pinAssignments, 2, "RXD", "PCINT0", "PE0");

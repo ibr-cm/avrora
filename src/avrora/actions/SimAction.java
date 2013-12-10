@@ -33,6 +33,7 @@
 package avrora.actions;
 
 import avrora.core.*;
+import avrora.core.SourceMapping.Location;
 import avrora.sim.*;
 import avrora.sim.util.SimUtil;
 import avrora.Defaults;
@@ -146,25 +147,22 @@ public class SimAction extends Action {
      * into a list of <code>Main.Location</code> instances.
      *
      * @param program the program to look up labels in
-     * @param v       the list of strings that are program locations
+     * @param locs       the list of strings that are program locations
      * @return a list of program locations
      */
-    public static List getLocationList(Program program, List v) {
-        HashSet locset = new HashSet(v.size()*2);
+    public static List<Location> getLocationList(Program program, List<String> locs) {
+        HashSet<Location> locset = new HashSet<Location>(locs.size()*2);
 
         SourceMapping lm = program.getSourceMapping();
-        Iterator i = v.iterator();
 
-        while (i.hasNext()) {
-            String val = (String)i.next();
-
+        for (String val : locs) {
             SourceMapping.Location l = lm.getLocation(val);
             if ( l == null )
                 Util.userError("Label unknown", val);
             locset.add(l);
         }
 
-        List loclist = Collections.list(Collections.enumeration(locset));
+        List<Location> loclist = Collections.list(Collections.enumeration(locset));
         Collections.sort(loclist, SourceMapping.LOCATION_COMPARATOR);
 
         return loclist;
@@ -182,24 +180,21 @@ public class SimAction extends Action {
     }
 
     protected static void reportMonitors(Simulation sim) {
-        Iterator i = sim.getNodeIterator();
+        Iterator<Simulation.Node> i = sim.getNodeIterator();
         while (i.hasNext()) {
-            Simulation.Node n = (Simulation.Node)i.next();
-            Iterator im = n.getMonitors().iterator();
-            while ( im.hasNext() ) {
-                Monitor m = (Monitor)im.next();
-                m.report();
+            for (Monitor mon : i.next().getMonitors()) {
+                mon.report();
             }
         }
     }
 
     protected static void reportTime(Simulation sim, long diff, boolean throughput) {
         // calculate total throughput over all threads
-        Iterator i = sim.getNodeIterator();
+        Iterator<Simulation.Node> i = sim.getNodeIterator();
         long aggCycles = 0;
         long maxCycles = 0;
         while ( i.hasNext() ) {
-            Simulation.Node n = (Simulation.Node)i.next();
+            Simulation.Node n = i.next();
             Simulator simulator = n.getSimulator();
             if ( simulator == null ) continue;
             long count = simulator.getClock().getCount();
@@ -227,6 +222,9 @@ public class SimAction extends Action {
      * @author Ben L. Titzer
      */
     public static class BreakPointException extends RuntimeException {
+        
+        private static final long serialVersionUID = 1L;
+
         /**
          * The <code>address</code> field stores the address of the instruction that caused the breakpoint.
          */
@@ -257,6 +255,8 @@ public class SimAction extends Action {
      */
     public static class TimeoutException extends RuntimeException {
 
+        private static final long serialVersionUID = 1L;
+
         /**
          * The <code>address</code> field stores the address of the next instruction to be executed after the
          * timeout.
@@ -283,6 +283,8 @@ public class SimAction extends Action {
     }
 
     public static class AsynchronousExit extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
     }
 
     public class ShutdownThread extends Thread {

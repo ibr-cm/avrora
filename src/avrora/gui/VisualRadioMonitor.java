@@ -60,8 +60,8 @@ public class VisualRadioMonitor extends MonitorFactory {
     public static JPanel masterPanel;
     public static JPanel optionsPanel;
     public static boolean isDisplayed;
-    public static Vector allCurrentMonitors; //a vector so we can access all instances of this class
-    public static Vector allCurrentGraphEvents;
+    public static Vector<VisualMonitor> allCurrentMonitors; //a vector so we can access all instances of this class
+    public static Vector<GraphEvents> allCurrentGraphEvents;
     public static int numofnodes; //for stupid reasons, this is always one greater than num of nodes
     //added to simulator
 
@@ -74,8 +74,8 @@ public class VisualRadioMonitor extends MonitorFactory {
         optionsPanel.setLayout(new GridLayout(1, 1));
         optionsPanel.add(optionsFiller);
         isDisplayed = false;
-        allCurrentMonitors = new Vector();
-        allCurrentGraphEvents = new Vector();
+        allCurrentMonitors = new Vector<VisualMonitor>();
+        allCurrentGraphEvents = new Vector<GraphEvents>();
         numofnodes = 1;
     }
 
@@ -154,8 +154,8 @@ public class VisualRadioMonitor extends MonitorFactory {
             updateDataAndPaint();  //in case there is still stuff in the queue...
             //we better take it out
             //destroy our static vector of monitors
-            allCurrentMonitors = new Vector();
-            allCurrentGraphEvents = new Vector();
+            allCurrentMonitors = new Vector<VisualMonitor>();
+            allCurrentGraphEvents = new Vector<GraphEvents>();
         }
 
     }

@@ -42,8 +42,6 @@ import cck.util.Util;
 import java.io.*;
 import java.util.*;
 
-import cck.text.Terminal;
-
 /**
  * handles node positions.
  *
@@ -98,7 +96,6 @@ public class TopologyStatic extends Topology {
      * @param line
      */
     private void parseLine(String line) {
-        String nodeName = "";
         double[] newpos = new double[4];
         //check for comment
         if (!line.startsWith("#")) {
@@ -107,7 +104,7 @@ public class TopologyStatic extends Topology {
             while (tokenizer.hasMoreTokens() && count < 5) {
                 try {
                     if (count == 0)
-                        nodeName = tokenizer.nextToken();
+                        tokenizer.nextToken();
                     else {
                         newpos[count - 1] = Double.parseDouble(tokenizer.nextToken());
                     }

@@ -113,19 +113,19 @@ public class StateCache {
     public class Set {
 
         private State oneState;
-        private HashSet delegate;
+        private HashSet<State> delegate;
 
         private boolean delegating = false;
         private boolean empty = true;
 
-        private class OptionalIterator implements Iterator {
+        private class OptionalIterator implements Iterator<State> {
             boolean done;
 
             public boolean hasNext() {
                 return !done && oneState != null;
             }
 
-            public Object next() {
+            public State next() {
                 done = true;
                 return oneState;
             }
@@ -160,7 +160,7 @@ public class StateCache {
             }
         }
 
-        public Iterator iterator() {
+        public Iterator<State> iterator() {
             if (delegating)
                 return delegate.iterator();
             else
@@ -184,7 +184,7 @@ public class StateCache {
         }
 
         private void beginDelegation() {
-            delegate = new HashSet();
+            delegate = new HashSet<State>();
             if (oneState != null)
                 delegate.add(oneState);
             else
@@ -231,9 +231,8 @@ public class StateCache {
     }
 
 
-    private HashMap stateMap;
+    private HashMap<State, State> stateMap;
     private final State edenState;
-    private final Program program;
     private long totalStateCount;
 
     /**
@@ -243,9 +242,8 @@ public class StateCache {
      * @param p the program to create the state space for
      */
     public StateCache(Program p) {
-        stateMap = new HashMap(p.program_end * 5);
+        stateMap = new HashMap<State, State>(p.program_end * 5);
         edenState = getStateFor(new MutableState());
-        program = p;
     }
 
     /**
@@ -291,7 +289,7 @@ public class StateCache {
         return totalStateCount;
     }
 
-    public Iterator getStateIterator() {
+    public Iterator<State> getStateIterator() {
         return stateMap.values().iterator();
     }
 

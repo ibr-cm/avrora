@@ -33,6 +33,7 @@
 package avrora.gui;
 
 import avrora.sim.Simulation;
+import avrora.sim.Simulation.Node;
 import avrora.sim.Simulator;
 import java.util.*;
 
@@ -55,19 +56,17 @@ import java.util.*;
  *
  * @author Ben L. Titzer
  */
-public abstract class SingleNodeMonitor implements Simulation.Monitor {
+public abstract class SingleNodeMonitor implements Simulation.GuiMonitor {
 
-    final HashMap panelMap; // maps VisualSimulation.Node -> SingleNodePanel
-    final HashMap monitorMap; // maps MonitorPanel -> PCMonitor
+    final HashMap<Node, SingleNodePanel> panelMap; // maps VisualSimulation.Node -> SingleNodePanel
     final String monitorName;
 
     /**
-     * Default constuctor, will init the hash maps that store information
+     * Default constructor, will init the hash maps that store information
      * about the monitors in this node
      */
     public SingleNodeMonitor(String n) {
-        panelMap = new HashMap();
-        monitorMap = new HashMap();
+        panelMap = new HashMap<Node, SingleNodePanel>();
         monitorName = n;
     }
 
@@ -79,15 +78,13 @@ public abstract class SingleNodeMonitor implements Simulation.Monitor {
      *
      * @param nodes A list of the nodes that should be attached to the monitor
      */
-    public void attach(Simulation sim, List nodes) {
-        Iterator i = nodes.iterator();
-        while ( i.hasNext()) {
-            Simulation.Node n = (Simulation.Node)i.next();
-            if ( panelMap.containsKey(n) ) continue;
-            MonitorPanel p = AvroraGui.instance.createMonitorPanel(monitorName+" - "+n.id);
-            SingleNodePanel snp = newPanel(n, p);
-            panelMap.put(n, snp);
-            n.addMonitor(this);
+    public void attach(Simulation sim, List<Simulation.Node> nodes) {
+        for (Simulation.Node node : nodes) {
+            if ( panelMap.containsKey(nodes) ) continue;
+            MonitorPanel p = AvroraGui.instance.createMonitorPanel(monitorName+" - "+node.id);
+            SingleNodePanel snp = newPanel(node, p);
+            panelMap.put(node, snp);
+            node.addGuiMonitor(this);
         }
     }
 
@@ -99,8 +96,7 @@ public abstract class SingleNodeMonitor implements Simulation.Monitor {
      * @param s The simulator that the monitor can be inserted into
      */
     public void construct(Simulation sim, Simulation.Node n, Simulator s) {
-        SingleNodePanel snp = (SingleNodePanel)panelMap.get(n);
-        snp.construct(s);
+        panelMap.get(n).construct(s);
     }
 
     /**
@@ -111,8 +107,7 @@ public abstract class SingleNodeMonitor implements Simulation.Monitor {
      * @param s The simulator that the monitor can be inserted into
      */
     public void destruct(Simulation sim, Simulation.Node n, Simulator s) {
-        SingleNodePanel snp = (SingleNodePanel)panelMap.get(n);
-        snp.destruct();
+        panelMap.get(n).destruct();
     }
 
     /**
@@ -122,22 +117,20 @@ public abstract class SingleNodeMonitor implements Simulation.Monitor {
      * element of the list is not already attached to the node, it will just
      * skip that element.
      */
-    public void remove(Simulation sim, List nodes) {
-        Iterator i = nodes.iterator();
-        while ( i.hasNext()) {
-            Simulation.Node n = (Simulation.Node)i.next();
+    public void remove(Simulation sim, List<Simulation.Node> nodes) {
+        for (Simulation.Node n : nodes) {
             removeOne(n);
         }
     }
 
     private void removeOne(Simulation.Node n) {
-        SingleNodePanel snp = (SingleNodePanel)panelMap.get(n);
+        SingleNodePanel snp = panelMap.get(n);
         if ( snp == null ) return;
 
         snp.remove();
         AvroraGui.instance.removeMonitorPanel(snp.panel);
         panelMap.remove(n);
-        n.removeMonitor(this);
+        n.removeGuiMonitor(this);
     }
 
     protected abstract class SingleNodePanel {

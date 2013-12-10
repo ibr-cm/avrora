@@ -42,15 +42,11 @@ import java.util.*;
  */
 public class ObjDumpReformatter {
 
-    HashSet sections;
-    List sectlist;
+    HashSet<String> sections;
+    List<String> sectlist;
 
-    public ObjDumpReformatter(List slist) {
-        sections = new HashSet();
-        Iterator i = slist.iterator();
-        while (i.hasNext()) {
-            sections.add(i.next());
-        }
+    public ObjDumpReformatter(List<String> slist) {
+        sections = new HashSet<String>(slist);
         sectlist = slist;
     }
 
@@ -107,9 +103,7 @@ public class ObjDumpReformatter {
             }
             if (line.indexOf("main.exe") != -1) out.append("program \"main.exe\":\n\n");
 
-            Iterator i = sectlist.iterator();
-            while (i.hasNext()) {
-                String s = (String)i.next();
+            for (String s : sectlist) {
                 if (line.indexOf(s) != -1) printSectionHeader(s, out, line);
             }
 

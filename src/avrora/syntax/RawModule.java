@@ -60,11 +60,11 @@ public class RawModule extends Module {
     }
 
     protected Section section;
-    protected HashMap sectionMap;
+    protected HashMap<String, Section> sectionMap;
 
     public RawModule(boolean cs, boolean ba) {
         super(cs, ba);
-        sectionMap = new HashMap();
+        sectionMap = new HashMap<String, Section>();
     }
 
     public void newSection(AbstractToken name, AbstractToken vma, AbstractToken lma) {

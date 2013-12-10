@@ -35,6 +35,7 @@ package avrora.syntax.elf;
 import avrora.Main;
 import avrora.actions.ELFDumpAction;
 import avrora.arch.*;
+import avrora.arch.AbstractInstr;
 import avrora.core.*;
 import cck.elf.*;
 import cck.text.StringUtil;
@@ -42,7 +43,6 @@ import cck.util.Option;
 import cck.util.Util;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -56,7 +56,7 @@ public class ELFParser extends ProgramReader {
     ELFHeader header;
     ELFProgramHeaderTable pht;
     ELFSectionHeaderTable sht;
-    List symbolTables;
+    List<ELFSymbolTable> symbolTables;
     ELFStringTable shstrtab;
     AbstractArchitecture arch;
 
@@ -108,9 +108,7 @@ public class ELFParser extends ProgramReader {
         p.setSourceMapping(map);
         if (SYMBOLS.get()) {
             symbolTables = ELFLoader.readSymbolTables(fis, header, sht);
-            Iterator i = symbolTables.iterator();
-            while (i.hasNext()) {
-                ELFSymbolTable stab = (ELFSymbolTable)i.next();
+            for (ELFSymbolTable stab : symbolTables) {
                 addSymbols(map, stab, stab.getStringTable());
             }
         }

@@ -160,6 +160,9 @@ abstract class TestExpr {
     }
 
     static class UnknownLabel extends RuntimeException {
+        
+        private static final long serialVersionUID = 1L;
+        
         String name;
 
         UnknownLabel(String n) {

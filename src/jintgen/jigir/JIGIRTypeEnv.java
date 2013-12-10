@@ -34,7 +34,6 @@
 
 package jintgen.jigir;
 
-import jintgen.isdl.AddrModeDecl;
 import jintgen.isdl.EnumDecl;
 import jintgen.isdl.OperandTypeDecl;
 import jintgen.isdl.parser.Token;
@@ -80,7 +79,7 @@ public class JIGIRTypeEnv extends TypeEnv {
             addDimension(size);
         }
 
-        public Type newType(TypeEnv te, HashMap<String, List> dims) {
+        public Type newType(TypeEnv te, HashMap<String, List<Object>> dims) {
             HashMap<String, Object> dimInst = buildDimensions(te, dims);
             Type type = types.get(dimInst);
             if ( type != null ) return type;
@@ -115,7 +114,7 @@ public class JIGIRTypeEnv extends TypeEnv {
             addDimension(align);
         }
 
-        public Type newType(TypeEnv te, HashMap<String, List> dims) {
+        public Type newType(TypeEnv te, HashMap<String, List<Object>> dims) {
             HashMap<String, Object> dimInst = buildDimensions(te, dims);
             Type type = types.get(dimInst);
             if ( type != null ) return type;
@@ -324,9 +323,9 @@ public class JIGIRTypeEnv extends TypeEnv {
     }
 
     public TypeRef newIntTypeRef(Token sign, Token n, Token size) {
-        List sign_list = new LinkedList();
+        List<Object> sign_list = new LinkedList<Object>();
         sign_list.add(sign);
-        List size_list = new LinkedList();
+        List<Object> size_list = new LinkedList<Object>();
         size_list.add(size);
         TypeRef ref = new TypeRef(n);
         ref.addDimension("sign", sign_list);
@@ -335,11 +334,11 @@ public class JIGIRTypeEnv extends TypeEnv {
     }
 
     public TYPE_int newIntType(boolean sign, int size) {
-        List sign_list = new LinkedList();
+        List<Object> sign_list = new LinkedList<Object>();
         sign_list.add(sign);
-        List size_list = new LinkedList();
+        List<Object> size_list = new LinkedList<Object>();
         size_list.add(size);
-        HashMap<String, List> map = new HashMap<String, List>();
+        HashMap<String, List<Object>> map = new HashMap<String, List<Object>>();
         map.put("size", size_list);
         map.put("sign", sign_list);
         return (TYPE_int)INT.newType(this, map);

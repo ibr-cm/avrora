@@ -195,7 +195,7 @@ public class RegisterSet {
 
     }
 
-    protected final HashMap fields;
+    protected final HashMap<String, FieldWriter> fields;
     protected final ActiveRegister[] registers;
     protected final RegisterLayout layout;
 
@@ -205,14 +205,12 @@ public class RegisterSet {
      * @param rl the layout of all the registers in the set
      */
     public RegisterSet(RegisterLayout rl) {
-        fields = new HashMap();
+        fields = new HashMap<String, FieldWriter>();
         registers = new ActiveRegister[rl.ioreg_size];
         layout = rl;
 
         // create the field representations
-        Iterator i = rl.fields.values().iterator();
-        while ( i.hasNext() ) {
-            RegisterLayout.Field f = (RegisterLayout.Field)i.next();
+        for (RegisterLayout.Field f : rl.fields.values()) {
             FieldWriter fw = new FieldWriter();
             fw.fobject = new Field();
             fields.put(f.name, fw);

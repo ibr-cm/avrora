@@ -57,8 +57,7 @@ public abstract class ATMegaTimer extends AtmelInternalDevice {
      * A collection of Input, Output, and InputOutputCompareUnits
      * implemented by this timer.
      */
-    final Map /* <Comparator.Name,Comparator> */ comparators =
-            /* new EnumMap<Comparator.Name,Comparator>() */    new HashMap();
+    final Map<String,Comparator> comparators = new HashMap<String, Comparator>();
 
     boolean timerEnabled;
     boolean countUp;
@@ -274,14 +273,14 @@ public abstract class ATMegaTimer extends AtmelInternalDevice {
         /**
          * Creates a new, mutable Mode object.
          */
-        protected Mode(Class sc, RegisterSet.Field f, ActiveRegister t) {
+        protected Mode(Class<? extends Strategy> sc, RegisterSet.Field f, ActiveRegister t) {
             this(sc, f, (TopValue)t);
         }
 
         /**
          * Creates a new, mutable Mode object.
          */
-        protected Mode(Class sc, RegisterSet.Field f, TopValue t) {
+        protected Mode(Class<? extends Strategy> sc, RegisterSet.Field f, TopValue t) {
             if (NORMAL.class == sc) {
                 strategy = new NORMAL();
             } else if (CTC.class == sc) {
@@ -327,8 +326,7 @@ public abstract class ATMegaTimer extends AtmelInternalDevice {
             int value = getCounter();
             if (devicePrinter != null) {
                 devicePrinter.println(name + " [" + getCounterName() + " = " + value);
-                Iterator i = comparators.values().iterator();
-                for (Comparator c = (Comparator)i.next(); c != null; c = (Comparator)i.next()) {
+                for (Comparator c : comparators.values()) {
                     devicePrinter.println(", " + c + "(actual) = " + c.read() + ", " + c + "(buffer) = " + c.readBuffer() + ']');
                 }
             }
@@ -338,9 +336,9 @@ public abstract class ATMegaTimer extends AtmelInternalDevice {
             // the compare match should be performed in any case.
             // XXX: Check that this is OK; is using count ok
             if (!compareMatchBlocked) {
-                Iterator i = comparators.values().iterator();
-                while (i.hasNext()) ((Comparator)i.next()).compare(value);
-
+                for (Comparator i : comparators.values()) {
+                    i.compare(value);
+                }
             }
 
             setCounter(value);

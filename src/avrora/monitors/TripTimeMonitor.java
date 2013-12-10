@@ -38,7 +38,6 @@ import cck.stat.Distribution;
 import cck.text.*;
 import cck.util.Option;
 import cck.util.Util;
-import java.util.Iterator;
 
 /**
  * The <code>TripTimeMonitor</code> class implements a monitor that tracks the time from
@@ -157,9 +156,7 @@ public class TripTimeMonitor extends MonitorFactory {
         }
 
         private void addPairs() {
-            Iterator i = PAIRS.get().iterator();
-            while (i.hasNext()) {
-                String str = (String)i.next();
+            for (String str : PAIRS.get()) {
                 int ind = str.indexOf(':');
                 if (ind <= 0)
                     throw Util.failure("invalid address format: " + StringUtil.quote(str));
@@ -184,10 +181,8 @@ public class TripTimeMonitor extends MonitorFactory {
         }
 
         private void addFrom() {
-            Iterator i = FROM.get().iterator();
             SourceMapping sm = program.getSourceMapping();
-            while (i.hasNext()) {
-                String str = (String)i.next();
+            for (String str : FROM.get()) {
                 SourceMapping.Location loc = sm.getLocation(str);
                 for ( int cntr = 0; cntr < program.program_end; cntr = program.getNextPC(cntr) )
                     addPair(loc.lma_addr, cntr);
@@ -195,10 +190,8 @@ public class TripTimeMonitor extends MonitorFactory {
         }
 
         private void addTo() {
-            Iterator i = TO.get().iterator();
             SourceMapping sm = program.getSourceMapping();
-            while (i.hasNext()) {
-                String str = (String)i.next();
+            for (String str : TO.get()) {
                 SourceMapping.Location loc = sm.getLocation(str);
                 for ( int cntr = 0; cntr < program.program_end; cntr = program.getNextPC(cntr) )
                     addPair(cntr, loc.lma_addr);

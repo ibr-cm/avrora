@@ -42,7 +42,6 @@ import avrora.sim.Simulator;
 import avrora.sim.State;
 import cck.util.Option;
 import cck.util.Util;
-import java.util.Iterator;
 
 /**
  * The <code>InteractiveMonitor</code> class implements a monitor that allows the user to interact with
@@ -66,9 +65,7 @@ public class InteractiveMonitor extends MonitorFactory {
         Mon(Simulator s) {
             this.simulator = s;
             this.sourceMap = s.getProgram().getSourceMapping();
-            Iterator i = BREAKPOINTS.get().iterator();
-            while ( i.hasNext() ) {
-                String str = (String)i.next();
+            for (String str : BREAKPOINTS.get()) {
                 SourceMapping.Location l = sourceMap.getLocation(str);
                 if ( l == null ) Util.userError("Label not found", str);
                 simulator.insertProbe(new BreakPointProbe(), l.lma_addr);

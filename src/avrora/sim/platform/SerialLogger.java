@@ -51,7 +51,6 @@ public class SerialLogger implements USART.USARTDevice {
     final static int ESCAPE_BYTE = 0x7d;
     final static int MTU = 256;
 
-    private USART usart;
     private byte[] receiveBuffer;
       
     private boolean inSync = false;
@@ -63,7 +62,6 @@ public class SerialLogger implements USART.USARTDevice {
     public SerialLogger(USART usart, Simulator s) {
         usart.connect(this);
 
-        this.usart = usart;
         this.simulator = s;
         this.receiveBuffer = new byte[MTU];
     }
@@ -162,8 +160,6 @@ public class SerialLogger implements USART.USARTDevice {
 
     public static int calc(byte[] packet, int index, int count) {
         int crc = 0;
-        int i;
-
         while (count > 0) {
             crc = calcByte(crc, packet[index++]);
             count--;

@@ -34,7 +34,6 @@ package cck.stat;
 
 import cck.text.Printer;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -46,7 +45,7 @@ import java.util.LinkedList;
 public class Proportion implements DataItem {
 
     protected final String name;
-    protected LinkedList shares;
+    protected LinkedList<Counter> shares;
     protected int total;
 
     /**
@@ -54,7 +53,7 @@ public class Proportion implements DataItem {
      */
     public Proportion(String newname) {
         name = newname;
-        shares = new LinkedList();
+        shares = new LinkedList<Counter>();
     }
 
     public String getName() {
@@ -66,12 +65,10 @@ public class Proportion implements DataItem {
      * @param printer
      */
     public void print(Printer printer) {
-        Iterator i = shares.iterator();
         printer.print("\n " + name);
         printer.print("\n---------------------------------------------------------------------");
 
-        while ( i.hasNext() ) {
-            Counter s = (Counter) i.next();
+        for (Counter s : shares) {
             // TODO: print out the fraction
             s.print(printer);
         }
@@ -99,10 +96,7 @@ public class Proportion implements DataItem {
      * Search for the counter with the specified string name and return it if it is registered.
      */
     public Counter getCounter(String name) {
-        Iterator i = shares.iterator();
-
-        while ( i.hasNext() ) {
-            Counter s = (Counter) i.next();
+        for (Counter s : shares) {
             if (name.equals(s.getName())) return s;
         }
 
@@ -123,11 +117,10 @@ public class Proportion implements DataItem {
      * Do the computations and compute the proportions of each share.
      */
     public void process() {
-        Iterator i = shares.iterator();
         total = 0;
 
-        while (i.hasNext()) {
-            total += ((Counter) i.next()).getTotal();
+        for (Counter c : shares) {
+            total += c.getTotal();
         }
     }
 

@@ -116,7 +116,7 @@ public class RegisterLayout {
      * The <code>ioregAssignments</code> field stores a reference to a hashmap from IO register names to their
      * addresses.
      */
-    protected final HashMap ioregAssignments;
+    protected final HashMap<String, RegisterInfo> ioregAssignments;
 
     protected final RegisterInfo[] info;
 
@@ -124,7 +124,7 @@ public class RegisterLayout {
      * The <code>fields</code> field stores a reference to a hashmap that maps from a field name to a representation
      * of the field.
      */
-    protected final HashMap fields;
+    protected final HashMap<String, Field> fields;
 
     /**
      * The constructor for the <code>RegisterLayout</code> class creates a new register layout with the specified
@@ -133,8 +133,8 @@ public class RegisterLayout {
      */
     public RegisterLayout(int is, int rlength) {
         ioreg_size = is;
-        ioregAssignments = new HashMap();
-        fields = new HashMap();
+        ioregAssignments = new HashMap<String, RegisterInfo>();
+        fields = new HashMap<String, Field>();
         info = new RegisterInfo[is];
         ioreg_length = rlength;
     }
@@ -242,7 +242,7 @@ public class RegisterLayout {
         SubField[] subFields = new SubField[count];
         System.arraycopy(sfs, 0, subFields, 0, count);
         // calculate the commit points (i.e. last write to the field)
-        HashSet fs = new HashSet();
+        HashSet<Field> fs = new HashSet<Field>();
         for ( int cntr = subFields.length - 1; cntr >= 0; cntr-- ) {
             SubField subField = subFields[cntr];
             if ( !fs.contains(subField.field) ) subField.commit = true;

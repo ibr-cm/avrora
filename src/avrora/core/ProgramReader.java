@@ -37,7 +37,6 @@ import avrora.arch.ArchitectureRegistry;
 import cck.help.HelpCategory;
 import cck.text.StringUtil;
 import cck.util.*;
-import java.util.Iterator;
 
 /**
  * The <code>ProgramReader</code> class represents an object capable of reading a program given the special
@@ -85,9 +84,7 @@ public abstract class ProgramReader extends HelpCategory {
      * @param p the program to add indirect edges to
      */
     protected void addIndirectEdges(Program p) {
-        Iterator i = INDIRECT_EDGES.get().iterator();
-        while (i.hasNext()) {
-            String s = (String)i.next();
+        for (String s : INDIRECT_EDGES.get()) {
             int ind = s.indexOf(':');
             if (ind <= 0)
                 throw Util.failure("invalid indirect edge format: " + StringUtil.quote(s));

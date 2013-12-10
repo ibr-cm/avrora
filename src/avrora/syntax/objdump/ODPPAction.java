@@ -34,11 +34,9 @@
 package avrora.syntax.objdump;
 
 import avrora.actions.Action;
-import cck.text.Verbose;
 import cck.util.Option;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.util.HashSet;
 
 /**
  * The <code>ObjDumpPreprocessor</code> class is a utility class that takes the output from the

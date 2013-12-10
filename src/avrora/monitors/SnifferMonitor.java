@@ -49,13 +49,13 @@ public class SnifferMonitor extends MonitorFactory {
             "This option enables/disables the printing of the output.");
     protected Option.Str FILENAME = newOption("FileName", "out.dcf",
             "This option is used to give a name to the output file. Name of output is out.dcf as default");
-    protected List monitors = new LinkedList();
+    protected List<Mon> monitors = new LinkedList<Mon>();
 
     protected static int packetsTotal;
 
 
     class Mon implements Monitor, Medium.Probe {
-        LinkedList bytes;
+        LinkedList<Character> bytes;
         final Simulator simulator;
         final SimPrinter printer;
         final boolean showReceived;
@@ -87,7 +87,7 @@ public class SnifferMonitor extends MonitorFactory {
             showTransmitted = TRANSMITTED.get();
             Print = PRINT.get();
             fileName = FILENAME.get();
-            bytes = new LinkedList();
+            bytes = new LinkedList<Character>();
             DateTime = now.getTime()/1000;//sec precision
             monitors.add(this);
         }
@@ -108,7 +108,7 @@ public class SnifferMonitor extends MonitorFactory {
                     if (Print) Terminal.println(buf.toString());
                     if (showTransmitted) logfile(buf);
                 }
-                bytes = new LinkedList();
+                bytes = new LinkedList<Character>();
             }
         }
 
@@ -129,7 +129,7 @@ public class SnifferMonitor extends MonitorFactory {
                     if (Print) Terminal.println(buf.toString());
                     if (showReceived) logfile(buf);
                 }
-                bytes = new LinkedList();
+                bytes = new LinkedList<Character>();
             }
         }
 
@@ -145,16 +145,15 @@ public class SnifferMonitor extends MonitorFactory {
             DecimalFormat SixDecimals = new DecimalFormat("0.000000");
             buf.append(String.valueOf(SixDecimals.format(seconds + DateTime))).append(" ");
             //Iterate bytes from the packet and parse them
-            Iterator i = bytes.iterator();
             int cntr = 0;
             int len = 0;
             int power_received = 0;
             int lqi = 0;
             int fcs=0;
             //Skip SHR (Preamble &SFD) and append length,data payload,LQI..
-            while ( i.hasNext() ) {
+            for (Character c : bytes) {
                 cntr++;
-                char t = ((Character)i.next()).charValue();
+                char t = c.charValue();
                 //length field
                 if (cntr == 6){
                     len = (int)t;
@@ -192,13 +191,12 @@ public class SnifferMonitor extends MonitorFactory {
             DecimalFormat SixDecimals = new DecimalFormat("0.000000");
             buf.append(SixDecimals.format(seconds + DateTime)).append(" ");
             //Iterate bytes from the packet and parse them
-            Iterator i = bytes.iterator();
             int cntr = 0;
             int len = 0;
             //Skip SHR (Preamble &SFD) and append length,data payload,LQI..
-            while ( i.hasNext() ) {
+            for (Character c : bytes) {
                 cntr++;
-                char t = ((Character)i.next()).charValue();
+                char t = c.charValue();
                 //length field
                 if (cntr == 6){
                     len = (int)t;

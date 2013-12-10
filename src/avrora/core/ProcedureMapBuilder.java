@@ -66,12 +66,12 @@ class ProcedureMapBuilder {
      */
     public ProcedureMap buildMap() {
         discoverProcedures();
-        HashMap procMap = buildProcedureBlockLists();
+        HashMap<ControlFlowGraph.Block, Collection<ControlFlowGraph.Block>> procMap = buildProcedureBlockLists();
         return new ProcedureMap(ENTRYPOINTS, ENTRYMAP, procMap);
     }
 
-    private HashSet ENTRYPOINTS;
-    private HashMap ENTRYMAP;
+    private HashSet<ControlFlowGraph.Block> ENTRYPOINTS;
+    private HashMap<ControlFlowGraph.Block, Object> ENTRYMAP;
 
     // this object marks a block as shared between two procedures
     private final Object SHARED = new Object();
@@ -79,29 +79,24 @@ class ProcedureMapBuilder {
     private void discoverProcedures() {
 
         discoverEntrypoints();
-        ENTRYMAP = new HashMap();
+        ENTRYMAP = new HashMap<ControlFlowGraph.Block, Object>();
 
-        Iterator iter = ENTRYPOINTS.iterator();
-        while (iter.hasNext()) {
-            Object block = iter.next();
+        for (ControlFlowGraph.Block block : ENTRYPOINTS) {    
             ENTRYMAP.put(block, block);
         }
-
-        iter = ENTRYPOINTS.iterator();
-        while (iter.hasNext()) {
-            ControlFlowGraph.Block block = (ControlFlowGraph.Block)iter.next();
-            propagate(block, block, new HashSet());
+        for (ControlFlowGraph.Block block : ENTRYPOINTS) {
+            propagate(block, block, new HashSet<ControlFlowGraph.Block>());
         }
 
     }
 
     private void discoverEntrypoints() {
-        ENTRYPOINTS = new HashSet();
+        ENTRYPOINTS = new HashSet<ControlFlowGraph.Block>();
 
         // discover edges that have incoming call edges
-        Iterator edges = cfg.getEdgeIterator();
+        Iterator<ControlFlowGraph.Edge> edges = cfg.getEdgeIterator();
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge edge = (ControlFlowGraph.Edge)edges.next();
+            ControlFlowGraph.Edge edge = edges.next();
             if ("CALL".equals(edge.getType())) {
                 if (edge.getTarget() == null) {
                     addIndirectEntrypoints(edge, cfg);
@@ -112,24 +107,22 @@ class ProcedureMapBuilder {
     }
 
     private void addIndirectEntrypoints(ControlFlowGraph.Edge edge, ControlFlowGraph cfg) {
-        List l = program.getIndirectEdges(edge.getSource().getLastAddress());
-        if (l == null) return;
-        Iterator i = l.iterator();
-        while (i.hasNext()) {
-            int target_addr = ((Integer)i.next()).intValue();
-            ControlFlowGraph.Block target = cfg.getBlockStartingAt(target_addr);
+        List<Integer> edges = program.getIndirectEdges(edge.getSource().getLastAddress());
+        if (edges == null) return;
+        for (Integer targetAddr : edges){
+            ControlFlowGraph.Block target = cfg.getBlockStartingAt(targetAddr);
             if (target != null) {
                 ENTRYPOINTS.add(target);
             }
         }
     }
 
-    private void propagate(ControlFlowGraph.Block entry, ControlFlowGraph.Block block, HashSet seen) {
+    private void propagate(ControlFlowGraph.Block entry, ControlFlowGraph.Block block, HashSet<ControlFlowGraph.Block> seen) {
         if (ENTRYMAP.get(block) == SHARED) return;
 
-        Iterator edges = block.getEdgeIterator();
+        Iterator<ControlFlowGraph.Edge> edges = block.getEdgeIterator();
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge edge = (ControlFlowGraph.Edge)edges.next();
+            ControlFlowGraph.Edge edge = edges.next();
             if ("CALL".equals(edge.getType())) continue;
             ControlFlowGraph.Block target = edge.getTarget();
             if (target == null) continue;
@@ -158,9 +151,9 @@ class ProcedureMapBuilder {
         if (ENTRYMAP.get(block) == SHARED) return;
         ENTRYMAP.put(block, SHARED);
 
-        Iterator edges = block.getEdgeIterator();
+        Iterator<ControlFlowGraph.Edge> edges = block.getEdgeIterator();
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge edge = (ControlFlowGraph.Edge)edges.next();
+            ControlFlowGraph.Edge edge = edges.next();
             if ("CALL".equals(edge.getType())) continue;
             ControlFlowGraph.Block target = edge.getTarget();
             if (target == null) continue;
@@ -168,26 +161,23 @@ class ProcedureMapBuilder {
         }
     }
 
-    private HashMap buildProcedureBlockLists() {
+    private HashMap<ControlFlowGraph.Block, Collection<ControlFlowGraph.Block>> buildProcedureBlockLists() {
         // maps procedure entry to list blocks in the procedure
-        HashMap procMap = new HashMap();
+        HashMap<ControlFlowGraph.Block, Collection<ControlFlowGraph.Block>> procMap = new HashMap<ControlFlowGraph.Block, Collection<ControlFlowGraph.Block>>();
 
         // create the initial map of entry points to empty lists
-        Iterator entry_iter = ENTRYPOINTS.iterator();
-        while (entry_iter.hasNext()) {
-            ControlFlowGraph.Block entry = (ControlFlowGraph.Block)entry_iter.next();
-            procMap.put(entry, new LinkedList());
+        for (ControlFlowGraph.Block entry : ENTRYPOINTS) {
+            procMap.put(entry, new LinkedList<ControlFlowGraph.Block>());
         }
 
         // add each block to the list of its respective procedure
-        Iterator block_iter = cfg.getBlockIterator();
+        Iterator<ControlFlowGraph.Block> block_iter = cfg.getBlockIterator();
         while (block_iter.hasNext()) {
-            ControlFlowGraph.Block block = (ControlFlowGraph.Block)block_iter.next();
+            ControlFlowGraph.Block block = block_iter.next();
             Object mark = ENTRYMAP.get(block);
             if (mark == null || !(mark instanceof ControlFlowGraph.Block)) continue;
             ControlFlowGraph.Block entry = (ControlFlowGraph.Block)mark;
-            LinkedList list = (LinkedList)procMap.get(entry);
-            list.add(block);
+            procMap.get(entry).add(block);
         }
         return procMap;
     }

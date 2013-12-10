@@ -105,9 +105,9 @@ public class ATMega16 extends ATMegaFamily {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
+        HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
         RegisterLayout rl = new RegisterLayout(ATMEGA16_IOREG_SIZE, 8);
-        HashMap interruptAssignments = new HashMap(30);
+        HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(30);
 
         addPin(pinAssignments, 1, "XCK", "T0", "PB0");
         addPin(pinAssignments, 2, "T1", "PB1");

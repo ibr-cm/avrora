@@ -41,7 +41,6 @@ import avrora.sim.Simulation;
 import cck.help.HelpCategory;
 import cck.util.Options;
 
-import java.io.*;
 import java.util.*;
 
 /**
@@ -72,8 +71,8 @@ public abstract class Topology extends HelpCategory {
     }
 
     //structure of the node positions
-    protected final ArrayList positions;
-    protected final ArrayList nodes;
+    protected final ArrayList<Position> positions;
+    protected final ArrayList<Simulation.Node> nodes;
 
     /**
      * new topology
@@ -86,12 +85,12 @@ public abstract class Topology extends HelpCategory {
         addSection("TOPOLOGY OVERVIEW", help);
         addOptionSection("Help for the options accepted by this topology is below.", options);
       
-        positions = new ArrayList();
-        nodes = new ArrayList();
+        positions = new ArrayList<Position>();
+        nodes = new ArrayList<Simulation.Node>();
     }
 
     public Position getPosition(int id) {
-        return ((Position)positions.get(id));
+        return positions.get(id);
     }
     
     public void addNode(Simulation.Node node) {

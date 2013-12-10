@@ -32,8 +32,6 @@
 
 package avrora.sim;
 
-import cck.util.Arithmetic;
-
 /**
  * The <code>RW16Register</code> class is an implementation of an IO register that has the simple, default
  * behavior of being able to read and write just as a general purpose register or byte in SRAM.

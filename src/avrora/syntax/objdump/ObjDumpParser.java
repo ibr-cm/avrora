@@ -1491,6 +1491,8 @@ public class ObjDumpParser extends AbstractParser implements ObjDumpParserConsta
 
     private static class LookaheadSuccess extends Error {
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     private final LookaheadSuccess jj_ls = new LookaheadSuccess();
@@ -1525,7 +1527,7 @@ public class ObjDumpParser extends AbstractParser implements ObjDumpParserConsta
         else return jj_ntk = jj_nt.kind;
     }
 
-    private Vector jj_expentries = new Vector();
+    private Vector<int[]> jj_expentries = new Vector<int[]>();
     private int[] jj_expentry;
     private int jj_kind = -1;
     private int[] jj_lasttokens = new int[100];
@@ -1539,8 +1541,8 @@ public class ObjDumpParser extends AbstractParser implements ObjDumpParserConsta
             jj_expentry = new int[jj_endpos];
             System.arraycopy(jj_lasttokens, 0, jj_expentry, 0, jj_endpos);
             boolean exists = false;
-            for (Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
-                int[] oldentry = (int[]) e.nextElement();
+            for (Enumeration<int[]> e = jj_expentries.elements(); e.hasMoreElements();) {
+                int[] oldentry = e.nextElement();
                 if (oldentry.length == jj_expentry.length) {
                     exists = true;
                     for (int i = 0; i < jj_expentry.length; i++) {
@@ -1600,7 +1602,7 @@ public class ObjDumpParser extends AbstractParser implements ObjDumpParserConsta
         jj_add_error_token(0, 0);
         int[][] exptokseq = new int[jj_expentries.size()][];
         for (int i = 0; i < jj_expentries.size(); i++) {
-            exptokseq[i] = (int[])jj_expentries.elementAt(i);
+            exptokseq[i] = jj_expentries.elementAt(i);
         }
         return new ParseException(token, exptokseq, tokenImage);
     }

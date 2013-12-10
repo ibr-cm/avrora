@@ -325,10 +325,8 @@ public class Main {
         Terminal.htmlColors = HTML.get();
         Status.ENABLED = STATUS.get();
         Status.TIMING = STATUS_TIMING.get();
-        List verbose = VERBOSE.get();
-        Iterator i = verbose.iterator();
-        while (i.hasNext())
-            Verbose.setVerbose((String)i.next(), true);
+        for (String str : VERBOSE.get())
+            Verbose.setVerbose(str, true);
     }
 
     /**

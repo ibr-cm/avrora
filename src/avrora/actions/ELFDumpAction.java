@@ -40,7 +40,6 @@ import cck.text.TermUtil;
 import cck.elf.*;
 import avrora.Main;
 
-import java.util.Iterator;
 import java.util.List;
 import java.io.RandomAccessFile;
 
@@ -94,10 +93,8 @@ public class ELFDumpAction extends Action {
             printSHT(sht);
 
             // read the symbol tables
-            List symbolTables = ELFLoader.readSymbolTables(fis, header, sht);
-            Iterator i = symbolTables.iterator();
-            while ( i.hasNext() ) {
-                ELFSymbolTable stab = (ELFSymbolTable) i.next();
+            List<ELFSymbolTable> symbolTables = ELFLoader.readSymbolTables(fis, header, sht);
+            for (ELFSymbolTable stab : symbolTables) {
                 printSymbolTable(stab, sht);
             }
 

@@ -216,13 +216,12 @@ public class ProfileMonitor extends MonitorFactory {
                 return 100.0f * count / totalcount;
         }
 
-        class InstrProfileEntry implements Comparable {
+        class InstrProfileEntry implements Comparable<InstrProfileEntry> {
             String name;
             long count;
             long cycles;
 
-            public int compareTo(Object o) {
-                InstrProfileEntry other = (InstrProfileEntry)o;
+            public int compareTo(InstrProfileEntry other) {
                 if ( this.cycles > 0 ) {
                     if ( other.cycles > this.cycles ) return 1;
                     if ( other.cycles < this.cycles ) return -1;
@@ -236,16 +235,14 @@ public class ProfileMonitor extends MonitorFactory {
         }
 
         private void reportInstrProfile() {
-            List l = computeInstrProfile();
+            List<InstrProfileEntry> profile = computeInstrProfile();
 
             TermUtil.printSeparator(Terminal.MAXLINE, "Profiling Results by Instruction Type");
             Terminal.printGreen(" Instruction      Count    Cycles   Percent");
             Terminal.nextln();
             TermUtil.printThinSeparator(Terminal.MAXLINE);
 
-            Iterator i = l.iterator();
-            while ( i.hasNext() ) {
-                InstrProfileEntry ipe = (InstrProfileEntry)i.next();
+            for (InstrProfileEntry ipe : profile) {
                 float pcnt = computePercent(ipe.count, ipe.cycles);
                 String p = StringUtil.toFixedFloat(pcnt, 4) + " %";
                 Terminal.printGreen("   "+StringUtil.rightJustify(ipe.name, 9));
@@ -257,8 +254,8 @@ public class ProfileMonitor extends MonitorFactory {
             }
         }
 
-        private List computeInstrProfile() {
-            HashMap cmap = new HashMap();
+        private List<InstrProfileEntry> computeInstrProfile() {
+            HashMap<String,InstrProfileEntry> cmap = new HashMap<String,InstrProfileEntry>();
 
             for ( int cntr = 0; cntr < icount.length; cntr++ ) {
                 if ( icount[cntr] == 0 ) continue;
@@ -275,8 +272,8 @@ public class ProfileMonitor extends MonitorFactory {
                 entry.cycles += itime[cntr];
             }
 
-            Enumeration e = Collections.enumeration(cmap.values());
-            List l = Collections.list(e);
+            Enumeration<InstrProfileEntry> e = Collections.enumeration(cmap.values());
+            List<InstrProfileEntry> l = Collections.list(e);
             Collections.sort(l);
             return l;
         }

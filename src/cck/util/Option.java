@@ -62,10 +62,8 @@ public abstract class Option {
      * The <code>OptionComparator</code> is an implementation of the <code>java.util.Comparator</code>
      * interface that is used to sort options alphabetically for printing in the help system.
      */
-    public static final Comparator COMPARATOR = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            Option opt1 = (Option) o1;
-            Option opt2 = (Option) o2;
+    public static final Comparator<Option> COMPARATOR = new Comparator<Option>() {
+        public int compare(Option opt1, Option opt2) {
             return String.CASE_INSENSITIVE_ORDER.compare(opt1.getName(), opt2.getName());
         }
     };
@@ -475,7 +473,7 @@ public abstract class Option {
      * encapsulates a list.
      */
     public static class List extends Option {
-        protected java.util.List value;
+        protected java.util.List<String> value;
         protected String orig;
 
         /**
@@ -516,7 +514,7 @@ public abstract class Option {
          *
          * @return the value of the option as a <code>java.util.List</code>.
          */
-        public java.util.List get() {
+        public java.util.List<String> get() {
             return value;
         }
 
@@ -537,10 +535,9 @@ public abstract class Option {
 
         public String[] toArray() {
             String[] result = new String[value.size()];
-            Iterator i = value.iterator();
             int cntr = 0;
-            while ( i.hasNext() ) {
-                result[cntr++] = (String)i.next();
+            for (String str : value) {
+                result[cntr++] = str;
             }
             return result;
         }

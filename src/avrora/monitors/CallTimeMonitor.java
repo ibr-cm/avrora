@@ -63,7 +63,7 @@ public class CallTimeMonitor extends MonitorFactory {
         final boolean ignore_interrupts;
 
         long cumul;
-        long cumul_sqr;
+//        long cumul_sqr;
         int count;
         long max;
         long min;
@@ -79,7 +79,7 @@ public class CallTimeMonitor extends MonitorFactory {
             program = s.getProgram();
 
             cumul = 0;
-            cumul_sqr = 0;
+//            cumul_sqr = 0;
             max = 0;
             min = Long.MAX_VALUE;
             count = 0;
@@ -129,7 +129,7 @@ public class CallTimeMonitor extends MonitorFactory {
 
         private void record(long time) {
             cumul += time;
-            cumul_sqr += (time * time);
+//            cumul_sqr += (time * time);
             max = Math.max(max, time);
             min = Math.min(min, time);
             count++;
@@ -150,9 +150,13 @@ public class CallTimeMonitor extends MonitorFactory {
             TermUtil.printThinSeparator(Terminal.MAXLINE);
 
             float avg = (float)cumul / count;
-            double std = Math.sqrt(((double)cumul_sqr / count) - (avg * avg));
-
-            Terminal.println(" " + StringUtil.leftJustify(METHOD.get(), 20) + "  " + StringUtil.rightJustify(count, 8) + "  " + StringUtil.rightJustify(avg, 10) + "  " + StringUtil.rightJustify(cumul, 10) + "  " + StringUtil.rightJustify((float)max, 9) + "  " + StringUtil.rightJustify((float)min, 9));
+//            double std = Math.sqrt(((double)cumul_sqr / count) - (avg * avg));
+            Terminal.println(" " + StringUtil.leftJustify(METHOD.get(), 20)
+                    + "  " + StringUtil.rightJustify(count, 8) + "  "
+                    + StringUtil.rightJustify(avg, 10) + "  "
+                    + StringUtil.rightJustify(cumul, 10) + "  "
+                    + StringUtil.rightJustify((float) max, 9) + "  "
+                    + StringUtil.rightJustify((float) min, 9));
             Terminal.nextln();
         }
     }

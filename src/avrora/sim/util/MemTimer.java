@@ -57,7 +57,7 @@ public class MemTimer extends Simulator.Watch.Empty {
             Terminal.printRed("Unexpected interception by printer!");
             System.exit(-1);
         }
-        AtmelInterpreter a = (AtmelInterpreter) state.getSimulator().getInterpreter();
+        
         switch (value) {
             case 100:
                 if (timer_state != 0) {

@@ -101,9 +101,9 @@ public class ATMega32 extends ATMegaFamily {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
+        HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
         RegisterLayout rl = new RegisterLayout(ATMEGA32_IOREG_SIZE, 8);
-        HashMap interruptAssignments = new HashMap(30);
+        HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(30);
 
         addPin(pinAssignments, 1, "MOSI", "PB5");
         addPin(pinAssignments, 2, "MISO", "PB6");

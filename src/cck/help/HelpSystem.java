@@ -75,7 +75,7 @@ public class HelpSystem {
      * @param name the short name of the help category
      * @param cz   the class for this help category
      */
-    public static void addCategory(String name, Class cz) {
+    public static void addCategory(String name, Class<?> cz) {
         categoryMap.addClass(name, cz);
     }
 
@@ -84,7 +84,7 @@ public class HelpSystem {
      *
      * @return a sorted list of all help categories
      */
-    public static List getSortedList() {
+    public static List<String> getSortedList() {
         return categoryMap.getSortedList();
     }
 }

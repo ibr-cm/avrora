@@ -557,17 +557,22 @@ public class StringUtil {
         return lead + LPAREN + arg1 + COMMA_SPACE + arg2 + COMMA_SPACE + arg3 + COMMA_SPACE + arg4 + RPAREN;
     }
 
-    public static String commalist(List l) {
+    public static String commalist(List<?> l) {
         StringBuffer buf = new StringBuffer();
         commalist(l, buf);
         return buf.toString();
     }
 
-    public static void commalist(List l, StringBuffer buf) {
-        Iterator i = l.iterator();
-        while (i.hasNext()) {
-            buf.append(i.next().toString());
-            if (i.hasNext()) buf.append(", ");
+    public static void commalist(List<?> l, StringBuffer buf) {
+    	boolean useComma = false;
+    	for (Object o : l) {
+    		if (useComma) {
+    			buf.append(", ");	
+    		}
+    		else {
+    		    useComma = true;
+    		}
+            buf.append(o.toString());
         }
     }
 
@@ -584,23 +589,22 @@ public class StringUtil {
         }
     }
 
-    public static void commalist(Iterator i, StringBuffer buf) {
+    public static void commalist(Iterator<?> i, StringBuffer buf) {
         for ( int cntr = 0; i.hasNext(); cntr++ ) {
             if (cntr > 0) buf.append(", ");
             buf.append(i.next().toString());
         }
     }
 
-    public static String linelist(List l) {
+    public static String linelist(List<?> l) {
         StringBuffer buf = new StringBuffer();
         linelist(buf, l);
         return buf.toString();
     }
 
-    public static void linelist(StringBuffer buf, List l) {
-        Iterator i = l.iterator();
-        while (i.hasNext()) {
-            buf.append(i.next().toString());
+    public static void linelist(StringBuffer buf, List<?> l) {
+        for (Object o : l) {
+            buf.append(o.toString());
             buf.append('\n');
         }
     }
@@ -716,10 +720,6 @@ public class StringUtil {
         return c;
     }
 
-    private static IllegalArgumentException invalidCharLiteral(String lit) {
-        return new IllegalArgumentException("Invalid character literal: " + lit);
-    }
-
     public static String trimquotes(String s) {
         if (s.length() == 0) return s;
 
@@ -764,8 +764,8 @@ public class StringUtil {
         return buf.toString();
     }
 
-    public static List trimLines(String s, int indent, int width) {
-        LinkedList list = new LinkedList();
+    public static List<String> trimLines(String s, int indent, int width) {
+        LinkedList<String> list = new LinkedList<String>();
         int len = s.length();
         int consumed = indent;
         String indstr = space(indent);
@@ -797,7 +797,7 @@ public class StringUtil {
         return list;
     }
 
-    static StringBuffer newBuffer(String n, StringBuffer old, List strs) {
+    static StringBuffer newBuffer(String n, StringBuffer old, List<String> strs) {
         strs.add(old.toString());
         return new StringBuffer(n);
     }
@@ -1024,8 +1024,8 @@ public class StringUtil {
         return val;
     }
 
-    public static List toList(String val) {
-        LinkedList list = new LinkedList();
+    public static List<String> toList(String val) {
+        LinkedList<String> list = new LinkedList<String>();
         if ("".equals(val)) return list;
 
         CharacterIterator i = new StringCharacterIterator(val);
@@ -1043,7 +1043,7 @@ public class StringUtil {
         return list;
     }
 
-    public static String getShortName(Class clazz) {
+    public static String getShortName(Class<?> clazz) {
         String nm = clazz.getName();
         int dollar = nm.lastIndexOf('$');
         int dot = nm.lastIndexOf('.');

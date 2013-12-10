@@ -42,7 +42,7 @@ import java.util.HashMap;
  */
 public class LegacyInstrSet {
 
-    private static final HashMap instructions = new HashMap(150);
+    private static final HashMap<String, LegacyInstrProto> instructions = new HashMap<String, LegacyInstrProto>(150);
 
     static {
 //--BEGIN INSTRUCTIONSET GENERATOR--

@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class noise {
 
-    private static List noise = new ArrayList();
+    private static List<Integer> noise = new ArrayList<Integer>();
 
     /** Creates a new instance of Noise from file */
     public noise(String fileName) throws IOException {

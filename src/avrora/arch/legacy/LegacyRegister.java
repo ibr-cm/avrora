@@ -52,7 +52,7 @@ import java.util.HashSet;
  */
 public class LegacyRegister {
 
-    private static final HashMap registers = initializeRegisterMap();
+    private static final HashMap<String, LegacyRegister> registers = initializeRegisterMap();
 
     public static final LegacyRegister R0 = getRegisterByNumber(0);
     public static final LegacyRegister R1 = getRegisterByNumber(1);
@@ -131,8 +131,8 @@ public class LegacyRegister {
     public static final Set YZ_set = new Set(REGS_YZ);
     public static final Set Z_set = new Set(REGS_Z);
 
-    private static HashMap initializeRegisterMap() {
-        HashMap map = new HashMap();
+    private static HashMap<String, LegacyRegister> initializeRegisterMap() {
+        HashMap<String, LegacyRegister> map = new HashMap<String, LegacyRegister>();
 
         for (int cntr = 0; cntr < 32; cntr++) {
             LegacyRegister reg = new LegacyRegister("r" + cntr, cntr, 8);
@@ -265,7 +265,7 @@ public class LegacyRegister {
          */
         public final String contents;
 
-        private final HashSet registerSet;
+        private final HashSet<LegacyRegister> registerSet;
 
         /**
          * The constructor for the <code>Set</code> class takes a string that represents the contents of the
@@ -275,7 +275,7 @@ public class LegacyRegister {
          * @param regs an array of registers that are members of this set
          */
         Set(LegacyRegister[] regs) {
-            registerSet = new HashSet(2 * regs.length);
+            registerSet = new HashSet<LegacyRegister>(2 * regs.length);
             for (int cntr = 0; cntr < regs.length; cntr++) {
                 registerSet.add(regs[cntr]);
             }

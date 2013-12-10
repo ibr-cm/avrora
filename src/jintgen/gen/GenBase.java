@@ -73,7 +73,7 @@ public class GenBase {
     }
 
     protected void generateJavaDoc(String doc) {
-        List lines = StringUtil.trimLines(doc, 0, 70);
+        List<String> lines = StringUtil.trimLines(doc, 0, 70);
         p.println("");
         p.println("/**");
         for ( Object l : lines ) {

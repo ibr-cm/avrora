@@ -34,15 +34,18 @@
 
 package avrora.arch.msp430.mcu;
 
+import java.util.HashMap;
+
 import avrora.arch.msp430.MSP430Interpreter;
 import avrora.arch.msp430.MSP430Properties;
 import avrora.core.Program;
 import avrora.sim.Interpreter;
-import avrora.sim.Simulator;
 import avrora.sim.Simulation;
 import avrora.sim.clock.ClockDomain;
-import avrora.sim.mcu.*;
-import java.util.HashMap;
+import avrora.sim.mcu.DefaultMCU;
+import avrora.sim.mcu.MCUProperties;
+import avrora.sim.mcu.Microcontroller;
+import avrora.sim.mcu.RegisterLayout;
 
 /**
  * @author Ben L. Titzer
@@ -57,9 +60,9 @@ public class F1611 extends DefaultMCU {
     protected static final MSP430Properties PROPS = initProps();
 
     static MSP430Properties initProps() {
-        HashMap pins = new HashMap();
+        HashMap<String, Integer> pins = new HashMap<String, Integer>();
         RegisterLayout layout = new RegisterLayout(IOREG_SIZE, 16);
-        HashMap ints = new HashMap();
+        HashMap<String, Integer> ints = new HashMap<String, Integer>();
         return new MSP430Properties(IOREG_SIZE, SRAM_SIZE, CODE_START, 40, 64, pins, layout, ints);
     }
 

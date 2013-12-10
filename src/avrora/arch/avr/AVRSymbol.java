@@ -27,7 +27,7 @@ public class AVRSymbol {
 
     public static class GPR extends AVRSymbol {
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, GPR> set = new HashMap<String, GPR>();
 
         private static GPR newGPR(String n, int v) {
             GPR obj = new GPR(n, v);
@@ -79,7 +79,7 @@ public class AVRSymbol {
 
     public static class ADR extends AVRSymbol {
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, ADR> set = new HashMap<String, ADR>();
 
         private static ADR newADR(String n, int v) {
             ADR obj = new ADR(n, v);
@@ -108,7 +108,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, HGPR> set = new HashMap<String, HGPR>();
 
         private static HGPR newHGPR(String n, int v, int ev) {
             HGPR obj = new HGPR(n, v, ev);
@@ -151,7 +151,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, EGPR> set = new HashMap<String, EGPR>();
 
         private static EGPR newEGPR(String n, int v, int ev) {
             EGPR obj = new EGPR(n, v, ev);
@@ -194,7 +194,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, MGPR> set = new HashMap<String, MGPR>();
 
         private static MGPR newMGPR(String n, int v, int ev) {
             MGPR obj = new MGPR(n, v, ev);
@@ -229,7 +229,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, YZ> set = new HashMap<String, YZ>();
 
         private static YZ newYZ(String n, int v, int ev) {
             YZ obj = new YZ(n, v, ev);
@@ -258,7 +258,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, RDL> set = new HashMap<String, RDL>();
 
         private static RDL newRDL(String n, int v, int ev) {
             RDL obj = new RDL(n, v, ev);
@@ -289,7 +289,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, R0> set = new HashMap<String, R0>();
 
         private static R0 newR0(String n, int v, int ev) {
             R0 obj = new R0(n, v, ev);
@@ -317,7 +317,7 @@ public class AVRSymbol {
             return encoding;
         }
 
-        private static HashMap set = new HashMap();
+        private static HashMap<String, RZ> set = new HashMap<String, RZ>();
 
         private static RZ newRZ(String n, int v, int ev) {
             RZ obj = new RZ(n, v, ev);

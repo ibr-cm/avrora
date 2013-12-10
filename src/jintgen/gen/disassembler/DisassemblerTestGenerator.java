@@ -114,7 +114,6 @@ public class DisassemblerTestGenerator{
         if ( o.isCompound() ) {
             CompoundValues cv = new CompoundValues();
             operandValues.put(o, cv);
-            OperandTypeDecl.Compound ct = (OperandTypeDecl.Compound)o;
             return cv;
         } else {
             SimpleValues sv = new SimpleValues();

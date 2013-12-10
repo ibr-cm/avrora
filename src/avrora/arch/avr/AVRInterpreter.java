@@ -242,7 +242,7 @@ public class AVRInterpreter extends AVRInstrInterpreter {
 
     protected void skip() {
         AVRInstr i = null;
-        int size = i.getSize();
+        int size = i.getSize(); // yeah .. this will most definitely fail. probably dead code?
         if ( size == 2 ) cycles += 1;
         else cycles += 2;
         nextpc += size;

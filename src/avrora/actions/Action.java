@@ -33,8 +33,6 @@
 package avrora.actions;
 
 import cck.help.HelpCategory;
-import cck.util.Option;
-import cck.util.Options;
 
 /**
  * The <code>Action</code> class defines a new action that the main driver is capable of executing. Each

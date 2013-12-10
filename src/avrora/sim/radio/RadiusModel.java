@@ -6,7 +6,9 @@
  */
 package avrora.sim.radio;
 
+import avrora.sim.radio.Medium.TXRX;
 import avrora.sim.radio.Topology;
+import avrora.sim.radio.Topology.Position;
 
 import java.util.*;
 
@@ -21,14 +23,14 @@ public class RadiusModel implements Medium.Arbitrator {
     protected final double minimumDistanceSq;
     protected final double maximumDistance;
     protected final double maximumDistanceSq;
-    protected final Map positions;
+    protected final Map<TXRX, Position> positions;
 
     public RadiusModel(double minDist, double maxDist) {
         maximumDistance = maxDist;
         maximumDistanceSq = maxDist * maxDist;
         minimumDistance = minDist;
         minimumDistanceSq = minDist * minDist;
-        positions = new HashMap();
+        positions = new HashMap<TXRX, Position>();
     }
     
     public int getNoise(int index){   
@@ -44,13 +46,11 @@ public class RadiusModel implements Medium.Arbitrator {
         return distanceSq(trans.origin, receiver) <= maximumDistanceSq;
     }
 
-    public char mergeTransmissions(Medium.Receiver receiver, List it, long bit,int Milliseconds) {
+    public char mergeTransmissions(Medium.Receiver receiver, List<Medium.Transmission> it, long bit,int Milliseconds) {
         assert it.size() > 0;
         boolean one = false;
         int value = 0;
-        Iterator i = it.iterator();
-        while ( i.hasNext() ) {
-            Medium.Transmission next = (Medium.Transmission)i.next();
+        for (Medium.Transmission next : it) {
             if (lockTransmission(receiver, next, Milliseconds)) {
                 if (one) {
                     int nval = 0xff & next.getByteAtTime(bit);

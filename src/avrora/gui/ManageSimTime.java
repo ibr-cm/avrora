@@ -68,7 +68,7 @@ public class ManageSimTime {
     private JSlider simTimeSlider;
     private SpinnerNumberModel simTimeDelaySpinner;
     private SpinnerNumberModel simTimeCycleSpinner;
-    private JComboBox simTimeIorCSelect;
+    private JComboBox<String> simTimeIorCSelect;
 
     private static int[] simTimeDelayDefaults;
     private static int[] simTimeCycleDefaults;
@@ -122,7 +122,7 @@ public class ManageSimTime {
         simTimeDelayDefaults[5] = 0;
         simTimeCycleDefaults[5] = 0;
 
-        Hashtable temptable = new Hashtable();
+        Hashtable<Integer, JLabel> temptable = new Hashtable<Integer, JLabel>();
         temptable.put(new Integer(-1), new JLabel("Custom"));
         temptable.put(new Integer(0), new JLabel("Full Speed"));
         temptable.put(new Integer(1), new JLabel("Real Time"));
@@ -157,10 +157,10 @@ public class ManageSimTime {
         thesetup.simTimeCycleSpinner.addChangeListener(AvroraGui.instance);
 
         //Cycle/Instruction selector
-        Vector iorcvector = new Vector();
+        Vector<String> iorcvector = new Vector<String>();
         iorcvector.add("cycles");
         iorcvector.add("instructions");
-        thesetup.simTimeIorCSelect = new JComboBox(iorcvector);
+        thesetup.simTimeIorCSelect = new JComboBox<String>(iorcvector);
         thesetup.simTimeIorCSelect.addActionListener(AvroraGui.instance);
 
         //Toolbar

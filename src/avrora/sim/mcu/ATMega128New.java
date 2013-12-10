@@ -112,8 +112,8 @@ public class ATMega128New extends ATMegaClassic {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
-        HashMap interruptAssignments = new HashMap(50);
+        HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
+        HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(50);
 
         addPin(pinAssignments, 1, "PEN");
         addPin(pinAssignments, 2, "PE0", "RXD0", "PDI");
@@ -391,8 +391,7 @@ public class ATMega128New extends ATMegaClassic {
         EIFR_reg = buildInterruptRange(true, "EIMSK", "EIFR", 2, 8);
 
         // set up the timer mask and flag registers and interrupt range
-        RWRegister TIFR_reg = buildInterruptRange(false, "TIMSK", "TIFR", 17, 8);
-        RWRegister TIMSK_reg = (MaskRegister)getIOReg("TIMSK");
+        buildInterruptRange(false, "TIMSK", "TIFR", 17, 8);
 
         int[] ETIFR_mapping = {25, 29, 30, 28, 27, 26, -1, -1};
         RWRegister ETIFR_reg = new FlagRegister(interpreter, ETIFR_mapping);

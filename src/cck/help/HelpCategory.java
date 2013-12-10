@@ -56,12 +56,10 @@ public class HelpCategory implements HelpItem {
     public String name;
     public final String help;
 
-    private final LinkedList sections;
+    private final LinkedList<Section> sections;
 
-    public static final Comparator COMPARATOR = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            HelpCategory c1 = (HelpCategory) o1;
-            HelpCategory c2 = (HelpCategory) o2;
+    public static final Comparator<HelpCategory> COMPARATOR = new Comparator<HelpCategory>() {
+        public int compare(HelpCategory c1, HelpCategory c2) {
             return String.CASE_INSENSITIVE_ORDER.compare(c1.name, c2.name);
         }
     };
@@ -180,13 +178,11 @@ public class HelpCategory implements HelpItem {
             Terminal.println(StringUtil.formatParagraphs(para, 0, 4, Terminal.MAXLINE));
             Terminal.println("");
 
-            Collection c = options.getAllOptions();
-            List l = Collections.list(Collections.enumeration(c));
+            Collection<Option> c = options.getAllOptions();
+            List<Option> l = Collections.list(Collections.enumeration(c));
             Collections.sort(l, Option.COMPARATOR);
 
-            Iterator i = l.iterator();
-            while (i.hasNext()) {
-                Option opt = (Option) i.next();
+            for (Option opt : l) {
                 opt.printHelp();
             }
 
@@ -197,9 +193,9 @@ public class HelpCategory implements HelpItem {
     private class ListSection extends Section {
         final String title;
         final String para;
-        final List list;
+        final List<HelpItem> list;
 
-        ListSection(String t, String p, List l) {
+        ListSection(String t, String p, List<HelpItem> l) {
             title = t;
             para = p;
             list = l;
@@ -214,9 +210,7 @@ public class HelpCategory implements HelpItem {
             Terminal.println(StringUtil.formatParagraphs(para, 0, 4, Terminal.MAXLINE));
             Terminal.println("");
 
-            Iterator i = list.iterator();
-            while (i.hasNext()) {
-                HelpItem hi = (HelpItem) i.next();
+            for (HelpItem hi : list) {
                 hi.printHelp();
             }
 
@@ -234,7 +228,7 @@ public class HelpCategory implements HelpItem {
     public HelpCategory(String name, String help) {
         this.name = name;
         this.help = help;
-        this.sections = new LinkedList();
+        this.sections = new LinkedList<Section>();
     }
 
     /**
@@ -296,7 +290,7 @@ public class HelpCategory implements HelpItem {
      * @param para  a paragraph description of the section
      * @param l     a list of <code>HelpItem</code> instances that will be added to the end of the section
      */
-    public void addListSection(String title, String para, List l) {
+    public void addListSection(String title, String para, List<HelpItem> l) {
         sections.addLast(new ListSection(title, para, l));
     }
 
@@ -308,21 +302,17 @@ public class HelpCategory implements HelpItem {
      * @param para  a paragraph description of this section
      * @param l     a list of subcategories
      */
-    public void addSubcategorySection(String title, String para, List l) {
-        Iterator i = l.iterator();
-        LinkedList sl = new LinkedList();
-        while (i.hasNext()) {
-            HelpCategory hc = (HelpCategory) i.next();
+    public void addSubcategorySection(String title, String para, List<HelpCategory> l) {
+        LinkedList<HelpItem> sl = new LinkedList<HelpItem>();
+        for (HelpCategory hc : l) {
             sl.addLast(new SubcategoryItem(4, hc));
         }
         addListSection(title, para, sl);
     }
 
     public void addOptionValueSection(String title, String para, String optname, ClassMap optvals) {
-        LinkedList list = new LinkedList();
-        Iterator i = optvals.getSortedList().iterator();
-        while (i.hasNext()) {
-            String s = (String) i.next();
+        LinkedList<HelpItem> list = new LinkedList<HelpItem>();
+        for (String s : optvals.getSortedList()) {
             list.addLast(new ClassMapValueItem(4, optname, s, optvals));
         }
 
@@ -344,11 +334,8 @@ public class HelpCategory implements HelpItem {
      * The <code>printHelp()</code> method prints out all of the help sections in order for this category.
      */
     public void printHelp() {
-        Iterator i = sections.iterator();
-        while (i.hasNext()) {
-            Section s = (Section) i.next();
+        for (Section s : sections) {
             s.printHelp();
         }
     }
-
 }

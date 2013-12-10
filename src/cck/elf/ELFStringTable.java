@@ -48,7 +48,7 @@ import java.util.HashMap;
  */
 public class ELFStringTable {
 
-    protected final HashMap map;
+    protected final HashMap<Integer, String> map;
     protected final byte[] data;
 
     protected final ELFSectionHeaderTable.Entry32 entry;
@@ -63,7 +63,7 @@ public class ELFStringTable {
      */
     public ELFStringTable(ELFHeader header, ELFSectionHeaderTable.Entry32 entry) {
         data = new byte[entry.sh_size];
-        map = new HashMap();
+        map = new HashMap<Integer, String>();
         this.entry = entry;
     }
 

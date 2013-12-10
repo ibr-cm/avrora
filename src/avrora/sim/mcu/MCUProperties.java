@@ -44,15 +44,16 @@ public class MCUProperties {
 
     protected static final int BASE_ADDRESS = 32;
 
-    protected final HashMap pinAssignments;
+    protected final HashMap<String, Integer> pinAssignments;
     protected final RegisterLayout layout;
-    protected final HashMap interruptAssignments;
+    protected final HashMap<String,Integer> interruptAssignments;
     protected final String[] ioreg_name;
     protected final String[] interrupt_name;
 
     public final int num_interrupts;
 
-    protected MCUProperties(HashMap pa, RegisterLayout rl, HashMap inta, int ni) {
+    protected MCUProperties(HashMap<String, Integer> pa, RegisterLayout rl,
+            HashMap<String, Integer> inta, int ni) {
         pinAssignments = pa;
         layout = rl;
         interruptAssignments = inta;
@@ -69,21 +70,17 @@ public class MCUProperties {
     protected String[] initInterruptNames() {
         int max = getMax();
         String[] interrupt_name = new String[max+1];
-        Iterator i = interruptAssignments.keySet().iterator();
-        while ( i.hasNext() ) {
-            String s = (String)i.next();
-            Integer iv = (Integer)interruptAssignments.get(s);
-            interrupt_name[iv.intValue()] = s;
+        for (String s : interruptAssignments.keySet()) {
+            Integer iv = interruptAssignments.get(s);
+            interrupt_name[iv] = s;
         }
         return interrupt_name;
     }
 
     private int getMax() {
         int max = 0;
-        Iterator i = interruptAssignments.keySet().iterator();
-        while ( i.hasNext() ) {
-            String s = (String)i.next();
-            int v = ((Integer)interruptAssignments.get(s)).intValue();
+        for (String s : interruptAssignments.keySet()) {
+            int v = interruptAssignments.get(s);
             if ( max < v ) max = v;
         }
         return max;
@@ -107,10 +104,10 @@ public class MCUProperties {
      * @throws NoSuchElementException if the specified pin name does not have an assignment
      */
     public int getPin(String n) {
-        Integer i = (Integer)pinAssignments.get(n);
+        Integer i = pinAssignments.get(n);
         if ( i == null )
             throw new NoSuchElementException(StringUtil.quote(n)+" pin not found");
-        return i.intValue();
+        return i;
     }
 
     /**
@@ -152,10 +149,10 @@ public class MCUProperties {
      * @throws NoSuchElementException if the specified interrupt name does not have an assignment
      */
     public int getInterrupt(String n) {
-        Integer i = (Integer)interruptAssignments.get(n);
+        Integer i = interruptAssignments.get(n);
         if ( i == null )
             throw new NoSuchElementException(StringUtil.quote(n)+" interrupt not found");
-        return i.intValue();
+        return i;
     }
 
     /**

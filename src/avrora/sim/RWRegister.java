@@ -33,7 +33,6 @@
 package avrora.sim;
 
 import cck.util.Arithmetic;
-import cck.util.Util;
 import avrora.sim.state.AbstractRegisterView;
 import avrora.sim.state.RegisterView;
 

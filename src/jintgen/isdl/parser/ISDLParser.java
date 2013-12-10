@@ -1454,7 +1454,7 @@ public class ISDLParser implements ISDLParserConstants {
 
     public TypeRef Type() throws ParseException {
         Token t;
-        HashMap<String, List> dims = new HashMap<String, List>();
+        HashMap<String, List<Object>> dims = new HashMap<String, List<Object>>();
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
             case ADD:
             case SUB:
@@ -1479,7 +1479,7 @@ public class ISDLParser implements ISDLParserConstants {
 
     }
 
-    public void SignDimension(HashMap<String, List> dims) throws ParseException {
+    public void SignDimension(HashMap<String, List<Object>> dims) throws ParseException {
         Token s;
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
             case ADD:
@@ -1493,22 +1493,22 @@ public class ISDLParser implements ISDLParserConstants {
                 jj_consume_token(-1);
                 throw new ParseException();
         }
-        List l = new LinkedList();
+        List<Object> l = new LinkedList<Object>();
         l.add(s);
         dims.put("sign", l);
     }
 
-    public void SizeDimension(HashMap<String, List> dims) throws ParseException {
+    public void SizeDimension(HashMap<String, List<Object>> dims) throws ParseException {
         Token w;
         jj_consume_token(82);
         w = jj_consume_token(INTEGER_LITERAL);
-        List l = new LinkedList();
+        List<Object> l = new LinkedList<Object>();
         l.add(w);
         dims.put("size", l);
     }
 
-    public void TypesDimension(HashMap<String, List> dims, String n) throws ParseException {
-        List ty = new LinkedList();
+    public void TypesDimension(HashMap<String, List<Object>> dims, String n) throws ParseException {
+        List<Object> ty = new LinkedList<Object>();
         TypeRef tr;
         jj_consume_token(LESS);
         switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
@@ -2124,7 +2124,6 @@ public class ISDLParser implements ISDLParserConstants {
     private Token jj_scanpos, jj_lastpos;
     private int jj_la;
     public boolean lookingAhead = false;
-    private boolean jj_semLA;
     private int jj_gen;
     private final int[] jj_la1 = new int[66];
     private static int[] jj_la1_0;
@@ -2268,6 +2267,8 @@ public class ISDLParser implements ISDLParserConstants {
 
     private static final class LookaheadSuccess extends Error {
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     private final LookaheadSuccess jj_ls = new LookaheadSuccess();
@@ -2319,7 +2320,7 @@ public class ISDLParser implements ISDLParserConstants {
         else return (jj_ntk = jj_nt.kind);
     }
 
-    private Vector jj_expentries = new Vector();
+    private Vector<int[]> jj_expentries = new Vector<int[]>();
     private int[] jj_expentry;
     private int jj_kind = -1;
     private int[] jj_lasttokens = new int[100];
@@ -2333,8 +2334,8 @@ public class ISDLParser implements ISDLParserConstants {
             jj_expentry = new int[jj_endpos];
             System.arraycopy(jj_lasttokens, 0, jj_expentry, 0, jj_endpos);
             boolean exists = false;
-            for (Enumeration e = jj_expentries.elements(); e.hasMoreElements();) {
-                int[] oldentry = (int[])(e.nextElement());
+            for (Enumeration<int[]> e = jj_expentries.elements(); e.hasMoreElements();) {
+                int[] oldentry = (e.nextElement());
                 if (oldentry.length == jj_expentry.length) {
                     exists = true;
                     for (int i = 0; i < jj_expentry.length; i++) {
@@ -2388,7 +2389,7 @@ public class ISDLParser implements ISDLParserConstants {
         jj_add_error_token(0, 0);
         int[][] exptokseq = new int[jj_expentries.size()][];
         for (int i = 0; i < jj_expentries.size(); i++) {
-            exptokseq[i] = (int[])jj_expentries.elementAt(i);
+            exptokseq[i] = jj_expentries.elementAt(i);
         }
         return new ParseException(token, exptokseq, tokenImage);
     }

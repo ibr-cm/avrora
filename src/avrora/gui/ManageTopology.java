@@ -33,6 +33,8 @@
 package avrora.gui;
 
 import avrora.sim.Simulation;
+import avrora.sim.Simulation.GuiMonitor;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -102,7 +104,7 @@ public class ManageTopology {
      * a change has been made.
      */
     public void createSimpleAirTable() {
-        Vector columnNames = new Vector();
+        Vector<String> columnNames = new Vector<String>();
         
         //Here are the column ID's
         columnNames.add("Node ID");
@@ -114,19 +116,22 @@ public class ManageTopology {
         table = new JTable(theModel);
         
         //fill the table with all the data from AvroraGui
-        Iterator ni = AvroraGui.instance.getSimulation().getNodeIterator();
+        Iterator<Simulation.Node> ni = AvroraGui.instance.getSimulation().getNodeIterator();
         while ( ni.hasNext() ) {
-            Simulation.Node currentNode = (Simulation.Node)ni.next();
-            Vector tempVector = new Vector();
+            Simulation.Node currentNode = ni.next();
+            Vector<Comparable<?>> tempVector = new Vector<Comparable<?>>();
             tempVector.add(new Integer(currentNode.id));
             tempVector.add(currentNode.getProgram().getName());
-            Iterator i = currentNode.getMonitors().iterator();
             StringBuffer mstrBuffer = new StringBuffer(100);
-            while ( i.hasNext() ) {
-                mstrBuffer.append(i.next());
-                if ( i.hasNext() ) {
+            boolean useComma = false;
+            for (GuiMonitor gm : currentNode.getGuiMonitors()) {
+                if (useComma) {
                     mstrBuffer.append(",");
                 }
+                else {
+                    useComma = true;
+                }
+                mstrBuffer.append(gm);
             }
             tempVector.add(mstrBuffer.toString());
             theModel.addRow(tempVector);

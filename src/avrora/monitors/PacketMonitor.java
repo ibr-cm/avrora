@@ -65,7 +65,7 @@ public class PacketMonitor extends MonitorFactory {
             "start symbol of packet data in order to display both the preamble, start " +
             "symbol, and packet contents.");
 
-    protected List monitors = new LinkedList();
+    protected List<Mon> monitors = new LinkedList<Mon>();
 
     class Mon implements Monitor, Medium.Probe {
         char[] bufferData;
@@ -287,9 +287,7 @@ public class PacketMonitor extends MonitorFactory {
                 else Terminal.printGreen("Node     sent (b/p)          recv (b/p)    corrupted (b)");
                 Terminal.nextln();
                 TermUtil.printThinSeparator();
-                Iterator i = monitors.iterator();
-                while (i.hasNext()) {
-                    Mon mon = (Mon)i.next();
+                for (Mon mon : monitors) {
                     Terminal.print(StringUtil.rightJustify(mon.simulator.getID(), 4));
                     Terminal.print(StringUtil.rightJustify(mon.bytesTransmitted, 10));
                     Terminal.print(" / ");

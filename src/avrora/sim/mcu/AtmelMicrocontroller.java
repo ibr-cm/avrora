@@ -38,14 +38,9 @@ import avrora.sim.InterruptTable.Notification;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.clock.MainClock;
 import avrora.sim.mcu.ATMegaFamily.FlagRegister;
-import avrora.sim.mcu.DefaultMCU.Pin;
-import avrora.sim.mcu.Microcontroller.Pin.Input;
-import avrora.sim.state.BooleanView;
 import avrora.sim.state.RegisterUtil.BitRangeView;
 import cck.text.Printer;
-import cck.text.StringUtil;
 import java.util.HashMap;
-import java.util.NoSuchElementException;
 
 /**
  * The <code>AtmelMicrocontroller</code> class represents the common functionality among microcontrollers
@@ -62,7 +57,7 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
 
     public final AVRProperties properties;
 
-    protected final HashMap devices;
+    protected final HashMap<String, AtmelInternalDevice> devices;
     public static final int MODE_ACTIVE = 0;
 
     /**
@@ -99,7 +94,7 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
         super(cd, p.num_pins, p.getRegisterLayout().instantiate(), fsm);
         mainClock = cd.getMainClock();
         properties = p;
-        devices = new HashMap();
+        devices = new HashMap<String, AtmelInternalDevice>();
     }
 
     /**
@@ -142,27 +137,27 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
      * @return a reference to the internal device if it exists; null otherwise
      */
     public AtmelInternalDevice getDevice(String name) {
-        return (AtmelInternalDevice)devices.get(name);
+        return devices.get(name);
     }
 
-    public static void addPin(HashMap pinMap, int p, String n) {
+    public static void addPin(HashMap<String, Integer> pinMap, int p, String n) {
         pinMap.put(n, new Integer(p));
     }
 
-    public static void addPin(HashMap pinMap, int p, String n1, String n2) {
+    public static void addPin(HashMap<String, Integer> pinMap, int p, String n1, String n2) {
         Integer i = new Integer(p);
         pinMap.put(n1, i);
         pinMap.put(n2, i);
     }
 
-    public static void addPin(HashMap pinMap, int p, String n1, String n2, String n3) {
+    public static void addPin(HashMap<String, Integer> pinMap, int p, String n1, String n2, String n3) {
         Integer i = new Integer(p);
         pinMap.put(n1, i);
         pinMap.put(n2, i);
         pinMap.put(n3, i);
     }
 
-    public static void addPin(HashMap pinMap, int p, String n1, String n2, String n3, String n4) {
+    public static void addPin(HashMap<String, Integer> pinMap, int p, String n1, String n2, String n3, String n4) {
         Integer i = new Integer(p);
         pinMap.put(n1, i);
         pinMap.put(n2, i);
@@ -227,7 +222,7 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
 
 
 
-    public static void addInterrupt(HashMap iMap, String n, int i) {
+    public static void addInterrupt(HashMap<String, Integer> iMap, String n, int i) {
         iMap.put(n, new Integer(i));
     }
 

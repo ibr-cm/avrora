@@ -32,8 +32,6 @@
 
 package avrora.syntax;
 
-import cck.parser.AbstractParseException;
-
 
 /**
  * The <code>AbstractParser</code> is a superclass of all parsers introduced to give multiple JavaCC-generated

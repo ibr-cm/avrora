@@ -34,6 +34,8 @@ package avrora.gui;
 
 import avrora.sim.Simulation;
 import cck.util.ClassMap;
+import cck.util.Option;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,11 +49,11 @@ import java.util.List;
 public class GUIDefaults {
 
     static final ClassMap monitorMap; // map of default MonitorFactory's for GUI
-    static final List options;
+    static final List<Option> options;
 
     static {
-        monitorMap = new ClassMap("Monitor", Simulation.Monitor.class);  //for regular monitors
-        options = new LinkedList();
+        monitorMap = new ClassMap("Monitor", Simulation.GuiMonitor.class);  //for regular monitors
+        options = new LinkedList<Option>();
 
         addNewMonitorType("Stack monitor", new VisualStackMonitor());
     }
@@ -60,15 +62,15 @@ public class GUIDefaults {
         monitorMap.addInstance(n, o);
     }
 
-    public static List getMonitorList() {
+    public static List<String> getMonitorList() {
         return monitorMap.getSortedList();
     }
 
-    public static List getOptionList() {
+    public static List<Option> getOptionList() {
         return options;
     }
 
-    public static Simulation.Monitor getMonitor(String name) {
-        return (Simulation.Monitor)monitorMap.getObjectOfClass(name);
+    public static Simulation.GuiMonitor getMonitor(String name) {
+        return (Simulation.GuiMonitor)monitorMap.getObjectOfClass(name);
     }
 }

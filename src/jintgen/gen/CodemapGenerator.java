@@ -88,11 +88,8 @@ public class CodemapGenerator extends Generator {
         sgen.lastblock = -1;
         egen.operands = new HashMap<String, Operand>();
 
-        int regcount = 0;
-        int immcount = 0;
         for ( AddrModeDecl.Operand o : d.getOperands() ) {
             Operand op = new Operand();
-            OperandTypeDecl ot = o.getOperandType();
             op.name = o.name.image;
             egen.operands.put(o.name.toString(), op);
         }
@@ -221,7 +218,8 @@ public class CodemapGenerator extends Generator {
             throw Util.unimplemented();
         }
 
-        private void generate(String clname, Object o1, Object o2, Object o3, Object o4) {
+        // unused
+/*        private void generate(String clname, Object o1, Object o2, Object o3, Object o4) {
             printer.print("stmt = new " + clname + '(');
             generate(o1);
             printer.print(", ");
@@ -232,7 +230,7 @@ public class CodemapGenerator extends Generator {
             generate(o4);
             printer.println(");");
         }
-
+*/
         private void generate(String clname, Object o1, Object o2, Object o3) {
             printer.print("stmt = new " + clname + '(');
             generate(o1);
@@ -243,14 +241,15 @@ public class CodemapGenerator extends Generator {
             printer.println(");");
         }
 
-        private void generate(String clname, Object o1, Object o2) {
+        // unused
+/*        private void generate(String clname, Object o1, Object o2) {
             printer.print("stmt = new " + clname + '(');
             generate(o1);
             printer.print(", ");
             generate(o2);
             printer.println(");");
         }
-
+*/
         private void generate(Object o) {
             if (o instanceof Expr)
                 ((Expr)o).accept(egen);
@@ -260,9 +259,11 @@ public class CodemapGenerator extends Generator {
                 printer.print(o.toString());
         }
 
-        private void generate(int i) {
+        // unused
+/*        private void generate(int i) {
             printer.print("" + i);
         }
+*/    
     }
 
     protected class ExprGenerator implements CodeVisitor {

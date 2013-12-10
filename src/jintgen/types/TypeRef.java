@@ -58,7 +58,7 @@ public class TypeRef implements Typeable {
      * The <code>dimensions</code> field stores a reference to a map that contains, for
      * each dimension, the values of the parameters to that dimension.
      */
-    protected final HashMap<String, List> dimensions;
+    protected final HashMap<String, List<Object>> dimensions;
 
     /**
      * The <code>typeCon</code> field stores a reference to the type constructor for
@@ -81,7 +81,7 @@ public class TypeRef implements Typeable {
      */
     public TypeRef(AbstractToken n) {
         tcName = n;
-        dimensions = new HashMap<String, List>();
+        dimensions = new HashMap<String, List<Object>>();
     }
 
     /**
@@ -89,9 +89,10 @@ public class TypeRef implements Typeable {
      * that refers to the specified type constructor.
      * @param n a token that represents the name of the specified type constructor
      */
-    public TypeRef(AbstractToken n, HashMap<String, List> dimensions) {
+    @SuppressWarnings("unchecked")
+    public TypeRef(AbstractToken n, HashMap<String, List<Object>> dimensions) {
         tcName = n;
-        this.dimensions = (HashMap<String, List>)dimensions.clone();
+        this.dimensions = (HashMap<String, List<Object>>)dimensions.clone();
     }
 
     public TypeRef(Type t) {
@@ -99,11 +100,11 @@ public class TypeRef implements Typeable {
         typeCon = t.getTypeCon();
         tok.image = typeCon.getName();
         tcName = tok;
-        dimensions = new HashMap<String, List>();
+        dimensions = new HashMap<String, List<Object>>();
         type = t;
     }
 
-    public void addDimension(String name, List val) {
+    public void addDimension(String name, List<Object> val) {
         dimensions.put(name, val);
     }
 
@@ -125,7 +126,7 @@ public class TypeRef implements Typeable {
         boolean first = true;
         if (!dimensions.isEmpty() ) {
             buf.append('(');
-            for ( Map.Entry<String, List> e : dimensions.entrySet() ) {
+            for ( Map.Entry<String, List<Object>> e : dimensions.entrySet() ) {
                 if ( !first ) buf.append(", ");
                 buf.append(e.getKey());
                 buf.append(": ");

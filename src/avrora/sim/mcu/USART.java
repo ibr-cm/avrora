@@ -330,7 +330,7 @@ public class USART extends AtmelInternalDevice {
         }
 
         public byte read() {
-            if ( !true) UCSRnA_reg.RXC_flag.flag(false);
+            //if ( !true) UCSRnA_reg.RXC_flag.flag(false);
             //UCSRnA_reg.writeBit(RXCn, true);
             return receiveRegister.read();
         }
@@ -346,12 +346,12 @@ public class USART extends AtmelInternalDevice {
          */
         private class TwoLevelFIFO extends RWRegister {
 
-            LinkedList readyQueue;
-            LinkedList waitQueue;
+            LinkedList<USARTFrameWrapper> readyQueue;
+            LinkedList<USARTFrameWrapper> waitQueue;
 
             TwoLevelFIFO() {
-                readyQueue = new LinkedList();
-                waitQueue = new LinkedList();
+                readyQueue = new LinkedList<USARTFrameWrapper>();
+                waitQueue = new LinkedList<USARTFrameWrapper>();
                 waitQueue.add(new USARTFrameWrapper());
                 waitQueue.add(new USARTFrameWrapper());
                 waitQueue.add(new USARTFrameWrapper());
@@ -382,19 +382,18 @@ public class USART extends AtmelInternalDevice {
                 }
             }
 
-            protected void flush() {
+            // unused
+/*            protected void flush() {
                 while (!waitQueue.isEmpty()) {
                     // empty the wait queue. fill the ready queue.
                     readyQueue.add(waitQueue.removeLast());
                 }
             }
-
+*/
             private class USARTFrameWrapper {
                 Frame frame;
             }
-
         }
-
     }
 
     /**
@@ -462,12 +461,11 @@ public class USART extends AtmelInternalDevice {
         final RegisterView _umsel = RegisterUtil.bitView(this, UMSELn);
 
         public int getFrameSize() {
-            if (false) {
+            /*if (false) {
                 int indx = (UCSRnB_reg._ucszHigh.getValue() << 2) | _ucszLow.getValue();
                 return FRAME_SIZE[indx];
-            } else {
-                return 8;
-            }
+            } */
+            return 8;
         }
 
         public int getStopBits() {

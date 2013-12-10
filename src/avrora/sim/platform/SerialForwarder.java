@@ -146,7 +146,7 @@ public class SerialForwarder implements USART.USARTDevice {
 
     public USART.Frame transmitFrame() {
         try {
-            int len = in.read(data, 0, 1);
+            in.read(data, 0, 1);
             return new USART.Frame(data[0], false, 8);
         } catch (IOException e) {
             throw Util.unexpected(e);

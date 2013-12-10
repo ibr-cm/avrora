@@ -35,7 +35,6 @@
 package avrora.sim.util;
 
 import avrora.sim.Simulator;
-import avrora.sim.output.*;
 import avrora.sim.clock.Clock;
 import cck.text.*;
 import cck.util.TimeUtil;

@@ -35,8 +35,8 @@
 package avrora.actions;
 
 import avrora.Main;
-import avrora.arch.AbstractArchitecture;
-import avrora.arch.AbstractDisassembler;
+//import avrora.arch.AbstractArchitecture;
+//import avrora.arch.AbstractDisassembler;
 import avrora.syntax.elf.ELFParser;
 import cck.util.Util;
 
@@ -60,7 +60,8 @@ public class NewSimAction extends Action {
         Main.checkFileExists(fn);
         ELFParser loader = new ELFParser();
         loader.options.process(options);
-        AbstractArchitecture arch = loader.getArchitecture();
-        AbstractDisassembler d = arch.getDisassembler();
+        // commented out to remove compiler warnings. Class is incomplete anyway. 
+//        AbstractArchitecture arch = loader.getArchitecture();
+//        AbstractDisassembler d = arch.getDisassembler();
     }
 }

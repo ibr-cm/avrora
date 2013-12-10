@@ -52,18 +52,15 @@ public class SourceMapping {
      * The <code>program</code> field stores a reference to the program for this source mapping.
      */
     protected final Program program;
-    protected final HashMap labels;
-    protected final HashMap reverseMap;
+    protected final HashMap<String, Location> labels;
+    protected final HashMap<Integer, String> reverseMap;
 
     /**
      * The <code>LOCATION_COMPARATOR</code> comparator is used in order to sort locations
      * in the program from lowest address to highest address.
      */
-    public static Comparator LOCATION_COMPARATOR = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            Location l1 = (Location)o1;
-            Location l2 = (Location)o2;
-
+    public static Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
+        public int compare(Location l1, Location l2) {
             if (l1.lma_addr == l2.lma_addr) {
                 if (l1.name == null) return 1;
                 if (l2.name == null) return -1;
@@ -156,7 +153,7 @@ public class SourceMapping {
      * @return a string representation of the address as a label or a hexadecimal string
      */
     public String getName(int address) {
-        String s = (String)reverseMap.get(new Integer(address));
+        String s = reverseMap.get(new Integer(address));
         return s == null ? StringUtil.addrToString(address) : s;
     }
 
@@ -167,8 +164,8 @@ public class SourceMapping {
      */
     public SourceMapping(Program p) {
         program = p;
-        labels = new HashMap();
-        reverseMap = new HashMap();
+        labels = new HashMap<String, Location>();
+        reverseMap = new HashMap<Integer, String>();
     }
 
     /**
@@ -194,7 +191,7 @@ public class SourceMapping {
             int val = StringUtil.evaluateIntegerLiteral(name);
             return new Location(null, null, val, val);
         }
-        return (Location)labels.get(name);
+        return labels.get(name);
     }
 
     /**
@@ -216,7 +213,7 @@ public class SourceMapping {
      * in this source mapping.
      * @return an iterator that will allow iterating over all of the labels in this source mapping
      */
-    public Iterator getIterator() {
+    public Iterator<Location> getIterator() {
         return labels.values().iterator();
     }
 }

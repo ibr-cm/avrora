@@ -50,7 +50,7 @@ public class SignDimension extends TypeCon.Dimension {
         super("sign");
     }
 
-    public Object build(TypeEnv te, List params) {
+    public Object build(TypeEnv te, List<Object> params) {
         boolean signed = true;
         if ( params.size() > 1) throw Util.failure("sign type dimension expects 0 or 1 parameters");
         if ( params.size() == 1 ) {

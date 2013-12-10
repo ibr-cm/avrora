@@ -40,20 +40,20 @@ import avrora.sim.output.SimPrinter;
 import cck.text.StringUtil;
 import cck.text.Terminal;
 import cck.util.Option;
+import cck.util.Options;
 import cck.util.Util;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.HashMap;
 
 /**
  * The <code>GDBServer</code> class implements a monitor that can communicate to gdb via
  * the remote serial protocol (RSP). This allows Avrora to host a program that is executing
  * but is being remotely debugged by gdb. This can all be done without modifications to the
  * <code>Simulator</code> class, by simply using probes, watches, and events.
- *
- * NOTE: This monitor is only meant for a single node simulation!
  *
  * @author Ben L. Titzer
  */
@@ -64,10 +64,13 @@ public class GDBServer extends MonitorFactory {
             "send commands to Avrora. This allows gdb to be used as a front end for debugging a program " +
             "running inside of Avrora.";
 
-    private final Option.Long PORT = newOption("port", 10001,
-            "This option specifies the port on which the GDB server will listen for a connection from " +
-            "the GDB front-end.");
+    private final Option.List PORTS = newOptionList("port", "10001",
+            "This option specifies the ports on which the GDB server will listen for a connection from " +
+            "the GDB front-end. If only a port number is given, it allows to control node 0. Using a list " +
+            "($node:$port,$node:$port,...) the control port for each node can be specified.");
 
+    HashMap<Integer, Integer> portMap;
+    
     /**
      * The <code>GDBMonitor</code> class implements a monitor that can interactively debug
      * a program that is running in Avrora. It uses the remote serial protocol of GDB to run
@@ -531,7 +534,7 @@ public class GDBServer extends MonitorFactory {
                 if (printer != null) {
                     printer.println("--IN STARTUP PROBE @ "+StringUtil.addrToString(pc)+"--");
                 }
-                Terminal.println("GDBServer listening on port "+port+"...");
+                Terminal.println("GDBServer for node " + simulator.getID() + " listening on port " + port + "...");
                 Terminal.flush();
                 try {
                     socket = serverSocket.accept();
@@ -597,6 +600,38 @@ public class GDBServer extends MonitorFactory {
      */
     public GDBServer() {
         super(HELP);
+        portMap = new HashMap<Integer, Integer>();
+    }
+
+    public void processOptions(Options o) {
+        super.processOptions(o);
+        // check if it is a single number
+        try {
+            Integer port = Integer.valueOf(PORTS.stringValue());
+            portMap.put(new Integer(0), port);
+            return;
+        }
+        catch (NumberFormatException nfe) {
+            // just ignore and go on
+        }
+        // try to parse it as a list
+        for (String pid : PORTS.get()) {
+            String[] str = pid.split(":");
+            if ( str.length != 2 )
+                Util.userError("Format error in \"port\" option");
+            Integer nid = Integer.valueOf(str[0]);
+            Integer port = Integer.valueOf(str[1]);
+            portMap.put(nid, port);
+        }
+    }
+    
+    /**
+      * Dummy monitor for all nodes that should not be controled by GDB
+      */
+    protected class EmptyMonitor implements Monitor {
+        public void report() {
+            // do nothing.
+        }
     }
 
     /**
@@ -607,6 +642,15 @@ public class GDBServer extends MonitorFactory {
      * @return a new <code>Monitor</code> instance for the specified simulator
      */
     public Monitor newMonitor(Simulator s) {
-        return new GDBMonitor(s, (int)PORT.get());
+        // get port for this node
+        Integer port = (Integer)portMap.get(new Integer(s.getID()));
+        if (port == null) {
+            // no port given, install empty monitor
+            return new EmptyMonitor();
+        }
+        else {
+            return new GDBMonitor(s, port.intValue());
+        }
     }
 }
+

@@ -48,8 +48,8 @@ import java.util.List;
  */
 public class PredicateParser {
 
-    public List parseInitializers(String init) throws Exception {
-        List inits = new LinkedList();
+    public List<Predicate> parseInitializers(String init) throws Exception {
+        List<Predicate> inits = new LinkedList<Predicate>();
         CharacterIterator i = new StringCharacterIterator(init);
         while (true) {
             StringUtil.skipWhiteSpace(i);
@@ -65,8 +65,8 @@ public class PredicateParser {
         return inits;
     }
 
-    public List parseResult(String result) throws Exception {
-        List predicates = new LinkedList();
+    public List<Predicate> parseResult(String result) throws Exception {
+        List<Predicate> predicates = new LinkedList<Predicate>();
         CharacterIterator i = new StringCharacterIterator(result);
         while (true) {
             Predicate s = readPredicate(i);

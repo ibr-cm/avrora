@@ -45,8 +45,6 @@ public class ExprList extends ASTNode {
 
     public ExprItem head, tail;
 
-    private int length;
-
     public class ExprItem {
 
         public final Expr expr;
@@ -72,8 +70,6 @@ public class ExprList extends ASTNode {
             tail.next = new ExprItem(e);
             tail = tail.next;
         }
-
-        length++;
     }
 
 }

@@ -35,9 +35,7 @@ package avrora.sim.output;
 
 import avrora.sim.Simulator;
 import avrora.sim.util.SimUtil;
-import cck.text.Verbose;
 import cck.text.Terminal;
-import cck.util.Util;
 
 /**
  * The <code>Simulator.Printer</code> class is a printer that is tied to a specific <code>Simulator</code>

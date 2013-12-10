@@ -51,7 +51,7 @@ public class SizeDimension extends TypeCon.Dimension {
         super("size");
     }
 
-    public Object build(TypeEnv te, List params) {
+    public Object build(TypeEnv te, List<Object> params) {
         int size;
         int len = params.size();
         if ( len != 1) throw Util.failure("size type dimension expects 1 parameter");

@@ -64,7 +64,7 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class Defaults {
-    private static final HashMap mainCategories = new HashMap();
+    private static final HashMap<String, HelpCategory> mainCategories = new HashMap<String, HelpCategory>();
 
     private static ClassMap microcontrollers;
     private static ClassMap platforms;
@@ -350,7 +350,7 @@ public class Defaults {
      *
      * @return a sorted list of known actions
      */
-    public static List getActionList() {
+    public static List<String> getActionList() {
         addActions();
         return actions.getSortedList();
     }
@@ -361,17 +361,15 @@ public class Defaults {
      *
      * @return a sorted list of known program readers
      */
-    public static List getProgramReaderList() {
+    public static List<String> getProgramReaderList() {
         addInputFormats();
         return inputs.getSortedList();
     }
 
     public static void addSubCategories(ClassMap vals) {
-        List l = vals.getSortedList();
-        Iterator i = l.iterator();
-        while (i.hasNext()) {
-            String val = (String) i.next();
-            Class cz = vals.getClass(val);
+        List<String> l = vals.getSortedList();
+        for (String val : l) { 
+            Class<?> cz = vals.getClass(val);
             if (HelpCategory.class.isAssignableFrom(cz))
                 HelpSystem.addCategory(val, cz);
         }
@@ -387,20 +385,18 @@ public class Defaults {
         return HelpSystem.getCategory(name);
     }
 
-    public static List getMainCategories() {
+    public static List<HelpCategory> getMainCategories() {
         addAll();
-        List list = Collections.list(Collections.enumeration(mainCategories.values()));
+        List<HelpCategory> list = Collections.list(Collections.enumeration(mainCategories.values()));
         Collections.sort(list, HelpCategory.COMPARATOR);
         return list;
     }
 
-    public static List getAllCategories() {
+    public static List<HelpCategory> getAllCategories() {
         addAll();
-        List l = HelpSystem.getSortedList();
-        LinkedList nl = new LinkedList();
-        Iterator i = l.iterator();
-        while ( i.hasNext() ) {
-            String s = (String)i.next();
+        List<String> l = HelpSystem.getSortedList();
+        LinkedList<HelpCategory> nl = new LinkedList<HelpCategory>();
+        for (String s : l) {
             nl.addLast(HelpSystem.getCategory(s));
         }
         return nl;

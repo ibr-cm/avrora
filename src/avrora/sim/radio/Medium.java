@@ -58,7 +58,7 @@ public class Medium {
 
     public interface Arbitrator {
         public boolean lockTransmission(Receiver receiver, Transmission tran, int Milliseconds);
-        public char mergeTransmissions(Receiver receiver, List trans, long bit, int Milliseconds);
+        public char mergeTransmissions(Receiver receiver, List<Medium.Transmission> trans, long bit, int Milliseconds);
         public double computeReceivedPower(Medium.Transmission t, Medium.Receiver receiver, int Milliseconds);
         public int getNoise(int index);
     }
@@ -371,16 +371,14 @@ public class Medium {
              * @param oneBitBeforeNow
              */
             private void deliverByte(long oneBitBeforeNow) {
-                List it = getIntersection(oneBitBeforeNow - BYTE_SIZE);
+                List<Transmission> it = getIntersection(oneBitBeforeNow - BYTE_SIZE);
                 if (it != null) {//there is a transmission
                     boolean one = false;
                     double rssi = 0.0;
                     double SNR = 0;
                     double BER = 0;
                     assert it.size() > 0;
-                    Iterator i = it.iterator();
-                    while (i.hasNext()) {
-                        Transmission t = (Transmission) i.next();
+                    for (Transmission t : it) {
                         if (one) {//more than one transmission
                             double I = medium.arbitrator.computeReceivedPower(t, Receiver.this, (int) clock.cyclesToMillis(clock.getCount()));
                             //add interference to received power in linear scale
@@ -441,7 +439,7 @@ public class Medium {
                 long time = clock.getCount();
                 long bit = getBitNum(time) - BIT_DELAY; // there is a one bit delay
                 waitForNeighbors(time - cyclesPerByte);
-                List it = getIntersection(bit - BYTE_SIZE);
+                List<Transmission> it = getIntersection(bit - BYTE_SIZE);
                 if (it != null) { //if there is a transmission
                     //There are 3 modes (ED, 802.15.4 compliant detection, both)
                     int cca_mode = (MDMCTRL0_reg & 0x00c0) >>> 6;
@@ -450,9 +448,7 @@ public class Medium {
                         boolean one = false;
                         double rssi = 0.0;
                         assert it.size() > 0;
-                        Iterator i = it.iterator();
-                        while (i.hasNext()) {
-                            Transmission t = (Transmission) i.next();
+                        for (Transmission t : it) {
                             if (one) {//more than one transmission
                                 double I = medium.arbitrator.computeReceivedPower(t, Receiver.this, (int) clock.cyclesToMillis(clock.getCount()));
                                 //add interference to received power in linear scale
@@ -487,9 +483,9 @@ public class Medium {
         private Transmission earliestNewTransmission(long bit) {
             Transmission tx = null;
             synchronized (medium) {
-                Iterator i = medium.transmissions.iterator();
+                Iterator<Transmission> i = medium.transmissions.iterator();
                 while (i.hasNext()) {
-                    Transmission t = (Transmission) i.next();
+                    Transmission t = i.next();
                     if (bit <= t.firstBit && medium.arbitrator.lockTransmission(Receiver.this, t, (int) clock.cyclesToMillis(clock.getCount()))) {
                         if (tx == null) tx = t;
                         else if (t.firstBit < tx.firstBit) tx = t;
@@ -508,14 +504,12 @@ public class Medium {
          * @param bit time in which calculate if tx intersect (oneBitBeforeNow - BYTE_SIZE)
          * @return it representing the list of transmissions that intersect
          */
-        private List getIntersection(long bit) {
-            List it = null;
+        private List<Transmission> getIntersection(long bit) {
+            List<Transmission> it = null;
             synchronized (medium) {
-                Iterator i = medium.transmissions.iterator();
-                while (i.hasNext()) {
-                    Transmission t = (Transmission) i.next();
+                for (Transmission t : medium.transmissions) {
                     if (intersect(bit, t)) {
-                        if (it == null) it = new LinkedList();
+                        if (it == null) it = new LinkedList<Transmission>();
                         it.add(t);
                     }
                 }
@@ -545,13 +539,13 @@ public class Medium {
             return true;
         }
 
-        public char mergeTransmissions(Receiver receiver, List it, long bit, int Milliseconds) {
+        public char mergeTransmissions(Receiver receiver, List<Transmission> it, long bit, int Milliseconds) {
             assert it.size() > 0;
-            Iterator i = it.iterator();
-            Transmission first = (Transmission) i.next();
+            Iterator<Transmission> i = it.iterator();
+            Transmission first = i.next();
             int value = 0xff & first.getByteAtTime(bit);
             while (i.hasNext()) {
-                Transmission next = (Transmission) i.next();
+                Transmission next = i.next();
                 int nval = 0xff & next.getByteAtTime(bit);
                 value |= (nval << 8) ^ (value << 8); // compute corrupted bits
                 value |= nval;
@@ -647,7 +641,7 @@ public class Medium {
     public final int minLength;
     public final int maxLength;
 
-    protected List transmissions = new LinkedList();
+    protected List<Transmission> transmissions = new LinkedList<Transmission>();
 
     /**
      * The constructor for the <code>Medium</code> class creates a new shared transmission

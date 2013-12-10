@@ -36,7 +36,6 @@ import avrora.arch.avr.AVRProperties;
 import avrora.sim.*;
 import avrora.sim.clock.ClockDomain;
 import cck.util.Arithmetic;
-import cck.util.Util;
 
 /**
  * The <code>ATMegaFamily</code> class encapsulates much of the common functionality among the

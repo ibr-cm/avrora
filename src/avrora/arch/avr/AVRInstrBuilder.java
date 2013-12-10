@@ -6,7 +6,7 @@ public abstract class AVRInstrBuilder {
 
     public abstract AVRInstr build(int size, AVRAddrMode am);
 
-    static final HashMap builders = new HashMap();
+    static final HashMap<String, AVRInstrBuilder> builders = new HashMap<String, AVRInstrBuilder>();
 
     static AVRInstrBuilder add(String name, AVRInstrBuilder b) {
         builders.put(name, b);

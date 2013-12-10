@@ -43,19 +43,19 @@ import java.util.*;
  */
 public class ProbeTest {
 
-    final HashMap entities;
+    final HashMap<String, TestEntity> entities;
 
     Simulator simulator;
     SimPrinter printer;
     DeltaQueue eventqueue;
 
-    List mainCode;
-    final List expectedEvents;
-    List recordedEvents;
+    List<Stmt> mainCode;
+    final List<Event> expectedEvents;
+    List<Event> recordedEvents;
 
     ProbeTest() {
-        entities = new HashMap();
-        expectedEvents = new LinkedList();
+        entities = new HashMap<String, TestEntity>();
+        expectedEvents = new LinkedList<Event>();
     }
 
     class Event {
@@ -81,10 +81,10 @@ public class ProbeTest {
 
     public class TestProbe extends TestEntity implements Simulator.Probe {
 
-        List beforeStmts;
-        List afterStmts;
+        List<Stmt> beforeStmts;
+        List<Stmt> afterStmts;
 
-        TestProbe(String name, List b, List a) {
+        TestProbe(String name, List<Stmt> b, List<Stmt> a) {
             super(name);
             beforeStmts = b;
             afterStmts = a;
@@ -110,12 +110,12 @@ public class ProbeTest {
     }
 
     public class TestWatch extends TestEntity implements Simulator.Watch {
-        List beforeReadStmts;
-        List afterReadStmts;
-        List beforeWriteStmts;
-        List afterWriteStmts;
+        List<Stmt> beforeReadStmts;
+        List<Stmt> afterReadStmts;
+        List<Stmt> beforeWriteStmts;
+        List<Stmt> afterWriteStmts;
 
-        TestWatch(String name, List b1, List a1, List b2, List a2) {
+        TestWatch(String name, List<Stmt> b1, List<Stmt> a1, List<Stmt> b2, List<Stmt> a2) {
             super(name);
             beforeReadStmts = b1;
             afterReadStmts = a1;
@@ -153,9 +153,9 @@ public class ProbeTest {
     }
 
     public class TestEvent extends TestEntity implements Simulator.Event {
-        List fireStmts;
+        List<Stmt> fireStmts;
 
-        TestEvent(String name, List b) {
+        TestEvent(String name, List<Stmt> b) {
             super(name);
             fireStmts = b;
         }
@@ -228,10 +228,8 @@ public class ProbeTest {
         }
     }
 
-    protected void execute(List l) {
-        Iterator i = l.iterator();
-        while ( i.hasNext() ) {
-            Stmt s = (Stmt)i.next();
+    protected void execute(List<Stmt> l) {
+        for (Stmt s : l) {
             s.execute();
         }
     }
@@ -246,39 +244,49 @@ public class ProbeTest {
 
     //-- interface for building the test case
 
-    public void newProbe(Token name, List b, List a) {
-        TestEntity e = new TestProbe(name.image, b, a);
+    public void newProbe(Token name, List<Object> b, List<Object> a) {
+        TestEntity e = new TestProbe(name.image, toStmts(b), toStmts(a));
         entities.put(name.image, e);
     }
 
-    public void newWatch(Token name, List b1, List a1, List b2, List a2) {
-        TestEntity e = new TestWatch(name.image, b1, a1, b2, a2);
+    public void newWatch(Token name, List<Object> b1, List<Object> a1, List<Object> b2, List<Object> a2) {
+        TestEntity e = new TestWatch(name.image, toStmts(b1), toStmts(a1), toStmts(b2), toStmts(a2));
         entities.put(name.image, e);
     }
 
-    public void newEvent(Token name, List b) {
-        TestEntity e = new TestEvent(name.image, b);
+    public void newEvent(Token name, List<Object> b) {
+        TestEntity e = new TestEvent(name.image, toStmts(b));
         entities.put(name.image, e);
     }
 
-    public void addInsert(List l, Token n, Token v) {
+    public void addInsert(List<Object> l, Token n, Token v) {
         l.add(new InsertStmt(n.image, StringUtil.evaluateIntegerLiteral(v.image)));
     }
 
-    public void addRemove(List l, Token n, Token v) {
+    public void addRemove(List<Object> l, Token n, Token v) {
         l.add(new RemoveStmt(n.image, StringUtil.evaluateIntegerLiteral(v.image)));
     }
 
-    public void addAdvance(List l, Token v) {
+    public void addAdvance(List<Object> l, Token v) {
         l.add(new AdvanceStmt(StringUtil.evaluateIntegerLiteral(v.image)));
     }
 
-    public void addRun(List l) {
+    public void addRun(List<RunStmt> l) {
         l.add(new RunStmt());
     }
 
-    public void addMainCode(List l) {
-        mainCode = l;
+    public void addMainCode(List<Object> l) {
+        mainCode = toStmts(l);
+    }
+    
+    private static List<Stmt> toStmts(List<Object> list) {
+        List<Stmt> newList = new LinkedList<Stmt>();
+        for (Object o : list) {
+            if (o instanceof Stmt) {
+                newList.add((Stmt)o);
+            }
+        }
+        return newList;
     }
 
     public void addResultEvent(Token time, Token name) {
@@ -289,7 +297,7 @@ public class ProbeTest {
         simulator = s;
         printer = s.getPrinter("test.probes");
         eventqueue = null;
-        recordedEvents = new LinkedList();
+        recordedEvents = new LinkedList<Event>();
         execute(mainCode);
         s.start();
         match();
@@ -298,14 +306,14 @@ public class ProbeTest {
     public void run(DeltaQueue q) throws Exception {
         eventqueue = q;
         simulator = null;
-        recordedEvents = new LinkedList();
+        recordedEvents = new LinkedList<Event>();
         execute(mainCode);
         match();
     }
 
     public void match() throws Exception {
-        Iterator e = expectedEvents.iterator();
-        Iterator r = recordedEvents.iterator();
+        Iterator<Event> e = expectedEvents.iterator();
+        Iterator<Event> r = recordedEvents.iterator();
         int cntr = 1;
 
         while ( e.hasNext() ) {
@@ -339,6 +347,8 @@ public class ProbeTest {
     }
 
     public class Failure extends Exception {
+        
+        private static final long serialVersionUID = 1L;
         public final String reason;
 
         Failure(String s) {

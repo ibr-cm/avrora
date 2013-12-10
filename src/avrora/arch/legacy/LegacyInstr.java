@@ -163,6 +163,7 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      * restrictions imposed by the AVR instruction set architecture.
      */
     public static class InvalidOperand extends RuntimeException {
+        private static final long serialVersionUID = 1L;
         /**
          * The <code>number</code> field of the <code>InvalidOperand</code> instance records which operand
          * this error refers to. For example, if the first operand was the source of the problem, then this
@@ -184,6 +185,9 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      * this exception.
      */
     public static class InvalidRegister extends InvalidOperand {
+
+        private static final long serialVersionUID = 1L;
+
         /**
          * The <code>set</code> field records the expected register set for the operand.
          */
@@ -210,6 +214,8 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      * specified operand is not in the range, then this exception will be thrown.
      */
     public static class InvalidImmediate extends InvalidOperand {
+
+        private static final long serialVersionUID = 1L;
 
         /**
          * The <code>low</code> field stores the lowest value that is allowed for this operand.
@@ -241,6 +247,8 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      */
     public static class RegisterRequired extends RuntimeException {
 
+        private static final long serialVersionUID = 1L;
+        
         public final LegacyOperand operand;
 
         RegisterRequired(LegacyOperand o) {
@@ -255,6 +263,8 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      */
     public static class ImmediateRequired extends RuntimeException {
 
+        private static final long serialVersionUID = 1L;
+        
         public final LegacyOperand operand;
 
         ImmediateRequired(LegacyOperand o) {
@@ -269,6 +279,9 @@ public abstract class LegacyInstr implements LegacyInstrProto, AbstractInstr {
      * instruction.
      */
     public static class WrongNumberOfOperands extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+        
         public final int expected;
         public final int found;
 

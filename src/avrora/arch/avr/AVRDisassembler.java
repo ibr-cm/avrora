@@ -16,6 +16,8 @@ public class AVRDisassembler implements AbstractDisassembler {
 
     public static class InvalidInstruction extends Exception {
 
+        private static final long serialVersionUID = 1L;
+
         InvalidInstruction(int pc) {
             super("Invalid instruction at " + pc);
         }

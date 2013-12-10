@@ -29,7 +29,7 @@ public class ProbeParser implements ProbeParserConstants {
   }
 
   public void Main(ProbeTest pt) throws ParseException {
-                           List l;
+                           List<Object> l;
     jj_consume_token(MAIN);
     jj_consume_token(LBRACKET);
     l = Body(pt);
@@ -90,8 +90,8 @@ public class ProbeParser implements ProbeParserConstants {
     }
   }
 
-  public List Body(ProbeTest pt) throws ParseException {
-                            List l = new LinkedList();
+  public List<Object> Body(ProbeTest pt) throws ParseException {
+                            List<Object> l = new LinkedList<Object>();
     label_4:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -110,7 +110,7 @@ public class ProbeParser implements ProbeParserConstants {
 
   }
 
-  public void Statement(ProbeTest pt, List l) throws ParseException {
+  public void Statement(ProbeTest pt, List<Object> l) throws ParseException {
                                          Token n, v;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case INSERT:
@@ -138,7 +138,7 @@ public class ProbeParser implements ProbeParserConstants {
   }
 
   public void ProbeDeclaration(ProbeTest pt) throws ParseException {
-                                       Token n; List b, a;
+                                       Token n; List<Object> b, a;
     jj_consume_token(PROBE);
     n = jj_consume_token(IDENTIFIER);
     jj_consume_token(LBRACKET);
@@ -150,7 +150,7 @@ public class ProbeParser implements ProbeParserConstants {
   }
 
   public void WatchDeclaration(ProbeTest pt) throws ParseException {
-                                       Token n; List b1, a1, b2, a2;
+                                       Token n; List<Object> b1, a1, b2, a2;
     jj_consume_token(WATCH);
     n = jj_consume_token(IDENTIFIER);
     jj_consume_token(LBRACKET);
@@ -166,7 +166,7 @@ public class ProbeParser implements ProbeParserConstants {
   }
 
   public void EventDeclaration(ProbeTest pt) throws ParseException {
-                                       Token n; List b;
+                                       Token n; List<Object> b;
     jj_consume_token(EVENT);
     n = jj_consume_token(IDENTIFIER);
     jj_consume_token(LBRACKET);
@@ -279,7 +279,7 @@ public class ProbeParser implements ProbeParserConstants {
       return (jj_ntk = jj_nt.kind);
   }
 
-  private Vector jj_expentries = new Vector();
+  private Vector<int[]> jj_expentries = new Vector<int[]>();
   private int[] jj_expentry;
   private int jj_kind = -1;
 

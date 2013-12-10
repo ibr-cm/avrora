@@ -50,9 +50,9 @@ import java.util.*;
  */
 public class Module implements Context {
 
-    public final HashMap definitions;
-    public final HashMap constants;
-    public final HashMap labels;
+    public final HashMap<String, LegacyRegister> definitions;
+    public final HashMap<String, Integer> constants;
+    public final HashMap<String, Item> labels;
     public final AVRErrorReporter ERROR;
 
     public final boolean caseSensitivity;
@@ -65,7 +65,7 @@ public class Module implements Context {
 
     public Program newprogram;
 
-    private List itemList;
+    private List<Item> itemList;
 
     static Verbose.Printer modulePrinter = Verbose.getVerbosePrinter("loader");
 
@@ -140,16 +140,16 @@ public class Module implements Context {
         caseSensitivity = cs;
         useByteAddresses = ba;
 
-        definitions = new HashMap();
-        constants = new HashMap();
-        labels = new HashMap();
+        definitions = new HashMap<String, LegacyRegister>();
+        constants = new HashMap<String, Integer>();
+        labels = new HashMap<String, Item>();
 
         programSegment = new Seg(".text", 2, 0, true, true);
         dataSegment = new Seg(".data", 1, 32, false, false);
         eepromSegment = new Seg(".eeprom", 1, 0, false, false);
 
         segment = programSegment;
-        itemList = new LinkedList();
+        itemList = new LinkedList<Item>();
 
         addGlobalConstants();
 
@@ -294,9 +294,7 @@ public class Module implements Context {
 
         sourceMapping = new SourceMapping(newprogram);
         newprogram.setSourceMapping(sourceMapping);
-        Iterator i = itemList.iterator();
-        while (i.hasNext()) {
-            Item pos = (Item)i.next();
+        for (Item pos : itemList) {
             simplify(pos);
         }
 
@@ -308,9 +306,7 @@ public class Module implements Context {
         if (i instanceof Item.Instruction) instr = (Item.Instruction)i;
 
         try {
-
             i.simplify();
-
         } catch (LegacyInstr.ImmediateRequired e) {
             ERROR.ConstantExpected((SyntacticOperand)e.operand);
         } catch (LegacyInstr.InvalidImmediate e) {

@@ -33,8 +33,10 @@
 package avrora.gui;
 
 import avrora.Version;
+import avrora.gui.VisualRadioMonitor.VisualMonitor;
 import avrora.sim.Simulation;
 import avrora.sim.types.SensorSimulation;
+import cck.util.Option;
 import cck.util.Options;
 import cck.util.Util;
 import javax.swing.*;
@@ -116,7 +118,7 @@ public class AvroraGui implements ActionListener, ChangeListener {
     private JTextArea debugOutput; //This holds basic debug information
     private JPanel debugPanel; //this is init in createDebugOutput
 
-    private HashMap monitorTabMap;
+    private HashMap<JPanel, MonitorPanel> monitorTabMap;
 
     //For convuluted reasons it's important to store the
     //current monitor being displayed (see paint thread)
@@ -141,7 +143,7 @@ public class AvroraGui implements ActionListener, ChangeListener {
         //Make sure we have nice window decorations.
         JFrame.setDefaultLookAndFeelDecorated(true);
 
-        monitorTabMap = new HashMap();
+        monitorTabMap = new HashMap<JPanel, MonitorPanel>();
 
         //Create and set up the window.
         masterFrame = new JFrame("Avrora GUI");
@@ -214,7 +216,7 @@ public class AvroraGui implements ActionListener, ChangeListener {
      *
      * @return List of all monitors
      */
-    public List getMonitorList() {
+    public List<String> getMonitorList() {
         return GUIDefaults.getMonitorList();
     }
 
@@ -223,7 +225,7 @@ public class AvroraGui implements ActionListener, ChangeListener {
      *
      * @return List of all monitors
      */
-    public List getOptionList() {
+    public List<Option> getOptionList() {
         return GUIDefaults.getOptionList();
     }
 
@@ -283,19 +285,19 @@ public class AvroraGui implements ActionListener, ChangeListener {
      }
 
     private MonitorPanel getMonitorPanel(JPanel monitorPanel) {
-        MonitorPanel p = (MonitorPanel)monitorTabMap.get(monitorPanel);
+        MonitorPanel p = monitorTabMap.get(monitorPanel);
         if ( p == null ) return null;
         return p;
     }
 
     private String getMonitorName(JPanel monitorPanel) {
-        MonitorPanel p = (MonitorPanel)monitorTabMap.get(monitorPanel);
+        MonitorPanel p = monitorTabMap.get(monitorPanel);
         if ( p == null ) return null;
         return p.name;
     }
 
     private JPanel getOptionsFromMonitor(JPanel monitorPanel) {
-        MonitorPanel p = (MonitorPanel)monitorTabMap.get(monitorPanel);
+        MonitorPanel p = monitorTabMap.get(monitorPanel);
         if ( p == null ) return null;
         return p.optionsPanel;
     }
@@ -500,16 +502,16 @@ public class AvroraGui implements ActionListener, ChangeListener {
                     if (monitorResults.getSelectedIndex() != 0) {
                         if (currentMonitorDisplayed == null) {
                             //we need to get all the nodes that are of type visualradio monitor
-                            Vector allMons = VisualRadioMonitor.allCurrentMonitors;
-                            for (Enumeration e = allMons.elements(); e.hasMoreElements();) {
-                                VisualMonitor tempMon = (VisualMonitor) e.nextElement();
+                            Vector<VisualRadioMonitor.VisualMonitor> allMons = VisualRadioMonitor.allCurrentMonitors;
+                            for (Enumeration<VisualMonitor> e = allMons.elements(); e.hasMoreElements();) {
+                                VisualMonitor tempMon = e.nextElement();
                                 tempMon.updateDataAndPaint();
                             }
                         } else {
                             currentMonitorDisplayed.paint();
                         }
                     }
-                    Thread.currentThread().sleep(PAINT_THREAD_SLEEP_TIME);
+                    Thread.sleep(PAINT_THREAD_SLEEP_TIME);
                 }
             } catch (InterruptedException except) {
                 //If interrupted, do nothing

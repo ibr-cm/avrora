@@ -42,7 +42,6 @@ import avrora.sim.mcu.Microcontroller;
 import avrora.sim.util.MemoryProfiler;
 import cck.text.*;
 import cck.util.Option;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -92,11 +91,8 @@ public class MemoryMonitor extends MonitorFactory {
 
             if (!LOCATIONS.get().isEmpty() ) {
                 // instrument only the locations specified
-                List l = LOCATIONS.get();
-                List loc = SimAction.getLocationList(program, l);
-                Iterator i = loc.iterator();
-                while ( i.hasNext() ) {
-                    SourceMapping.Location location = (SourceMapping.Location)i.next();
+                List<SourceMapping.Location> loc = SimAction.getLocationList(program, LOCATIONS.get());
+                for (SourceMapping.Location location : loc) {
                     simulator.insertWatch(memprofile, location.vma_addr - 0x800000);
                 }
             } else {

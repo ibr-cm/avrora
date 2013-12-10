@@ -46,6 +46,8 @@ import cck.util.Util;
  */
 public class SourceError extends Util.Error {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * The <code>point</code> field stores a reference to the point in the file
      * where the error occured.

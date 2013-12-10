@@ -69,12 +69,12 @@ public class EnergyProfiler extends MonitorFactory {
          * <code>labelLookup</code> provides a HashMap to lookup procedures, e.g. labels. The HashMap key is
          * the label address, as value EnergyProfile is used
          */
-        private final HashMap labelLookup;
+        private final HashMap<Integer, EnergyProfile> labelLookup;
 
         /**
          * <code>profiles</code>: list of all EnergyProfiles
          */
-        private final LinkedList profiles;
+        private final LinkedList<EnergyProfile> profiles;
 
         /**
          * <code>procedureProbe</code>: probes for entering a new basic block, always need to check whether we
@@ -108,8 +108,8 @@ public class EnergyProfiler extends MonitorFactory {
         Monitor(Simulator s) {
             simulator = s;
             program = s.getProgram();
-            labelLookup = new HashMap();
-            profiles = new LinkedList();
+            labelLookup = new HashMap<Integer, EnergyProfile>();
+            profiles = new LinkedList<EnergyProfile>();
 
             procedureProbe = new ProcedureProbe();
             sleepCycles = 0;
@@ -124,11 +124,11 @@ public class EnergyProfiler extends MonitorFactory {
             lastChange = 0;
             currentMode = nearestLabel(0);
             //scan each basic block and find the corresponding label, e.g. procedure
-            Iterator it = program.getCFG().getSortedBlockIterator();
+            Iterator<Block> it = program.getCFG().getSortedBlockIterator();
             int address;
             int size;
             while (it.hasNext()) {
-                Block block = (Block)it.next();
+                Block block = it.next();
                 size = block.getSize();
                 address = block.getAddress();
                 if (size > 0 && program.readInstr(address) != null) {
@@ -142,9 +142,9 @@ public class EnergyProfiler extends MonitorFactory {
          * scan all labels and put them in the list
          */
         private void setupLabels() {
-            Iterator it = program.getSourceMapping().getIterator();
+            Iterator<SourceMapping.Location> it = program.getSourceMapping().getIterator();
             while (it.hasNext()) {
-                SourceMapping.Location tempLoc = (SourceMapping.Location)it.next();
+                SourceMapping.Location tempLoc = it.next();
                 if (".text".equals(tempLoc.section) )
                     profiles.add(new EnergyProfile(tempLoc));
             }
@@ -157,10 +157,8 @@ public class EnergyProfiler extends MonitorFactory {
          * @return the nearest Label
          */
         private EnergyProfile nearestLabel(int address) {
-            Iterator it = profiles.iterator();
             EnergyProfile match = null;
-            while (it.hasNext()) {
-                EnergyProfile temp = (EnergyProfile)it.next();
+            for (EnergyProfile temp : profiles) {
                 if ((temp.location.lma_addr <= address) && ((match == null) || (temp.location.lma_addr > match.location.lma_addr))) {
                     match = temp;
                 }
@@ -206,9 +204,7 @@ public class EnergyProfiler extends MonitorFactory {
             //display data
             TermUtil.printSeparator("Energy breakdown for node "+simulator.getID());
             Terminal.printCyan("notation: procedureName@Address: cycles\n");
-            Iterator it = profiles.iterator();
-            while (it.hasNext()) {
-                EnergyProfile profile = (EnergyProfile)it.next();
+            for (EnergyProfile profile : profiles) {
                 if (profile.cycles > 0) {
                     Terminal.println("   " + profile.location.name + '@' + profile.location.lma_addr + ": " + profile.cycles);
                 }

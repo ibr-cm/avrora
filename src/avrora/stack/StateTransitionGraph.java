@@ -278,7 +278,7 @@ public class StateTransitionGraph {
     }
 
     public void deleteStateSets() {
-        Iterator i = cache.getStateIterator();
+        Iterator<StateCache.State> i = cache.getStateIterator();
         while (i.hasNext()) {
             StateCache.State state = (StateCache.State)i.next();
             state.info.stateSet = null;
@@ -286,9 +286,9 @@ public class StateTransitionGraph {
     }
 
     public void dump(Printer p) {
-        Iterator i = cache.getStateIterator();
+        Iterator<StateCache.State> i = cache.getStateIterator();
         while (i.hasNext()) {
-            StateCache.State state = (StateCache.State)i.next();
+            StateCache.State state = i.next();
             StringBuffer buf = dumpToBuffer(state);
             p.println(buf.toString());
         }

@@ -35,9 +35,6 @@ package avrora.sim.output;
 
 import avrora.sim.Simulator;
 
-import java.util.List;
-import java.util.ArrayList;
-
 /**
  * The <code>EventBuffer</code> definition.
  *

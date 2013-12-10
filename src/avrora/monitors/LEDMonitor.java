@@ -11,9 +11,7 @@ import avrora.sim.FiniteStateMachine;
 import avrora.sim.output.SimPrinter;
 import avrora.sim.platform.LED;
 import avrora.sim.platform.Platform;
-import avrora.sim.util.SimUtil;
 import cck.text.Terminal;
-import cck.text.Printer;
 
 /**
  * The <code>LEDMonitor</code> class implements a monitor that tracks any LEDs on

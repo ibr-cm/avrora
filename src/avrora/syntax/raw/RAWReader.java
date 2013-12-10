@@ -56,13 +56,13 @@ public class RAWReader extends ProgramReader {
 
         protected final int addr;
         protected boolean code;
-        protected List bytes;
-        protected List strings;
+        protected List<Byte> bytes;
+        protected List<String> strings;
 
         protected Record(int addr) {
             this.addr = addr;
-            bytes = new ArrayList(4);
-            strings = new ArrayList(1);
+            bytes = new ArrayList<Byte>(4);
+            strings = new ArrayList<String>(1);
         }
     }
 
@@ -77,16 +77,16 @@ public class RAWReader extends ProgramReader {
         if (args.length != 1) Util.userError("input type \"raw\" accepts only one file at a time.");
         AbstractArchitecture arch = getArchitecture();
         String fname = args[0];
-        List records = parseFile(fname);
+        List<Record> records = parseFile(fname);
         Program p = createProgram(arch, records);
         loadProgram(p, records);
         return p;
     }
 
-    private List parseFile(String fname) throws Exception {
+    private List<Record> parseFile(String fname) throws Exception {
         Main.checkFileExists(fname);
         BufferedReader reader = new BufferedReader(new FileReader(fname));
-        List records = new LinkedList();
+        List<Record> records = new LinkedList<Record>();
         int cntr = 1;
         while (true) {
             String line = reader.readLine();
@@ -94,16 +94,15 @@ public class RAWReader extends ProgramReader {
             Record r = parse(cntr++, line);
             if (r != null) records.add(r);
         }
+        reader.close();
         return records;
     }
 
-    private Program createProgram(AbstractArchitecture arch, List records) {
+    private Program createProgram(AbstractArchitecture arch, List<Record> records) {
         boolean init = false;
         int min = 0;
         int max = 0;
-        Iterator i = records.iterator();
-        while (i.hasNext()) {
-            Record r = (Record)i.next();
+        for (Record r : records) {
             if (init) {
                 min = Arithmetic.min(min, r.addr);
                 max = Arithmetic.max(max, r.addr + r.bytes.size());
@@ -116,10 +115,8 @@ public class RAWReader extends ProgramReader {
         return new Program(arch, min, max);
     }
 
-    private void loadProgram(Program p, List records) {
-        Iterator i = records.iterator();
-        while (i.hasNext()) {
-            Record r = (Record)i.next();
+    private void loadProgram(Program p, List<Record> records) {
+        for (Record r : records) {
             loadBytes(r, p);
             loadInstr(r, p);
         }
@@ -127,9 +124,7 @@ public class RAWReader extends ProgramReader {
 
     private void loadBytes(Record r, Program p) {
         int pos = r.addr;
-        Iterator b = r.bytes.iterator();
-        while (b.hasNext()) {
-            Byte by = (Byte)b.next();
+        for (Byte by : r.bytes) {
             p.writeProgramByte(by.byteValue(), pos++);
         }
     }

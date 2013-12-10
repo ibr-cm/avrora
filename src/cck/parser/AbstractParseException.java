@@ -40,6 +40,9 @@ package cck.parser;
  * @author Ben L. Titzer
  */
 public class AbstractParseException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * This constructor is used by the method "generateParseException" in the generated parser.  Calling this
      * constructor generates a new object of this type with the fields "currentToken",

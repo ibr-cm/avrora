@@ -33,7 +33,6 @@
 package cck.text;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * The <code>Verbose</code> class is used to get instances of <code>Verbose.Printer</code> for reporting the
@@ -45,7 +44,7 @@ public class Verbose {
 
     static boolean ALL;
 
-    static final HashMap printerMap = new HashMap();
+    static final HashMap<String, Printer> printerMap = new HashMap<String, Printer>();
     static final Printer verbosePrinter = getVerbosePrinter("verbose");
 
     public static Printer getVerbosePrinter(String category) {
@@ -64,9 +63,7 @@ public class Verbose {
     public static void setVerbose(String category, boolean on) {
         if ("all".equals(category)) {
             ALL = on;
-            Iterator i = printerMap.values().iterator();
-            while (i.hasNext()) {
-                Printer p = (Printer) i.next();
+            for (Printer p : printerMap.values()) {
                 p.enabled = on;
             }
             return;

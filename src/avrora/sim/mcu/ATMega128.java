@@ -113,8 +113,8 @@ public class ATMega128 extends ATMegaFamily {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
-        HashMap interruptAssignments = new HashMap(50);
+        HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
+        HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(50);
 
         addPin(pinAssignments, 1, "PEN");
         addPin(pinAssignments, 2, "PE0", "RXD0", "PDI");

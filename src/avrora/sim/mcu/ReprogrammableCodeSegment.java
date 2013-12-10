@@ -51,7 +51,9 @@ import cck.util.Util;
  */
 public class ReprogrammableCodeSegment extends CodeSegment {
 
+    @SuppressWarnings("unused")
     private static final double ERASE_MS_MIN = 3.7;
+    @SuppressWarnings("unused")
     private static final double WRITE_MS_MIN = 3.7;
     private static final double ERASE_MS_MAX = 4.5;
     private static final double WRITE_MS_MAX = 4.5;

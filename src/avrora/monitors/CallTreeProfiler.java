@@ -41,7 +41,6 @@ public class CallTreeProfiler extends MonitorFactory {
 
         private final CallTreeNode[] stack = new CallTreeNode[MAX_CALL_DEPTH];
         private final CallTreeNode[] interrupts;
-        private final double threshold = THRESHOLD.get();
         private int stackDepth;
         private final Simulator simulator;
         private final SourceMapping sourceMapping;
@@ -176,15 +175,14 @@ public class CallTreeProfiler extends MonitorFactory {
         }
     }
 
-    static class Entry implements Comparable {
+    static class Entry implements Comparable<Entry> {
         final String name;
         final int count;
         Entry(String name, int count) {
             this.name = name;
             this.count = count;
         }
-        public int compareTo(Object o) {
-            Entry e = (Entry)o;
+        public int compareTo(Entry e) {
             if (count < e.count) return -1;
             if (count == e.count) return name.compareTo(e.name);
             return 1;

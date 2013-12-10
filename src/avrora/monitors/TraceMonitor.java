@@ -37,11 +37,9 @@ import avrora.core.*;
 import avrora.sim.Simulator;
 import avrora.sim.State;
 import avrora.sim.output.SimPrinter;
-import avrora.sim.util.SimUtil;
 import cck.text.*;
 import cck.util.Option;
 import cck.util.Util;
-import java.util.Iterator;
 
 /**
  * The <code>ProfileMonitor</code> class represents a monitor that can collect profiling information such as
@@ -174,9 +172,7 @@ public class TraceMonitor extends MonitorFactory {
         }
 
         private void addPairs() {
-            Iterator i = FROMTO.get().iterator();
-            while (i.hasNext()) {
-                String str = (String)i.next();
+            for (String str : FROMTO.get()) {
                 int ind = str.indexOf(':');
                 if (ind <= 0)
                     throw Util.failure("invalid address format: " + StringUtil.quote(str));

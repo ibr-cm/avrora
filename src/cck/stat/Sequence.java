@@ -47,14 +47,14 @@ public class Sequence {
     public class Iterator {
         int cursor;
         int[] frag;
-        java.util.Iterator fiter;
+        java.util.Iterator<int[]> fiter;
 
         Iterator(int start) {
             fiter = fragments.iterator();
-            frag = (int[]) fiter.next();
+            frag = fiter.next();
             while (start >= fragSize) {
                 if (!fiter.hasNext()) break;
-                frag = (int[]) fiter.next();
+                frag = fiter.next();
                 start -= fragSize;
             }
             cursor = start;
@@ -73,7 +73,7 @@ public class Sequence {
             } else {
                 // we are in an old (complete) fragment
                 if (cursor >= fragSize) {
-                    frag = (int[]) fiter.next();
+                    frag = fiter.next();
                     cursor = 0;
                 }
             }
@@ -81,7 +81,7 @@ public class Sequence {
         }
     }
 
-    final LinkedList fragments;
+    final LinkedList<int[]> fragments;
     final int fragSize;
 
     int[] currentFrag;
@@ -107,7 +107,7 @@ public class Sequence {
      */
     public Sequence(int fragsize) {
         fragSize = fragsize;
-        fragments = new LinkedList();
+        fragments = new LinkedList<int[]>();
         newFragment();
     }
 

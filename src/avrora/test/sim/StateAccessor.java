@@ -56,7 +56,7 @@ public abstract class StateAccessor {
 
     protected final Program program;
     protected final Simulator simulator;
-    protected final HashMap accessors;
+    protected final HashMap<String, Accessor> accessors;
 
     /**
      * The <code>Accessor</code> class is exposed for subclasses of the <code>StateAccess</code> class
@@ -86,7 +86,7 @@ public abstract class StateAccessor {
     protected StateAccessor(Program p, Simulator sim) {
         program = p;
         simulator = sim;
-        accessors = new HashMap();
+        accessors = new HashMap<String, Accessor>();
     }
 
     /**
@@ -97,7 +97,7 @@ public abstract class StateAccessor {
      * @return the value of the variable represented as an integer
      */
     public int get(String name) {
-        Accessor a = (Accessor)accessors.get(name);
+        Accessor a = accessors.get(name);
         if ( a == null ) throw Util.failure("unknown variable "+name);
         return a.get();
     }
@@ -151,10 +151,8 @@ public abstract class StateAccessor {
         return simulator;
     }
 
-    public void init(List inits) {
-        Iterator i = inits.iterator();
-        while ( i.hasNext() ) {
-            Predicate p = (Predicate)i.next();
+    public void init(List<Predicate> inits) {
+        for (Predicate p : inits) {
             p.init(this);
         }
     }

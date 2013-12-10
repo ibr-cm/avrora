@@ -32,9 +32,9 @@
 
 package avrora.monitors;
 
+import avrora.core.Program;
 import avrora.sim.Simulator;
 import avrora.sim.util.MemPrint;
-import avrora.core.Program;
 import avrora.core.SourceMapping;
 
 import cck.text.StringUtil;

@@ -45,6 +45,8 @@ import cck.text.Terminal;
  */
 public class SourceException extends SourceError {
 
+    private static final long serialVersionUID = 1L;
+    
     /**
      * The <code>trace</code> field stores a reference to the stack trace corresponding
      * to where the source exception ocurred.

@@ -258,13 +258,14 @@ public class TypeChecker extends VerifierPass implements CodeAccumulator<Type, E
     public Type visit(IndexExpr e, Environment env) {
         Type lt = typeOf(e.expr, env);
         if ( lt.isBasedOn("int") ) {
-            Type rt = intTypeOf(e.index, env);
+            intTypeOf(e.index, env);
             return typeEnv.BOOLEAN;
         }
         else if ( lt.isBasedOn("map") ) {
-            List<TypeRef> pm = (List<TypeRef>)lt.getDimension("types");
-            Type it = pm.get(0).resolve(typeEnv);
-            Type et = pm.get(1).resolve(typeEnv);
+            @SuppressWarnings("unchecked")
+            List<Object> pm = (List<Object>)lt.getDimension("types");
+            Type it = ((TypeRef)pm.get(0)).resolve(typeEnv);
+            Type et = ((TypeRef)pm.get(1)).resolve(typeEnv);
             typeCheck("indexing", e.index, it, env);
             return et;
         } else {
@@ -354,36 +355,30 @@ public class TypeChecker extends VerifierPass implements CodeAccumulator<Type, E
     public Type visit(DotExpr e, Environment env) {
         Type t = typeOf(e.expr, env);
         TypeCon typecon = t.getTypeCon();
-        if ( typecon instanceof JIGIRTypeEnv.TYPE_enum_kind ) {
-            return typeEnv.resolveType(((JIGIRTypeEnv.TYPE_enum_kind)typecon).decl.name);
-        } else if ( typecon instanceof JIGIRTypeEnv.TYPE_operand ) {
-	    OperandTypeDecl decl = ((JIGIRTypeEnv.TYPE_operand) typecon).decl;
-	    if (decl.isCompound()) {
-		OperandTypeDecl.Compound operand = 
-		    (OperandTypeDecl.Compound) decl;
-		AddrModeDecl.Operand subOperand = null;
-		for (AddrModeDecl.Operand op : operand.subOperands) {
-		    if (op.name.image.equals(e.field.image)) {
-			subOperand = op;
-			break;
-		    }
-		}
-		
-		if (subOperand == null) {
-		    ERROR.UnresolvedSubOperand(e.field);
-		}
-		
-		Type rt = subOperand.typeRef.resolve(arch.typeEnv);
-		
-		// Redundant check?
-		if (t == null) {
-		    ERROR.UnresolvedSubOperand(e.field);
-		}
-		return rt;
-	    } else {
-		// Can only apply dot operator to compound operands.
-		ERROR.CompoundTypeExpected(e.expr);
-	    }
+        if (typecon instanceof JIGIRTypeEnv.TYPE_enum_kind) {
+            return typeEnv
+                    .resolveType(((JIGIRTypeEnv.TYPE_enum_kind) typecon).decl.name);
+        } else if (typecon instanceof JIGIRTypeEnv.TYPE_operand) {
+            OperandTypeDecl decl = ((JIGIRTypeEnv.TYPE_operand) typecon).decl;
+            if (decl.isCompound()) {
+                OperandTypeDecl.Compound operand = (OperandTypeDecl.Compound) decl;
+                AddrModeDecl.Operand subOperand = null;
+                for (AddrModeDecl.Operand op : operand.subOperands) {
+                    if (op.name.image.equals(e.field.image)) {
+                        subOperand = op;
+                        break;
+                    }
+                }
+
+                if (subOperand == null) {
+                    ERROR.UnresolvedSubOperand(e.field);
+                }
+
+                return subOperand.typeRef.resolve(arch.typeEnv);
+            } else {
+                // Can only apply dot operator to compound operands.
+                ERROR.CompoundTypeExpected(e.expr);
+            }
         }
         throw Util.unimplemented();
     }

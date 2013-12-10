@@ -81,6 +81,8 @@ public class ELFHeader {
 
     public class FormatError extends Exception {
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     /**

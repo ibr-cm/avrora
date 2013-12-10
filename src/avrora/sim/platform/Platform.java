@@ -44,11 +44,11 @@ import java.util.HashMap;
 public abstract class Platform {
 
     protected final Microcontroller mcu;
-    protected final HashMap devices;
+    protected final HashMap<String, Object> devices;
 
     protected Platform(Microcontroller m) {
         mcu = m;
-        devices = new HashMap();
+        devices = new HashMap<String, Object>();
         mcu.setPlatform(this);
     }
 

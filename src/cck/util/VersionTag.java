@@ -42,7 +42,7 @@ import java.util.HashMap;
  */
 public class VersionTag {
 
-    private static final HashMap tags = new HashMap();
+    private static final HashMap<String, VersionTag> tags = new HashMap<String, VersionTag>();
 
     /**
      * The <code>getVersionTag()</code> method gets the version tag for the specified module.

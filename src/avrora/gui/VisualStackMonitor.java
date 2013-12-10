@@ -43,7 +43,7 @@ import java.awt.*;
  *
  * @author UCLA Compilers Group
  */
-public class VisualStackMonitor extends SingleNodeMonitor implements Simulation.Monitor {
+public class VisualStackMonitor extends SingleNodeMonitor implements Simulation.GuiMonitor {
 
     public class SPMon extends SingleNodePanel implements Simulator.Event, MonitorPanel.Updater {
         public Simulator simulator;

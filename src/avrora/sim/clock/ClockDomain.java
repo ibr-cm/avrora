@@ -44,7 +44,7 @@ import java.util.NoSuchElementException;
  */
 public class ClockDomain {
 
-    protected final HashMap clockMap;
+    protected final HashMap<String, Clock> clockMap;
     protected final MainClock mainClock;
 
     /**
@@ -53,7 +53,7 @@ public class ClockDomain {
      * @param mainHz the speed of the main clock in cycles per second
      */
     public ClockDomain(long mainHz) {
-        clockMap = new HashMap();
+        clockMap = new HashMap<String, Clock>();
         mainClock = new MainClock("main", mainHz);
         clockMap.put("main", mainClock);
     }

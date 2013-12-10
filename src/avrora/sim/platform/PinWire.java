@@ -33,15 +33,11 @@
 package avrora.sim.platform;
 
 import avrora.sim.FiniteStateMachine;
-import avrora.sim.FiniteStateMachine.Probe;
 import avrora.sim.Simulator;
 import avrora.sim.output.SimPrinter;
 import avrora.sim.clock.Clock;
 import avrora.sim.mcu.ATMegaFamily;
 import avrora.sim.mcu.Microcontroller;
-import avrora.sim.mcu.Microcontroller.Pin.InputListener;
-import avrora.sim.util.SimUtil;
-import cck.text.Printer;
 import cck.text.Terminal;
 
 
@@ -74,12 +70,6 @@ public class PinWire {
 
     // whether the microcontroller can write this as output
     private boolean acceptsOutput;
-
-    // whether this pin is an interrupt pin
-    private boolean isInterruptPin;
-
-    // the interrupt number
-    private int interruptNum;
 
     // input/output connectors
     public WireInput wireInput;

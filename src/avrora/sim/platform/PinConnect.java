@@ -39,6 +39,7 @@ import avrora.sim.clock.Synchronizer;
 import avrora.sim.mcu.Microcontroller;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Very simple implementation of pin interconnect between microcontrollers
@@ -58,8 +59,8 @@ public class PinConnect {
     public final Synchronizer synchronizer;
 
     // List of all the pin relationships
-    protected LinkedList pinNodes;
-    protected LinkedList pinConnections;
+    protected LinkedList<PinNode> pinNodes;
+    protected LinkedList<PinLink> pinConnections;
     
     // number of nodes
     protected int numNodes;
@@ -81,8 +82,8 @@ public class PinConnect {
     
     public PinConnect() {
         // period = 1
-        pinNodes = new LinkedList();
-        pinConnections = new LinkedList();
+        pinNodes = new LinkedList<PinNode>();
+        pinConnections = new LinkedList<PinLink>();
         pinEvent = new PinEvent();
         synchronizer = new StepSynchronizer(pinEvent);
         numNodes = 0;
@@ -108,18 +109,21 @@ public class PinConnect {
     	numNodes++;
     }
     
+    @Deprecated // dead/non functional code
     public void addSimulatorThread(SimulatorThread simThread) {
+        /* DEAD CODE
         Simulator sim = simThread.getSimulator();
         Microcontroller currMCU = sim.getMicrocontroller();
 
+ 
         // iterator over PinNodes
-        Iterator i = pinNodes.iterator();
+        Iterator<PinNode> i = pinNodes.iterator();
 
         // go through the complete list of PinNodes
         while (i.hasNext()) {
 
             // get the next PinNode on the list
-            PinNode p = (PinNode) i.next();
+            PinNode p = i.next();
 
             // does this node have the equivalent Microcontroller?
             if (currMCU == p.mcu) {
@@ -130,7 +134,7 @@ public class PinConnect {
                 // add simulator thread to PinClock and PinMeet
                 //synchronizer.addNode(simThread.getNode());
             }
-        }
+        }*/
     }
 
     /**
@@ -140,14 +144,14 @@ public class PinConnect {
     public void initializeConnections() {
 
         // iterator over PinNodes
-        Iterator i = pinNodes.iterator();
+        Iterator<PinNode> i = pinNodes.iterator();
 
         if (!i.hasNext()) {
             return;
         }
 
         // the previous PinNode
-        PinNode prevNode = (PinNode) i.next();
+        PinNode prevNode = i.next();
 
         // connect the nodes from North to South to create a long chain
         while (i.hasNext()) {
@@ -208,7 +212,6 @@ public class PinConnect {
         //public SimulatorThread simThread;
 
         // node id and neighbors
-    	private int localNode;
     	public PinNode[] neighborNodes;
     	
     	// side we are connected to neighbors
@@ -231,7 +234,6 @@ public class PinConnect {
             
             neighborNodes = new PinNode[]{null,null,null,null};
             neighborSides = new int[]{NONE,NONE,NONE,NONE};
-            localNode = node;
 
             platform = "SERES";
 
@@ -251,7 +253,6 @@ public class PinConnect {
      
         	neighborNodes = new PinNode[]{null,null,null,null,null,null};
         	neighborSides = new int[]{NONE,NONE,NONE,NONE,NONE,NONE};
-        	localNode = node;
 
         	platform = "Superbot";
         }
@@ -305,41 +306,31 @@ public class PinConnect {
         	neighbor.neighborNodes[neighborSide] = null;
         	neighbor.neighborSides[neighborSide] = NONE;
         	
-        	// disconnect the nodes on the appropriate sides
-        	Iterator i = pinConnections.iterator();
-        	
-        	// find the local to neighbor connection
-        	while ( i.hasNext() ) {
-        	
-        		PinLink curr = (PinLink) i.next();
-        	
+        	// find the local to neighbor connections
+        	List<PinLink> toRemove = new LinkedList<PinLink>();
+        	for (PinLink curr : pinConnections) {        	
         		// if this is the correct link, delete it
         		if ( curr.outputNode == this && curr.outputSide == localSide 
         				&& curr.inputNode == neighbor && curr.inputSide == neighborSide ) {
-        			pinConnections.remove(curr);
+        			toRemove.add(curr);
         		}
+        		// find the neighbor to local connection
+        		else if (curr.outputNode == neighbor
+                        && curr.outputSide == neighborSide
+                        && curr.inputNode == this
+                        && curr.inputSide == localSide) {
+                    toRemove.add(curr);
+                }
         	}
         	
-        	// reset iterator
-        	i = pinConnections.iterator();
-        	
-        	// find the neighbor to local connection
-        	while ( i.hasNext() ) {
-            	
-            		PinLink curr = (PinLink) i.next();
-            	
-            		// if this is the correct link, delete it
-            		if ( curr.outputNode == neighbor && curr.outputSide == neighborSide 
-            				&& curr.inputNode == this && curr.inputSide == localSide ) {
-            			pinConnections.remove(curr);
-            		}
-            	}
+        	for (PinLink del : toRemove) {
+        	    pinConnections.remove(del);
+        	}
         }
         /*
-        public void addSimulatorThread(SimulatorThread simThread) {
-            this.simThread = simThread;
-        }
-        */
+         * public void addSimulatorThread(SimulatorThread simThread) {
+         * this.simThread = simThread; }
+         */
     }
 
     /**
@@ -349,7 +340,7 @@ public class PinConnect {
      */
     protected class PinLink {
 
-        protected LinkedList pinWires;
+        protected LinkedList<PinWire> pinWires;
         protected int currentDelay;
         
         public PinNode outputNode;
@@ -361,7 +352,7 @@ public class PinConnect {
         // must start PinLink with an output pin
         public PinLink(PinWire outputPin) {
 
-            pinWires = new LinkedList();
+            pinWires = new LinkedList<PinWire>();
 
             // make sure it is set as output
             outputPin.wireOutput.enableOutput();
@@ -384,20 +375,13 @@ public class PinConnect {
 
         // transmit the signals on this connection
         public void propagateSignals() {
-
             // iterator over PinWires
-            Iterator i = pinWires.iterator();
-
             PinWire currOutput = null;
 
             // go through the complete list of PinWires to find the output wire
-            while (i.hasNext()) {
-
-                PinWire curr = (PinWire) i.next();
-
+            for (PinWire curr : pinWires) {
                 // if this wire accepts output
                 if (curr.outputReady()) {
-
                     // check that we haven't already found an output wire
                     if (currOutput != null) {
                         String s = "ERROR: More than one output wire on this PinLink";
@@ -417,15 +401,7 @@ public class PinConnect {
             }
             // if we have an output wire, propagate its signal
             else {
-
-                // reset the iterator
-                i = pinWires.iterator();
-
-                // go through all wires
-                while (i.hasNext()) {
-
-                    PinWire curr = (PinWire) i.next();
-
+                for (PinWire curr : pinWires) {
                     // if this is not the output, propagate the signal
                     if (curr != currOutput) {
                         // write the value of output pin to the input pins
@@ -441,14 +417,8 @@ public class PinConnect {
 
     protected class PinEvent implements Simulator.Event {
         public void fire() {
-            // iterator over PinLinks
-            Iterator i = pinConnections.iterator();
-            
-            PinLink currLink = (PinConnect.PinLink) i.next();
-            currLink.propagateSignals();
-            
-            while (i.hasNext()) {
-                currLink = (PinConnect.PinLink) i.next();
+            // iterator over PinLinks            
+            for (PinConnect.PinLink currLink : pinConnections) {
                 currLink.propagateSignals();
             }
         }
@@ -458,8 +428,7 @@ public class PinConnect {
 	/**
 	 * @return Returns the pinNodes.
 	 */
-	public LinkedList getPinNodes() {
+	public LinkedList<PinNode> getPinNodes() {
 		return pinNodes;
 	}
-
 }

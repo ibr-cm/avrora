@@ -89,9 +89,9 @@ public abstract class ATMegaX8 extends ATMegaFamilyNew {
 
     public static int pkg = pkgPDIP;
 
-    protected static final HashMap pinAssignments = new HashMap(150);
+    protected static final HashMap<String, Integer> pinAssignments = new HashMap<String, Integer>(150);
     protected static final RegisterLayout rl = new RegisterLayout(ATMEGAX8_IOREG_SIZE, 8);
-    protected static final HashMap interruptAssignments = new HashMap(30);
+    protected static final HashMap<String, Integer> interruptAssignments = new HashMap<String, Integer>(30);
 
     static {
         // statically initialize the pin assignments for this microcontroller

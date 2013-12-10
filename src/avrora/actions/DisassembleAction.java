@@ -34,6 +34,7 @@ package avrora.actions;
 
 import avrora.Main;
 import avrora.arch.*;
+import avrora.arch.AbstractInstr;
 import cck.text.StringUtil;
 import cck.text.Terminal;
 import cck.util.Option;
@@ -104,8 +105,13 @@ public class DisassembleAction extends Action {
         String fname = FILE.get();
         Main.checkFileExists(fname);
         FileInputStream fis = new FileInputStream(fname);
-        byte[] buf = new byte[fis.available()];
-        fis.read(buf);
+        byte[] buf;
+        try {
+            buf = new byte[fis.available()];
+            fis.read(buf);
+        } finally {
+            fis.close();
+        }
         for ( int cntr = 0; cntr < buf.length; ) {
             cntr += disassembleAndPrint(buf, cntr, da);
         }

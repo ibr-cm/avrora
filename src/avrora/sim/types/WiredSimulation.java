@@ -40,7 +40,6 @@ import avrora.sim.platform.PinConnect;
 import avrora.sim.platform.PlatformFactory;
 import cck.text.StringUtil;
 import cck.util.*;
-import java.util.Iterator;
 import java.util.Random;
 
 /**
@@ -177,9 +176,7 @@ public class WiredSimulation extends Simulation {
 
     private void createNodes(String[] args, PlatformFactory pf) throws Exception {
         int cntr = 0;
-        Iterator i = NODECOUNT.get().iterator();
-        while (i.hasNext()) {
-
+        for (String str : NODECOUNT.get()) {
             if (args.length <= cntr) break;
 
             String pname = args[cntr++];
@@ -187,7 +184,7 @@ public class WiredSimulation extends Simulation {
             lp.load();
 
             // create a number of nodes with the same program
-            int max = StringUtil.evaluateIntegerLiteral((String)i.next());
+            int max = StringUtil.evaluateIntegerLiteral(str);
             for (int node = 0; node < max; node++) {
                 WiredNode n = (WiredNode)createNode(pf, lp);
                 long r = processRandom();

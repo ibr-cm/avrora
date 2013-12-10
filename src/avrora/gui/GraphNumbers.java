@@ -46,6 +46,7 @@ import java.awt.event.AdjustmentListener;
  */
 public class GraphNumbers extends JPanel implements ChangeListener, AdjustmentListener {
 
+    private static final long serialVersionUID = 1L;
     private Sequence publicNumbers; //access by monitors to add stuff
     private Sequence privateNumbers; //only accessed by paint
     private final JPanel parentPanel;

@@ -78,7 +78,9 @@ public class MSP430Properties extends MCUProperties {
      * @param rl a <code>RegisterLayout</code> instance mapping string names to IO register addresses
      * @param inta a <code>HashMap</code> instance mapping string names to <code>Integer</code>
      */
-    public MSP430Properties(int is, int ss, int fs, int np, int ni, HashMap pa, RegisterLayout rl, HashMap inta) {
+    public MSP430Properties(int is, int ss, int fs, int np, int ni,
+            HashMap<String, Integer> pa, RegisterLayout rl,
+            HashMap<String, Integer> inta) {
         super(pa, rl, inta, ni);
         ioreg_size = is;
         sram_size = ss;

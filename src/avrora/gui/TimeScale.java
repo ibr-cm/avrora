@@ -81,13 +81,13 @@ public class TimeScale {
         double s100 = (double)hz / 100;
         zooms = new ZoomLevel[0];
 
-        LinkedList lout = new LinkedList();
+        LinkedList<ZoomLevel> lout = new LinkedList<ZoomLevel>();
         for ( double scale = s100; scale > 1; scale /= scaleup ) {
             lout.add(newZoomLevel(scale));
         }
         ZoomLevel[] zout = (ZoomLevel[])lout.toArray(zooms);
 
-        LinkedList lin = new LinkedList();
+        LinkedList<ZoomLevel> lin = new LinkedList<ZoomLevel>();
         for ( double scale = 1; scale > 0.02; scale /= scaleup ) {
             lin.add(newZoomLevel(scale));
         }

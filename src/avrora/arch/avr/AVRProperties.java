@@ -92,7 +92,9 @@ public class AVRProperties extends MCUProperties {
      * @param inta a <code>HashMap</code> instance mapping string names to <code>Integer</code>
      * indexes for each type of interrupt
      */
-    public AVRProperties(int is, int ss, int fs, int es, int np, int ni, CodeSegment.Factory csf, HashMap pa, RegisterLayout rl, HashMap inta) {
+    public AVRProperties(int is, int ss, int fs, int es, int np, int ni,
+            CodeSegment.Factory csf, HashMap<String, Integer> pa, RegisterLayout rl,
+            HashMap<String, Integer> inta) {
         super(pa, rl, inta, ni);
 
         ioreg_size = is;

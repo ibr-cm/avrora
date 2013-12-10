@@ -41,7 +41,6 @@ import avrora.sim.platform.DefaultPlatform;
 import avrora.sim.mcu.MicrocontrollerFactory;
 import avrora.sim.Simulator;
 import avrora.sim.AtmelInterpreter;
-import avrora.sim.Simulation;
 import avrora.sim.types.SingleSimulation;
 import avrora.Defaults;
 import cck.util.Arithmetic;

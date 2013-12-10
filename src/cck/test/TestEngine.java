@@ -37,7 +37,6 @@ import cck.text.Terminal;
 import cck.util.*;
 
 import java.io.*;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -85,8 +84,8 @@ public class TestEngine {
         public TestCase newTestCase(String fname, Properties props) throws Exception;
     }
 
-    public List[] results;
-    public List successes;
+    public List<TestCase>[] results;
+    public List<TestCase> successes;
 
     private String[] testNames;
     private int numTests;
@@ -161,19 +160,21 @@ public class TestEngine {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void initTests(String[] fnames) {
         Status.ENABLED = false;
         this.testNames = fnames;
         this.numTests = fnames.length;
         currentTest = 0;
-
+        
         results = new LinkedList[TestResult.MAX_CODE];
         for ( int cntr = 0; cntr < TestResult.MAX_CODE; cntr++ )
-            results[cntr] = new LinkedList();
+            results[cntr] = new LinkedList<TestCase>();
 
         successes = results[TestResult.SUCCESS];
     }
 
+    @SuppressWarnings("deprecation")
     private void runAllTests() {
         try {
             // create worker threads
@@ -205,7 +206,7 @@ public class TestEngine {
 
     private void runTest(int num) {
         try {
-            TestCase tc = runTest(testNames[num]);
+            runTest(testNames[num]);
         } catch (IOException e) {
             throw Util.unexpected(e);
         }
@@ -228,27 +229,23 @@ public class TestEngine {
             }
         }
     }
-    private void reportStatistics(List[] tests) {
+    private void reportStatistics(List<TestCase>[] tests) {
         if ( STATISTICS ) {
             for ( int cntr = 0; cntr < tests.length; cntr++ ) {
-                Iterator i = tests[cntr].iterator();
-                while (i.hasNext()) {
-                    TestCase tc = (TestCase) i.next();
+                for (TestCase tc : tests[cntr]) {
                     tc.reportStatistics();
                 }
             }
         }
     }
 
-    private static void report(String c, List[] lists, int w, int total) {
-        List list = lists[w];
+    private static void report(String c, List<TestCase>[] lists, int w, int total) {
+        List<TestCase> list = lists[w];
         if (list.isEmpty()) return;
 
         Terminal.print(TestResult.getColor(w), c);
         Terminal.println(": " + list.size() + " of " + total);
-        Iterator i = list.iterator();
-        while (i.hasNext()) {
-            TestCase tc = (TestCase) i.next();
+        for (TestCase tc : list) {
             report(tc.getFileName(), tc.result);
         }
     }
@@ -353,6 +350,7 @@ public class TestEngine {
     }
 
     public class NonTermination extends Util.Error {
+        private static final long serialVersionUID = 1L;
         public long milliseconds;
 
         public NonTermination(long ms) {

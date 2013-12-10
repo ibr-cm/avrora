@@ -41,8 +41,6 @@ import avrora.sim.platform.Platform;
 import avrora.sim.platform.PlatformFactory;
 import avrora.sim.platform.sensors.*;
 import avrora.sim.radio.*;
-import avrora.sim.radio.Topology;
-import avrora.sim.radio.noise;
 import cck.text.StringUtil;
 import cck.util.*;
 
@@ -143,11 +141,11 @@ public class SensorSimulation extends Simulation {
     protected class SensorNode extends Node {
         Radio radio;
         long startup;
-        List sensorInput;
+        List<SensorDataInput> sensorInput;
 
         SensorNode(int id, PlatformFactory pf, LoadableProgram p) {
             super(id, pf, p);
-            sensorInput = new LinkedList();
+            sensorInput = new LinkedList<SensorDataInput>();
         }
 
         /**
@@ -165,9 +163,7 @@ public class SensorSimulation extends Simulation {
 
         private void addSensorData() {
             // process sensor data inputs
-            Iterator i = sensorInput.iterator();
-            while ( i.hasNext() ) {
-                SensorDataInput sdi = (SensorDataInput)i.next();
+            for (SensorDataInput sdi : sensorInput) {
                 sdi.instantiate(platform);
             }
         }
@@ -344,7 +340,7 @@ public class SensorSimulation extends Simulation {
     }
 
     private void createNodes(String[] args, PlatformFactory pf) throws Exception {
-        Iterator i = NODECOUNT.get().iterator();
+        Iterator<String> i = NODECOUNT.get().iterator();
         for ( int arg = 0; arg < args.length; arg++ ) {
             int count = i.hasNext() ? StringUtil.evaluateIntegerLiteral((String)i.next()) : 1;
             LoadableProgram lp = new LoadableProgram(args[arg]);
@@ -368,9 +364,7 @@ public class SensorSimulation extends Simulation {
     }
 
     private void processSensorInput() {
-        Iterator i = SENSOR_DATA.get().iterator();
-        while ( i.hasNext() ) {
-            String str = (String)i.next();
+       for (String str : SENSOR_DATA.get()) {
             int ind = str.indexOf(':');
             if ( ind <= 0 )
                 Util.userError("Sensor data format error", str);

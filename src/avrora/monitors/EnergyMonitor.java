@@ -48,7 +48,6 @@ import cck.text.TermUtil;
 import cck.util.Option;
 import cck.util.Util;
 import java.io.*;
-import java.util.Iterator;
 
 /**
  * energy monitor implementation this class handles logging and
@@ -127,10 +126,8 @@ public class EnergyMonitor extends MonitorFactory {
             long cycles = clock.getCount();
             Terminal.println("Node lifetime: " + cycles + " cycles,  " + clock.cyclesToMillis(cycles) / 1000.0+ " seconds\n");
             // get energy information for each device
-            Iterator it = energyControl.consumer.iterator();
-            while( it.hasNext() ){
+            for (Energy en : energyControl.consumer) {
                 //get energy information
-                Energy en = (Energy)it.next();
                 int modes = en.getModeNumber();
                 Terminal.println(en.getName() + ": " + en.getTotalConsumedEnergy() + " Joule");
                 // get information for each state
@@ -155,11 +152,9 @@ public class EnergyMonitor extends MonitorFactory {
 
             public void fire(){
                 double totalEnergy = 0.0d;
-                Iterator it = energyControl.consumer.iterator();
-                //for (int i = 0; i < consumer.size(); ++i) {
-                while(it.hasNext()){
+                for (Energy en : energyControl.consumer) {
                     //get energy information
-                    totalEnergy += ((Energy)it.next()).getTotalConsumedEnergy();
+                    totalEnergy += en.getTotalConsumedEnergy();
                 }
                 if( totalEnergy <= energy ){
                     //lets go on
@@ -217,10 +212,7 @@ public class EnergyMonitor extends MonitorFactory {
                 //first: cycle
                 write("cycle ");
                 //and than all consumers names
-                Iterator it = energyControl.consumer.iterator();
-                while( it.hasNext() ){
-                    //for (int i = 0; i < consumer.size(); ++i) {
-                    Energy en = (Energy)it.next();
+                for (Energy en : energyControl.consumer) {
                     write(en.getName() + " ");
                 }
                 write("total");
@@ -290,9 +282,7 @@ public class EnergyMonitor extends MonitorFactory {
                 write(state.getCycles() + " ");
                 //and than all consumers
                 double total = 0.0f;
-                Iterator it = energyControl.consumer.iterator();
-                while(it.hasNext()){
-                    Energy en = (Energy)it.next();
+                for (Energy en : energyControl.consumer) {
                     double ampere = en.getCurrentAmpere();
                     total += ampere;
                     write(ampere + " ");
@@ -313,10 +303,7 @@ public class EnergyMonitor extends MonitorFactory {
                 write((state.getCycles() - 1) + " ");
                 //and than all consumers
                 double total = 0.0f;
-                Iterator it = energyControl.consumer.iterator();
-                //for (int i = 0; i < consumer.size(); ++i) {
-                while( it.hasNext() ){
-                    Energy en = (Energy)it.next();
+                for (Energy en : energyControl.consumer) {
                     double ampere = (en == energy) ? en.getOldAmpere() : en.getCurrentAmpere();
 
                     total += ampere;

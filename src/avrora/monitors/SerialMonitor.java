@@ -42,7 +42,6 @@ import avrora.sim.platform.SerialForwarder;
 import avrora.sim.platform.SerialLogger;
 import cck.util.*;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -74,7 +73,7 @@ public class SerialMonitor extends MonitorFactory {
             "The format is to first give the node number and then the UART number " +
             "($node:$uart,$node:$uart).");
 
-    HashMap portMap;
+    HashMap<Integer, Set<Connection>> portMap;
     private Simulator simulator;
 
     abstract class Connection {
@@ -123,11 +122,9 @@ public class SerialMonitor extends MonitorFactory {
          */
         Monitor(Simulator s) {
             simulator = s;
-            Set conns = (Set)portMap.get(new Integer(s.getID()));
+            Set<Connection> conns = portMap.get(new Integer(s.getID()));
             if ( conns != null ) {
-                Iterator i = conns.iterator();
-                while ( i.hasNext() ) {
-                    Connection conn = (Connection)i.next();
+                for (Connection conn : conns) {
                     AtmelMicrocontroller mcu = (AtmelMicrocontroller)s.getMicrocontroller();
                     USART usart = (USART)mcu.getDevice("usart" + conn.usart);
                     if ( usart == null && conn.usart == 0 )
@@ -151,7 +148,7 @@ public class SerialMonitor extends MonitorFactory {
         super("The \"serial\" monitor allows the serial port (UART) of a node in the simulation to be " +
                 "connected to a socket so that data from the program running in the simulation can be " +
                 "outputted, and external data can be fed into the serial port of the simulated node.");
-        portMap = new HashMap();
+        portMap = new HashMap<Integer, Set<Connection>>();
     }
 
     public void processOptions(Options o) {
@@ -162,9 +159,7 @@ public class SerialMonitor extends MonitorFactory {
     }
 
     private void processSocketConnections() {
-        Iterator i = PORTS.get().iterator();
-        while ( i.hasNext() ) {
-            String pid = (String)i.next();
+        for (String pid : PORTS.get()) {
             String[] str = pid.split(":");
             if ( str.length < 3 ) Util.userError("Format error in \"ports\" option");
             int nid = Integer.parseInt(str[0]);
@@ -178,9 +173,7 @@ public class SerialMonitor extends MonitorFactory {
     }
 
     private void processDeviceConnections() {
-        Iterator i = DEVICE.get().iterator();
-        while ( i.hasNext() ) {
-            String pid = (String)i.next();
+       for (String pid : DEVICE.get()) {
             String[] str = pid.split(":");
             if ( str.length < 3 ) Util.userError("Format error in \"device\" option");
             int nid = Integer.parseInt(str[0]);
@@ -196,9 +189,7 @@ public class SerialMonitor extends MonitorFactory {
     }
 
     private void processTerminalConnections() {
-        Iterator i = TERMINAL.get().iterator();
-        while ( i.hasNext() ) {
-            String pid = (String)i.next();
+        for (String pid : TERMINAL.get()) {
             String[] str = pid.split(":");
             if ( str.length < 2 ) Util.userError("Format error in \"terminal\" option");
             int nid = Integer.parseInt(str[0]);
@@ -211,9 +202,9 @@ public class SerialMonitor extends MonitorFactory {
 
     private void addConnection(int nid, Connection ucon) {
         Integer nidI = new Integer(nid);
-        Set set = (Set)portMap.get(nidI);
+        Set<Connection> set = portMap.get(nidI);
         if (set == null) {
-            set = new HashSet();
+            set = new HashSet<Connection>();
             portMap.put(nidI, set);
         }
         set.add(ucon);

@@ -73,7 +73,8 @@ public class InterruptTestHarness implements TestEngine.Harness {
         public void run() throws Exception {
             Program p = Main.loadProgram(new String[] { progName });
             Simulator s = Defaults.newSimulator(0, p);
-            new InterruptScheduler(interruptSched, s);
+            InterruptScheduler is = new InterruptScheduler(interruptSched, s);
+            is.start();
             probeTest.run(s);
         }
 

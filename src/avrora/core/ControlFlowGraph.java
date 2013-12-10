@@ -132,14 +132,14 @@ public class ControlFlowGraph {
         private int size;
         private int length;
 
-        private final List instructions;
-        private final List edges;
+        private final List<LegacyInstr> instructions;
+        private final List<Edge> edges;
 
         Block(int addr) {
             address = addr;
             last_address = address;
-            instructions = new LinkedList();
-            edges = new LinkedList();
+            instructions = new LinkedList<LegacyInstr>();
+            edges = new LinkedList<Edge>();
         }
 
 
@@ -225,20 +225,17 @@ public class ControlFlowGraph {
          *
          * @return an iterator over the instructions in this block.
          */
-        public Iterator getInstrIterator() {
+        public Iterator<LegacyInstr> getInstrIterator() {
             return instructions.iterator();
         }
 
-        public Iterator getEdgeIterator() {
+        public Iterator<Edge> getEdgeIterator() {
             return edges.iterator();
         }
     }
 
-    private static class BlockComparator implements Comparator {
-        public int compare(Object o1, Object o2) {
-            Block b1 = (Block)o1;
-            Block b2 = (Block)o2;
-
+    private static class BlockComparator implements Comparator<Block> {
+        public int compare(Block b1, Block b2) {
             return b1.address - b2.address;
         }
     }
@@ -247,13 +244,13 @@ public class ControlFlowGraph {
      * The <code>blocks</code> field contains a reference to a map from <code>Integer</code> to
      * <code>Block</code> this map is used to lookup the basic block that starts at a particular address.
      */
-    protected final HashMap blocks;
+    protected final HashMap<Integer, Block> blocks;
 
     /**
      * The <code>edges</code> field contains a reference to the list of edges (instances of class
      * <code>Edge</code>) within this control flow graph.
      */
-    protected final List allEdges;
+    protected final List<Edge> allEdges;
 
     /**
      * The <code>program</code> field stores a reference to the program to which this control flow graph
@@ -265,7 +262,7 @@ public class ControlFlowGraph {
      * The <code>COMPARATOR</code> field stores a comparator that is used in sorting basic blocks by program
      * order.
      */
-    public static final Comparator COMPARATOR = new BlockComparator();
+    public static final Comparator<Block> COMPARATOR = new BlockComparator();
 
 
     /**
@@ -277,8 +274,8 @@ public class ControlFlowGraph {
      */
     ControlFlowGraph(Program p) {
         program = p;
-        blocks = new HashMap();
-        allEdges = new LinkedList();
+        blocks = new HashMap<Integer, Block>();
+        allEdges = new LinkedList<Edge>();
     }
 
     /**
@@ -331,7 +328,7 @@ public class ControlFlowGraph {
      *         block exists; null otherwise
      */
     public Block getBlockStartingAt(int address) {
-        return (Block)blocks.get(new Integer(address));
+        return blocks.get(new Integer(address));
     }
 
     /**
@@ -352,7 +349,7 @@ public class ControlFlowGraph {
      * @return an instance of <code>Iterator</code> that can be used to iterate over all blocks in the control
      *         flow graph
      */
-    public Iterator getBlockIterator() {
+    public Iterator<Block> getBlockIterator() {
         return blocks.values().iterator();
     }
 
@@ -363,8 +360,8 @@ public class ControlFlowGraph {
      * @return an instance of <code>Iterator</code> that can be used to iterate over all blocks in the control
      *         flow graph in ascending order
      */
-    public Iterator getSortedBlockIterator() {
-        List l = Collections.list(Collections.enumeration(blocks.values()));
+    public Iterator<Block> getSortedBlockIterator() {
+        List<Block> l = Collections.list(Collections.enumeration(blocks.values()));
         Collections.sort(l, COMPARATOR);
         return l.iterator();
     }
@@ -375,7 +372,7 @@ public class ControlFlowGraph {
      *
      * @return an instance of <code>Iterator</code> that iterates over the edges of this control flow graph.
      */
-    public Iterator getEdgeIterator() {
+    public Iterator<Edge> getEdgeIterator() {
         return allEdges.iterator();
     }
 

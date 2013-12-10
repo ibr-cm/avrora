@@ -40,7 +40,6 @@ public class Printer {
     private boolean begLine;
     private int listdepth;
     private boolean first;
-    private boolean nlcomma;
     private int indent;
 
     public static final Printer STDOUT = new Printer(System.out);

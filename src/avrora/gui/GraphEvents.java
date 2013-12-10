@@ -55,6 +55,8 @@ import java.awt.event.AdjustmentListener;
  * @author UCLA Compilers Group
  */
 public class GraphEvents extends JPanel implements ChangeListener, AdjustmentListener {
+
+    private static final long serialVersionUID = 1L;
     private MyVector[] publicNumbers; //access by monitors to add stuff
     private MyVector[] privateNumbers; //only accessed by paint
     private static final int VECSIZE = 5;
@@ -102,13 +104,8 @@ public class GraphEvents extends JPanel implements ChangeListener, AdjustmentLis
             privateNumbers[i] = new MyVector();
         }
 
-        //Set option defaults
-        Color lineColor = Color.GREEN;
         backColor = Color.BLACK; //default background color is black
         tickColor = Color.LIGHT_GRAY; //default tick mark color is gray
-        int xAxisMajorTickMark = 20;
-        int minvalue = pminvalue;
-        int maxvalue = pmaxvalue;
         stepsize = pstepsize; //x-axis step size
     }
 

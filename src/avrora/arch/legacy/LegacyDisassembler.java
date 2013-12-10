@@ -61,6 +61,7 @@ public class LegacyDisassembler implements AbstractDisassembler {
      * a machine code instruction that does not correspond to a well-formed instruction. 
      */
     public class InvalidInstruction extends Exception {
+        private static final long serialVersionUID = 1L;
         public final int pc;
         public final int word1;
 
@@ -114,10 +115,11 @@ public class LegacyDisassembler implements AbstractDisassembler {
         return Arithmetic.word(code[index + word*2], code[index + word*2 + 1]);
     }
 
-    private int getByte(int word) {
+    // unused
+/*    private int getByte(int word) {
         return code[word*2] & 0xff;
     }
-
+*/
     private int relative(int address, int signbit) {
         address = Arithmetic.signExtend(address, signbit);
         return address + pc + 1;

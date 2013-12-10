@@ -54,6 +54,7 @@ public class Tuple3<A, B, C> {
     public boolean equals(Object o) {
         if ( this == o ) return true;
         if ( !(o instanceof Tuple3) ) return false;
+        @SuppressWarnings("rawtypes")
         Tuple3 to = (Tuple3)o;
         return to.a.equals(a) && to.b.equals(b) && to.c.equals(c);
     }

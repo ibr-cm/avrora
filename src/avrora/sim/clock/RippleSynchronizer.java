@@ -9,7 +9,6 @@ package avrora.sim.clock;
 import avrora.sim.*;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 import cck.util.Util;
 
@@ -27,7 +26,7 @@ public class RippleSynchronizer extends Synchronizer {
      * simulated.
      */
     protected long notifyPeriod;
-    protected final HashMap threadMap;
+    protected final HashMap<SimulatorThread, NotifyEvent> threadMap;
     protected final Simulator.Event action;
 
     protected int goal;
@@ -47,7 +46,7 @@ public class RippleSynchronizer extends Synchronizer {
     public RippleSynchronizer(long p, Simulator.Event a) {
         notifyPeriod = p;
         action = a;
-        threadMap = new HashMap();
+        threadMap = new HashMap<SimulatorThread, NotifyEvent>();
         WaitLink end = new WaitLink(Long.MAX_VALUE);
         WaitLink start = new WaitLink(-1);
         start.numPassed = goal;
@@ -206,9 +205,7 @@ public class RippleSynchronizer extends Synchronizer {
      * the global timing properties of simulation.
      */
     public synchronized void start() {
-        Iterator threadIterator = threadMap.keySet().iterator();
-        while (threadIterator.hasNext()) {
-            SimulatorThread thread = (SimulatorThread)threadIterator.next();
+        for (SimulatorThread thread : threadMap.keySet()) {
             thread.start();
         }
     }
@@ -219,9 +216,7 @@ public class RippleSynchronizer extends Synchronizer {
      * being called, or terminating normally such as through a timeout.
      */
     public void join() throws InterruptedException {
-        Iterator threadIterator = threadMap.keySet().iterator();
-        while (threadIterator.hasNext()) {
-            SimulatorThread thread = (SimulatorThread)threadIterator.next();
+        for (SimulatorThread thread : threadMap.keySet()) {
             thread.join();
         }
     }
@@ -231,9 +226,7 @@ public class RippleSynchronizer extends Synchronizer {
      * not guaranteed to stop all the simulation threads at the same global time.
      */
     public synchronized void stop() {
-        Iterator threadIterator = threadMap.keySet().iterator();
-        while (threadIterator.hasNext()) {
-            SimulatorThread thread = (SimulatorThread)threadIterator.next();
+        for (SimulatorThread thread : threadMap.keySet()) {
             thread.getSimulator().stop();
         }
     }

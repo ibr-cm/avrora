@@ -109,19 +109,19 @@ public class CFGAction extends Action {
     }
 
     private void dumpCFG(ControlFlowGraph cfg) {
-        Iterator biter = cfg.getSortedBlockIterator();
+        Iterator<ControlFlowGraph.Block> biter = cfg.getSortedBlockIterator();
         SourceMapping sm = program.getSourceMapping();
 
         while (biter.hasNext()) {
-            ControlFlowGraph.Block block = (ControlFlowGraph.Block)biter.next();
+            ControlFlowGraph.Block block = biter.next();
             Terminal.print("[");
             int address = block.getAddress();
             String s = sm.getName(address);
             Terminal.printBrightCyan(s);
             Terminal.println(":" + block.getSize() + ']');
-            Iterator iiter = block.getInstrIterator();
+            Iterator<LegacyInstr> iiter = block.getInstrIterator();
             while (iiter.hasNext()) {
-                LegacyInstr instr = (LegacyInstr)iiter.next();
+                LegacyInstr instr = iiter.next();
                 Terminal.printBrightBlue("    " + instr.getName());
                 Terminal.println(' ' + instr.getOperands());
             }
@@ -157,9 +157,9 @@ public class CFGAction extends Action {
 
         if (COLLAPSE_PROCEDURES.get()) {
 
-            Iterator blocks = cfg.getSortedBlockIterator();
+            Iterator<ControlFlowGraph.Block> blocks = cfg.getSortedBlockIterator();
             while (blocks.hasNext()) {
-                ControlFlowGraph.Block block = (ControlFlowGraph.Block)blocks.next();
+                ControlFlowGraph.Block block = blocks.next();
                 ControlFlowGraph.Block entry = pmap.getProcedureContaining(block);
 
                 // only print out nodes that have no color, are shared, or are entrypoints
@@ -168,9 +168,9 @@ public class CFGAction extends Action {
             }
         } else if (GROUP_PROCEDURES.get()) {
             // print out blocks that have no color
-            Iterator block_iter = cfg.getSortedBlockIterator();
+            Iterator<ControlFlowGraph.Block> block_iter = cfg.getSortedBlockIterator();
             while (block_iter.hasNext()) {
-                ControlFlowGraph.Block block = (ControlFlowGraph.Block)block_iter.next();
+                ControlFlowGraph.Block block = block_iter.next();
                 ControlFlowGraph.Block entry = pmap.getProcedureContaining(block);
 
                 // only print out nodes that have no color first
@@ -180,13 +180,9 @@ public class CFGAction extends Action {
 
             // print out each subgraph as a cluster
             int num = 0;
-            Iterator entry_iter = pmap.getProcedureEntrypoints().iterator();
-            while (entry_iter.hasNext()) {
-                ControlFlowGraph.Block entry = (ControlFlowGraph.Block)entry_iter.next();
+            for (ControlFlowGraph.Block entry : pmap.getProcedureEntrypoints()) {
                 p.startblock("subgraph cluster" + num++);
-                Iterator blocks = pmap.getProcedureBlocks(entry).iterator();
-                while (blocks.hasNext()) {
-                    ControlFlowGraph.Block block = (ControlFlowGraph.Block)blocks.next();
+                for (ControlFlowGraph.Block block : pmap.getProcedureBlocks(entry)) {;
                     printBlock(block, p);
                 }
                 p.endblock();
@@ -194,9 +190,9 @@ public class CFGAction extends Action {
 
         } else {
             // no grouping or collapsing of nodes
-            Iterator blocks = cfg.getSortedBlockIterator();
+            Iterator<ControlFlowGraph.Block> blocks = cfg.getSortedBlockIterator();
             while (blocks.hasNext()) {
-                ControlFlowGraph.Block block = (ControlFlowGraph.Block)blocks.next();
+                ControlFlowGraph.Block block = blocks.next();
                 printBlock(block, p);
             }
         }
@@ -204,9 +200,9 @@ public class CFGAction extends Action {
 
     private void assignProcedureColors() {
         // add each block to its respective color set
-        Iterator blocks = cfg.getBlockIterator();
+        Iterator<ControlFlowGraph.Block> blocks = cfg.getBlockIterator();
         while (blocks.hasNext()) {
-            ControlFlowGraph.Block block = (ControlFlowGraph.Block)blocks.next();
+            ControlFlowGraph.Block block = blocks.next();
             ControlFlowGraph.Block entry = pmap.getProcedureContaining(block);
 
             if (entry != null) {
@@ -226,9 +222,9 @@ public class CFGAction extends Action {
     }
 
     private void dumpDotEdges(Printer p) {
-        Iterator blocks = cfg.getBlockIterator();
+        Iterator<ControlFlowGraph.Block> blocks = cfg.getBlockIterator();
         while (blocks.hasNext()) {
-            ControlFlowGraph.Block block = (ControlFlowGraph.Block)blocks.next();
+            ControlFlowGraph.Block block = blocks.next();
             dumpDotEdges(block.getEdgeIterator(), p);
         }
     }
@@ -241,17 +237,16 @@ public class CFGAction extends Action {
         if (addr % 4 == 0 && addr < 35 * 4) // interrupt handler
             return "box";
 
-        Iterator edges = block.getEdgeIterator();
+        Iterator<ControlFlowGraph.Edge> edges = block.getEdgeIterator();
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge e = (ControlFlowGraph.Edge)edges.next();
-            String type = e.getType();
+            String type = edges.next().getType();
             if (isReturnEdge(type)) return "hexagon";
         }
         return "ellipse";
     }
 
     private int colorCounter;
-    private final HashMap BLOCK_COLORS = new HashMap();
+    private final HashMap<ControlFlowGraph.Block, String> BLOCK_COLORS = new HashMap<ControlFlowGraph.Block, String>();
     private static final String[] palette = {"aquamarine", "blue2", "brown1", "cadetblue1",
                                              "chartreuse1", "cyan4", "darkgoldenrod1", "darkorchid3", "darkslateblue",
                                              "deeppink2", "yellow", "seagreen3", "orangered1"};
@@ -275,11 +270,11 @@ public class CFGAction extends Action {
         return type != null && ("RET".equals(type) || "RETI".equals(type));
     }
 
-    private void dumpEdges(Iterator edges) {
+    private void dumpEdges(Iterator<ControlFlowGraph.Edge> edges) {
         SourceMapping sm = program.getSourceMapping();
 
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge e = (ControlFlowGraph.Edge)edges.next();
+            ControlFlowGraph.Edge e = edges.next();
             ControlFlowGraph.Block t = e.getTarget();
 
             if ("".equals(e.getType()))
@@ -299,9 +294,9 @@ public class CFGAction extends Action {
 
     private boolean unknownExists;
 
-    private void dumpDotEdges(Iterator edges, Printer p) {
+    private void dumpDotEdges(Iterator<ControlFlowGraph.Edge> edges, Printer p) {
         while (edges.hasNext()) {
-            ControlFlowGraph.Edge e = (ControlFlowGraph.Edge)edges.next();
+            ControlFlowGraph.Edge e = edges.next();
             ControlFlowGraph.Block source = e.getSource();
             ControlFlowGraph.Block target = e.getTarget();
             ControlFlowGraph.Block es, et;
@@ -331,9 +326,9 @@ public class CFGAction extends Action {
     }
 
     private void emitIndirectEdge(ControlFlowGraph.Block source, String sName, Printer p, String type) {
-        List l = program.getIndirectEdges(source.getLastAddress());
+        List<Integer> edges = program.getIndirectEdges(source.getLastAddress());
 
-        if (l == null) {
+        if (edges == null) {
             // emit the description for the unknown node if we haven't already
             if (!unknownExists) {
                 p.println("UNKNOWN [shape=Msquare];");
@@ -343,10 +338,8 @@ public class CFGAction extends Action {
             p.println(sName + " -> UNKNOWN [style=dotted];");
         } else {
             // emit indirect edges
-            Iterator i = l.iterator();
-            while (i.hasNext()) {
-                int taddr = ((Integer)i.next()).intValue();
-                ControlFlowGraph.Block target = cfg.getBlockStartingAt(taddr);
+            for (Integer taddr : edges){
+                ControlFlowGraph.Block target = cfg.getBlockStartingAt(taddr.intValue());
                 emitEdge(target, p, sName, type, false);
             }
 

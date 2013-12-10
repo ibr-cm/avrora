@@ -35,8 +35,6 @@ package avrora.sim.mcu;
 import avrora.sim.*;
 import avrora.sim.output.SimPrinter;
 import avrora.sim.clock.Clock;
-import cck.util.Util;
-import java.util.Iterator;
 
 /**
  * The <code>InteralDevice</code> class represents an internal device
@@ -60,10 +58,6 @@ public abstract class AtmelInternalDevice {
         mainClock = simulator.getClock();
         interpreter = (AtmelInterpreter)simulator.getInterpreter();
         devicePrinter = m.getSimulator().getPrinter("atmel." + n);
-    }
-
-    public Iterator getIORegs() {
-        throw Util.unimplemented();
     }
 
     protected void installIOReg(String name, ActiveRegister reg) {

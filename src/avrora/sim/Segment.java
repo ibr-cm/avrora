@@ -95,6 +95,7 @@ public class Segment {
      * object is consulted.
      */
     public class AddressOutOfBoundsException extends Util.Error {
+        private static final long serialVersionUID = 1L;
         public final int data_addr;
 
         protected AddressOutOfBoundsException(int da) {

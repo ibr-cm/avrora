@@ -55,7 +55,7 @@ public class Status {
         }
     }
 
-    static Stack stack = new Stack();
+    static Stack<Item> stack = new Stack<Item>();
     static boolean inside = false;
 
     public static boolean ENABLED = true;

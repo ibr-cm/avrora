@@ -52,6 +52,7 @@ public class Util {
      */
     public static class Error extends java.lang.Error {
 
+        private static final long serialVersionUID = 1L;
         protected final String message, param;
         public static boolean STACKTRACES;
 
@@ -89,6 +90,8 @@ public class Util {
      * within the application.
      */
     public static class InternalError extends Error {
+
+        private static final long serialVersionUID = 1L;
         private String category;
 
         public InternalError(String param) {
@@ -115,6 +118,9 @@ public class Util {
      * for each.
      */
     public static class Unexpected extends Error {
+
+        private static final long serialVersionUID = 1L;
+        
         public final Throwable thrown;
 
         public Unexpected(Throwable t) {
