@@ -36,7 +36,7 @@ import java.text.DecimalFormat;
 
 /**
  * Sniffer monitor implementation. This class logs the number of packets, RSSI, LQI..
- * as the accepted by the Daintree Networks’ Sensor Network Analyzer (SNA) software
+ * as the accepted by the Daintree Networks' Sensor Network Analyzer (SNA) software
  * @author Rodolfo de Paz
  */
 public class SnifferMonitor extends MonitorFactory {
@@ -248,7 +248,7 @@ public class SnifferMonitor extends MonitorFactory {
      * create a new monitor
      */
     public SnifferMonitor() {
-        super("The \"sniffer\" monitor logs packets in the format accepted by the Daintree Networks’ Sensor Network Analyzer (SNA) software.");
+        super("The \"sniffer\" monitor logs packets in the format accepted by the Daintree Networks' Sensor Network Analyzer (SNA) software.");
     }
 
 

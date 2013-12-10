@@ -1,7 +1,7 @@
 /**
  * Created on 15. Mai 2005, 15:00
  *
- * Copyright (c) 2005, Olaf Landsiedel, Thomas Gärtner, Protocol Engineering and
+ * Copyright (c) 2005, Olaf Landsiedel, Thomas Gaertner, Protocol Engineering and
  * Distributed Systems, University of Tuebingen
  * All rights reserved.
  *
