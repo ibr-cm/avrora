@@ -68,7 +68,7 @@ public class ManageSimTime {
     private JSlider simTimeSlider;
     private SpinnerNumberModel simTimeDelaySpinner;
     private SpinnerNumberModel simTimeCycleSpinner;
-    private JComboBox<String> simTimeIorCSelect;
+    private JComboBox simTimeIorCSelect;
 
     private static int[] simTimeDelayDefaults;
     private static int[] simTimeCycleDefaults;
@@ -87,6 +87,7 @@ public class ManageSimTime {
      *
      * @return An instance of ManageSimTime
      */
+    @SuppressWarnings("unchecked")
     public static ManageSimTime createManageSimTime() {
         ManageSimTime thesetup = new ManageSimTime();
 
@@ -160,7 +161,7 @@ public class ManageSimTime {
         Vector<String> iorcvector = new Vector<String>();
         iorcvector.add("cycles");
         iorcvector.add("instructions");
-        thesetup.simTimeIorCSelect = new JComboBox<String>(iorcvector);
+        thesetup.simTimeIorCSelect = new JComboBox(iorcvector);
         thesetup.simTimeIorCSelect.addActionListener(AvroraGui.instance);
 
         //Toolbar
