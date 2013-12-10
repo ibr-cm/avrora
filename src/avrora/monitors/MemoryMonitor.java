@@ -32,7 +32,6 @@
 
 package avrora.monitors;
 
-import avrora.actions.SimAction;
 import avrora.arch.avr.AVRProperties;
 import avrora.arch.legacy.LegacyState;
 import avrora.core.Program;
@@ -42,6 +41,9 @@ import avrora.sim.mcu.Microcontroller;
 import avrora.sim.util.MemoryProfiler;
 import cck.text.*;
 import cck.util.Option;
+import cck.util.Util;
+
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -50,18 +52,24 @@ import java.util.List;
  * reads and the number of writes and reports that information after the program is completed.
  *
  * @author Ben L. Titzer
+ * @author Daniel Minder
  */
 public class MemoryMonitor extends MonitorFactory {
 
     public final Option.List LOCATIONS = newOptionList("locations", "",
             "This option, when set, specifies a list of memory locations to instrument. When " +
             "this option is not specified, the monitor will instrument all reads and writes to " +
-            "memory.");
+            "memory. Locations can be given as symbols or addresses in hex format. For symbols " +
+            "all memory addresses of this symbol are monitored (works only with ELF input!).");
 
     public final Option.Bool LOWER_ADDRESS = newOption("low-addresses", false,
             "When this option is enabled, the memory monitor will be inserted for lower addresses, " +
             "recording reads and writes to the general purpose registers on the AVR and also IO registers " +
             "through direct and indirect memory reads and writes.");
+    
+    public final Option.Bool DUMP_WRITES = newOption("dump-writes", false,
+            "When this option is enabled, the memory monitor will dump each write access to all " +
+            "instrumented addresses. The address of the instruction that causes the write is included.");
 
     public class Monitor implements avrora.monitors.Monitor {
         public final Simulator simulator;
@@ -82,18 +90,48 @@ public class MemoryMonitor extends MonitorFactory {
             } else {
                 memstart = LegacyState.IOREG_BASE + p.ioreg_size;
             }
-            memprofile = new MemoryProfiler(ramsize);
+            // when output is switched off just pass null for the printer
+            memprofile = new MemoryProfiler(ramsize, DUMP_WRITES.get() ? s.getPrinter() : null);
 
             insertWatches();
         }
 
         private void insertWatches() {
-
             if (!LOCATIONS.get().isEmpty() ) {
                 // instrument only the locations specified
-                List<SourceMapping.Location> loc = SimAction.getLocationList(program, LOCATIONS.get());
-                for (SourceMapping.Location location : loc) {
-                    simulator.insertWatch(memprofile, location.vma_addr - 0x800000);
+                List<String> l = LOCATIONS.get();
+                HashSet<Integer> locset = new HashSet<Integer>(l.size()*2);
+                SourceMapping sm = program.getSourceMapping();
+                for (String val : l) {
+                    if (val.matches("^0[xX][0-9a-fA-F]+$")) {
+                        // hexadecimal number is direct address
+                        int memaddr = -1;
+                        try {
+                            memaddr = Integer.parseInt(val.substring(2), 16);
+                        }
+                        catch (java.lang.NumberFormatException nfe) {
+                            cck.util.Util.userError("Not a hex memory address", val);
+                        }
+                        if (memaddr < 0 || memaddr >= ramsize) {
+                            cck.util.Util.userError("Memory address not in ram", val);
+                        }
+                        if (memaddr != -1) {
+                            locset.add(new Integer(memaddr));
+                        }
+                    }
+                    else {
+                        // treat it as a label, try to convert it to address
+                        SourceMapping.Location loc = sm.getLocation(val);
+                        if (loc == null)
+                            Util.userError("Label unknown", val);
+                        int addr = loc.vma_addr & 0xffff;
+                        for (int i = 0; i < loc.size; i++)
+                            locset.add(new Integer(addr+i));
+                    }
+                }
+                // insert watches
+                for (Integer val : locset) {
+                        simulator.insertWatch(memprofile, val.intValue());
                 }
             } else {
                 // instrument the entire memory

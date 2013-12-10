@@ -146,6 +146,8 @@ public class SimAction extends Action {
      * The <code>getLocationList()</code> method is to used to parse a list of program locations and turn them
      * into a list of <code>Main.Location</code> instances.
      *
+     * Note: currently not used.
+     * 
      * @param program the program to look up labels in
      * @param locs       the list of strings that are program locations
      * @return a list of program locations

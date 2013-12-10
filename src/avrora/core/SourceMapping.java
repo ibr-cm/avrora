@@ -97,6 +97,13 @@ public class SourceMapping {
          * The <code>address</code> field records the address of this label as a byte address.
          */
         public final int lma_addr;
+        
+        /**
+         * The <code>size</code> field records the size of a variable in bytes if it is a variable
+         * and the information can be read from the ELF file. Size is minimum 1, which is ensured
+         * by the constructor.
+         */
+        public final int size;
 
         /**
          * The constructor for the <code>Location</code> class creates a new location for the
@@ -105,13 +112,15 @@ public class SourceMapping {
          * @param n the name of the label as a string
          * @param vma_addr the virtual memory address
          * @param lma_addr the linear memory address (physical)
+         * @param size the size of the variable
          */
-        Location(String s, String n, int vma_addr, int lma_addr) {
+        Location(String s, String n, int vma_addr, int lma_addr, int size) {
             section = s;
             if ( n == null ) name = StringUtil.addrToString(lma_addr);
             else name = n;
             this.vma_addr = vma_addr;
             this.lma_addr = lma_addr;
+            this.size = size < 1 ? 1 : size;
         }
 
         /**
@@ -178,10 +187,10 @@ public class SourceMapping {
     }
 
     /**
-     * The <code>getLocation()</cdoe> method retrieves an object that represents a location for the given name,
+     * The <code>getLocation()</code> method retrieves an object that represents a location for the given name,
      * if the name exists in the program. If the name does not exist in the program, this method will return null.
      * For strings beginning with "0x", this method will evaluate them as hexadecimal literals and return a
-     * location corresponding to an unnamed location at that address.
+     * location corresponding to an unnamed location at that address with size 1.
      * @param name the name of a program location as a label or a hexadecimal constant
      * @return a <code>Location</code> object representing that program location; <code>null</code> if the
      * specified label is not contained in the program
@@ -189,7 +198,7 @@ public class SourceMapping {
     public Location getLocation(String name) {
         if ( StringUtil.isHex(name) ) {
             int val = StringUtil.evaluateIntegerLiteral(name);
-            return new Location(null, null, val, val);
+            return new Location(null, null, val, val, 1);
         }
         return labels.get(name);
     }
@@ -201,9 +210,10 @@ public class SourceMapping {
      * @param name the name of the label
      * @param vma_addr the virtual address in the program
      * @param lma_addr the address in the program for which to create and store a new location
+     * @param size the size of the symbol if it is a variable
      */
-    public void newLocation(String section, String name, int vma_addr, int lma_addr) {
-        Location l = new Location(section, name, vma_addr, lma_addr);
+    public void newLocation(String section, String name, int vma_addr, int lma_addr, int size) {
+        Location l = new Location(section, name, vma_addr, lma_addr, size);
         labels.put(name, l);
         reverseMap.put(new Integer(lma_addr), name);
     }

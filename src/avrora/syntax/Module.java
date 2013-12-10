@@ -115,8 +115,8 @@ public class Module implements Context {
             else ERROR.InstructionCannotBeInSegment(name, loc);
         }
 
-        public void addLabel(String name, int vma_addr, int lma_addr) {
-            sourceMapping.newLocation(this.name, name, vma_addr, lma_addr);
+        public void addLabel(String name, int vma_addr, int lma_addr, int size) {
+            sourceMapping.newLocation(this.name, name, vma_addr, lma_addr, size);
         }
 
         public void setOrigin(int org) {

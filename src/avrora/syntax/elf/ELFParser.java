@@ -173,7 +173,7 @@ public class ELFParser extends ProgramReader {
             if (e.isFunction() || e.isObject()) {
                 String section = sht.getSectionName(e.st_shndx);
                 String name = ELFDumpAction.getName(str, e.st_name);
-                map.newLocation(section, name, e.st_value, findLMA(e));
+                map.newLocation(section, name, e.st_value, findLMA(e), e.st_size);
             }
         }
     }

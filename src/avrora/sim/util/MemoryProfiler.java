@@ -34,6 +34,7 @@ package avrora.sim.util;
 
 import avrora.sim.Simulator;
 import avrora.sim.State;
+import avrora.sim.output.SimPrinter;
 
 /**
  * @author Ben L. Titzer
@@ -42,10 +43,12 @@ public class MemoryProfiler extends Simulator.Watch.Empty {
 
     public final long[] rcount;
     public final long[] wcount;
+    private SimPrinter printer;
 
-    public MemoryProfiler(int size) {
+    public MemoryProfiler(int size, SimPrinter p) {
         rcount = new long[size];
         wcount = new long[size];
+        printer = p;
     }
 
     public void fireBeforeRead(State state, int data_addr) {
@@ -56,6 +59,9 @@ public class MemoryProfiler extends Simulator.Watch.Empty {
     public void fireBeforeWrite(State state, int data_addr, byte value) {
         if (data_addr < wcount.length)
             wcount[data_addr]++;
+        if (printer != null) {
+            printer.println("SRAM[" + Integer.toHexString(data_addr) + "] <- " + Integer.toHexString(value & 0xff) + " @ " + Integer.toHexString(state.getPC()));
+        }
     }
 
 }

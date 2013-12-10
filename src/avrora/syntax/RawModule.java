@@ -130,7 +130,7 @@ public class RawModule extends Module {
         }
 
         public void simplify() {
-            segment.addLabel(name.image, vma_addr, lma_addr);
+            segment.addLabel(name.image, vma_addr, lma_addr, 1);
         }
 
         public int getByteAddress() {

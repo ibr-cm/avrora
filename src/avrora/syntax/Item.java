@@ -166,7 +166,7 @@ public abstract class Item {
         }
 
         public void simplify() {
-            segment.addLabel(name.image, byteAddress, byteAddress);
+            segment.addLabel(name.image, byteAddress, byteAddress, 1);
         }
 
         public int getByteAddress() {
