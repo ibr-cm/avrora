@@ -60,6 +60,10 @@ public class SerialMonitor extends MonitorFactory {
             "to connect to the serial forwarder for each node. The format is to first give " +
             "the node number, the UART number, and then the port number " +
             "($node:$uart:$port,$node:$uart:$port).");
+    protected final Option.Bool WAITFORCONNECTION = newOption("waitForConnection", false,
+            "By default, the serial monitor does not wait for a connection on the given ports. Setting " +
+            "this parameter to true mimics the old behaviour where the simulation continued only after " +
+            "a successful connection.");
     protected final Option.List DEVICE = newOptionList("devices", "",
             "The \"device\" option can be used to specify the devices (represented as file names) " +
             "to connect to each of the nodes' serial port. The format is to first give " +
@@ -78,13 +82,18 @@ public class SerialMonitor extends MonitorFactory {
 
     abstract class Connection {
         int usart;
+        SerialForwarder sf = null;
         abstract void connect(USART usart);
+        void stop() {
+            if (sf != null)
+                sf.stop();
+        }
     }
 
     class SocketConnection extends Connection {
         int port;
         void connect(USART usart) {
-            new SerialForwarder(usart, port);
+            sf = new SerialForwarder(usart, port, simulator, WAITFORCONNECTION.get());
         }
     }
 
@@ -135,7 +144,12 @@ public class SerialMonitor extends MonitorFactory {
         }
 
         public void report() {
-            //no report
+            //no report, but stop the SocketConnections...
+            for (Set<Connection> conns : portMap.values()) {
+                for (Connection conn: conns) {
+                    conn.stop();
+                }
+            }
         }
 
     }

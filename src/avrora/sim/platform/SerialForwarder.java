@@ -35,7 +35,6 @@ package avrora.sim.platform;
 import avrora.sim.Simulator;
 import avrora.sim.clock.Clock;
 import avrora.sim.mcu.USART;
-import cck.text.Terminal;
 import cck.util.Util;
 import java.io.*;
 import java.net.ServerSocket;
@@ -50,16 +49,18 @@ import java.net.Socket;
  */
 public class SerialForwarder implements USART.USARTDevice {
 
-    public static final int BPS = 2400;
+    public static final int BPS = 57600;
 
-    private ServerSocket serverSocket;
-    private Socket socket;
-    private OutputStream out;
-    private InputStream in;
+    private ServerSocket serverSocket = null;
+    private Socket socket = null;
+    private Socket newSocket = null;
+    private OutputStream out = null;
+    private InputStream in = null;
     private USART usart;
     private SFTicker ticker;
     private byte[] data;
     protected int portNumber;
+    private final Simulator simulator;
     
     /**
      * Connects the traffic to and from a socket and directs it into the UART chip of a simulated device.
@@ -68,24 +69,83 @@ public class SerialForwarder implements USART.USARTDevice {
      * @param pn socket port number
      */
 
-    public SerialForwarder(USART usart, int pn) {
+    public SerialForwarder(USART usart, int pn, Simulator sim, boolean waitForConnection) {
         usart.connect(this);
 
         this.usart = usart;
         this.portNumber = pn;
+        this.simulator = sim;
         ticker = new SFTicker(usart.getClock(), BPS);
-        ticker.start();
         data = new byte[1];
         try {
             serverSocket = new ServerSocket(portNumber);
-            Terminal.print("Waiting for serial connection on port " + portNumber + "...");
-            Terminal.flush();
-            socket = serverSocket.accept();
-            Terminal.println("connected to " + socket.getRemoteSocketAddress());
-            out = socket.getOutputStream();
-            in = socket.getInputStream();
         } catch (IOException e) {
             throw Util.unexpected(e);
+        }
+        simulator.getPrinter().println("Waiting for serial connection on port " + portNumber + "...");
+        
+        if (waitForConnection) {
+            try {
+                newSocket = serverSocket.accept();
+            } catch (IOException e) {
+                throw Util.unexpected(e);
+            }
+            simulator.getPrinter().println("connected to " + newSocket.getRemoteSocketAddress());
+            ticker.start();
+        }
+        
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    do {
+                        Socket mySocket = serverSocket.accept();
+                        simulator.getPrinter().println("connected to " + mySocket.getRemoteSocketAddress());
+                        // we assign the streams in checkReconnection called from the ticker 
+                        synchronized (this) {
+                            newSocket = mySocket;
+                            if (socket == null) {
+                                ticker.start();
+                            }
+                        }
+                    } while(simulator.getSimulation().isRunning());
+                    serverSocket.close();
+                } catch (IOException e) {
+                    // ignore - we have shut down the server socket
+                }
+            }
+        }).start();
+    }
+
+    synchronized private void checkReconnection() {
+        if (newSocket != null) {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+            socket = newSocket;
+            newSocket = null;
+            try {
+                out = socket.getOutputStream();
+                in = socket.getInputStream();
+            } catch (IOException e) {
+                throw Util.unexpected(e);
+            }
+        }
+    }
+
+    synchronized private void closeSocketInOut() {
+        out = null;
+        in = null;
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // ignore
+            }
+            socket = null;
         }
     }
 
@@ -99,6 +159,7 @@ public class SerialForwarder implements USART.USARTDevice {
     public SerialForwarder(USART usdv, String infile, String outfile) {
         usart = usdv;
         portNumber = 0;
+        simulator = null;
         data = new byte[1];
 
         try {
@@ -128,6 +189,7 @@ public class SerialForwarder implements USART.USARTDevice {
     public SerialForwarder(USART usdv, String[] command) {
         usart = usdv;
         portNumber = 0;
+        simulator = null;
         data = new byte[1];
 
         try {
@@ -142,26 +204,41 @@ public class SerialForwarder implements USART.USARTDevice {
         ticker.start();
         usdv.connect(this);
     }
-
-
+    
     public USART.Frame transmitFrame() {
-        try {
-            in.read(data, 0, 1);
-            return new USART.Frame(data[0], false, 8);
-        } catch (IOException e) {
-            throw Util.unexpected(e);
+        if (in != null) {
+            try {
+                in.read(data, 0, 1);
+                return new USART.Frame(data[0], false, 8);
+            } catch (IOException e) {
+                // socket has probably gone away
+                closeSocketInOut();
+            }
         }
+        return new USART.Frame((byte)0, false, 8);
     }
 
 
     public void receiveFrame(USART.Frame frame) {
         try {
-            out.write((byte)frame.value);
+            if (out != null)
+                out.write((byte)frame.value);
         } catch (IOException e) {
-            throw Util.unexpected(e);
+            // socket has probably gone away
+            closeSocketInOut();
         }
     }
 
+    public void stop() {
+        if (serverSocket != null)
+            try {
+                closeSocketInOut();
+                serverSocket.close();
+            } catch (IOException e) {
+                throw Util.unexpected(e);
+            }
+    }
+    
     private class SFTicker implements Simulator.Event {
 
         private final long delta;
@@ -173,14 +250,18 @@ public class SerialForwarder implements USART.USARTDevice {
         }
 
         public void fire() {
+            checkReconnection();
             try {
-                if (in.available() >= 1) {
+                if (in != null && in.available() >= 1) {
                     usart.startReceive();
                 }
             } catch (IOException e) {
-                throw Util.unexpected(e);
+                // socket has probably gone away
+                closeSocketInOut();
             }
-            clock.insertEvent(this, delta);
+            if (in != null) {
+                clock.insertEvent(this, delta);
+            }
         }
 
         void start() {
