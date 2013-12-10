@@ -352,7 +352,7 @@ public class CC2420Radio implements Radio {
         registers[addr] = (char) val;
         switch (addr) {
             case MAIN:
-                if ((val & 0x8000) != 0) {
+                if ((val & 0x8000) == 0) {
                     reset();
                     stateMachine.transition(1);//change to power down state
                 }
