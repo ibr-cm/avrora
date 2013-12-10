@@ -34,7 +34,6 @@ package avrora.sim.mcu;
 
 import avrora.sim.*;
 import avrora.sim.state.*;
-import cck.text.StringUtil;
 import cck.util.Arithmetic;
 
 /**
@@ -74,8 +73,9 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
     public static final Frame FF_FRAME;
 
     static {
-        for ( int cntr = 0; cntr < 256; cntr++ )
+        for ( int cntr = 0; cntr < 256; cntr++ ) {
             frameCache[cntr] = new Frame((byte)cntr);
+        }
         ZERO_FRAME = frameCache[0];
         FF_FRAME = frameCache[0xff];
     }
@@ -84,10 +84,12 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
         return frameCache[data & 0xff];
     }
 
+    @Override
     public void connect(SPIDevice d) {
         connectedDevice = d;
     }
 
+    @Override
     public Frame exchange(Frame frame) {
         Frame result = newFrame(SPDR_reg.transmitReg.read());
         receive(frame);
@@ -149,6 +151,7 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
             }
         }
 
+        @Override
         public void fire() {
             if (SPCR_reg._enabled.getValue()) {
                 SPSR_reg.clearSPIF();//after every reading SPSR must be a cleared
@@ -162,10 +165,12 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
         }
     }
 
+    @Override
     public void force(int inum) {
         SPSR_reg.setSPIF();
     }
 
+    @Override
     public void invoke(int inum) {
         unpostSPIInterrupt();
     }
@@ -181,6 +186,7 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
 
         protected class TransmitRegister extends RWRegister {
 
+            @Override
             public void write(byte val) {
                 super.write(val);
                 transferEvent.enableTransfer();
@@ -198,6 +204,7 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
          *
          * @return the value from the receive buffer
          */
+        @Override
         public byte read() {
             if ( spifAccessed ) unpostSPIInterrupt();
             return receiveReg.read();
@@ -208,6 +215,7 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
          *
          * @param val the value to transmit buffer
          */
+        @Override
         public void write(byte val) {
             // TODO: implement write collision detection
             transmitReg.write(val);
@@ -231,10 +239,11 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
         final BooleanView _enabled = RegisterUtil.booleanView(this, SPE);
         final RegisterView _spr = RegisterUtil.bitRangeView(this, SPR0, SPR1);
 
+        @Override
         public void write(byte val) {
-            if (devicePrinter != null)
-          //      devicePrinter.println("SPI: wrote " + StringUtil.toMultirepString(val, 8) + " to SPCR");
             super.write(val);
+            //if (devicePrinter != null)
+            //      devicePrinter.println("SPI: wrote " + StringUtil.toMultirepString(val, 8) + " to SPCR");
             decode(val);
         }
 
@@ -279,15 +288,19 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
 
         byte prev_value;
 
+        @Override
         public void write(byte val) {
-            if (devicePrinter != null)
-      //          devicePrinter.println("SPI: wrote " + val + " to SPSR");
             super.write(val);
+            //if (devicePrinter != null)
+            // devicePrinter.println("SPI: wrote " + val + " to SPSR");
             decode(val);
         }
 
+        @Override
         public byte read() {
-            if (_spif.getValue()) spifAccessed = true;
+            if (_spif.getValue()) {
+              spifAccessed = true;
+            }
             return super.read();
         }
 

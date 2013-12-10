@@ -64,7 +64,7 @@ import java.util.*;
  * @author Ben L. Titzer
  */
 public class Defaults {
-    private static final HashMap<String, HelpCategory> mainCategories = new HashMap<String, HelpCategory>();
+    private static final HashMap<String, HelpCategory> mainCategories = new HashMap<>();
 
     private static ClassMap microcontrollers;
     private static ClassMap platforms;
@@ -395,7 +395,7 @@ public class Defaults {
     public static List<HelpCategory> getAllCategories() {
         addAll();
         List<String> l = HelpSystem.getSortedList();
-        LinkedList<HelpCategory> nl = new LinkedList<HelpCategory>();
+        LinkedList<HelpCategory> nl = new LinkedList<>();
         for (String s : l) {
             nl.addLast(HelpSystem.getCategory(s));
         }
@@ -422,6 +422,7 @@ public class Defaults {
                     "considered to be a program in Atmel assembly syntax.");
         }
 
+        @Override
         public Program read(String[] args) throws Exception {
             if (args.length == 0)
                 Util.userError("no input files");
@@ -435,22 +436,29 @@ public class Defaults {
 
             String extension = n.substring(offset).toLowerCase();
 
-            ProgramReader reader = null;
-            if (".asm".equals(extension))
-                reader = new AtmelProgramReader();
-            else if (".od".equals(extension))
-                reader = new ObjDumpProgramReader();
-            else if (".odpp".equals(extension))
-                reader = new ObjDump2ProgramReader();
-            else if (".elf".equals(extension))
-                reader = new ELFParser();
-            else
-                reader = new ELFParser(); //for contiki .$(TARGET) elf files
+            ProgramReader reader;// = null;
+            switch (extension) {
+                case ".asm":
+                    reader = new AtmelProgramReader();
+                    break;
+                case ".od":
+                    reader = new ObjDumpProgramReader();
+                    break;
+                case ".odpp":
+                    reader = new ObjDump2ProgramReader();
+                    break;
+                case ".elf":
+                    reader = new ELFParser();
+                    break;
+                default:
+                    reader = new ELFParser(); //for contiki .$(TARGET) elf files
+                    break;
+            }
 
-            if ( reader == null ) {
+            /*if ( reader == null ) {
                 Util.userError("file extension " + StringUtil.quote(extension) + " unknown");
                 return null;
-            }
+            }*/
 
             // TODO: this is a hack; all inherited options should be available
             reader.INDIRECT_EDGES.set(INDIRECT_EDGES.stringValue());
