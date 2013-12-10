@@ -82,18 +82,25 @@ public class AvroraLED extends LED {
 
     int index = 0;
     for ( avrora.sim.platform.LED led : leds.leds) {
-        if (led.color.equals("Red")) {
-            ledMap[index++] = LED_RED;
-        } else if (led.color.equals("Green")) {
-            ledMap[index++] = LED_GREEN;
-        } else if (led.color.equals("Blue")) {
-            ledMap[index++] = LED_BLUE;
-        } else if (led.color.equals("Yellow")) {
-       // ledMap[index++] = LED_YELLOW;
-          ledMap[index++] = LED_BLUE;  //make blue for cooja timeline
-        } else {
-            logger.debug("LED " + led.color + " not available");
-        }
+      switch (led.color) {
+        case "Red":
+          ledMap[index++] = LED_RED;
+          break;
+        case "Green":
+          ledMap[index++] = LED_GREEN;
+          break;
+        case "Blue":
+          ledMap[index++] = LED_BLUE;
+          break;
+        case "Yellow":
+          
+          ledMap[index++] = LED_YELLOW;
+          //ledMap[index++] = LED_BLUE;  //make blue for cooja timeline
+          break;
+        default:
+          logger.debug("LED " + led.color + " not available");
+          break;
+      }
         if (index > 3) {
             logger.debug(" Ignoring extra LEDs ");
              break;
@@ -102,62 +109,72 @@ public class AvroraLED extends LED {
 
     if (index-- >=0) {
         ledProbes[0] = new FiniteStateMachine.Probe() {
+          @Override
           public void fireAfterTransition(int old, int newstate) {
             ledOn[ledMap[0]] = newstate > 0;
             setChanged();
             notifyObservers();
           }
+          @Override
           public void fireBeforeTransition(int arg0, int arg1) {
           }
         };
     }
     if (index-- >=0) {
         ledProbes[1] = new FiniteStateMachine.Probe() {
+          @Override
           public void fireAfterTransition(int old, int newstate) {
             ledOn[ledMap[1]] = newstate > 0;
             setChanged();
             notifyObservers();
           }
+          @Override
           public void fireBeforeTransition(int arg0, int arg1) {
           }
         };
     }
     if (index-- >=0) {
         ledProbes[2] = new FiniteStateMachine.Probe() {
+          @Override
           public void fireAfterTransition(int old, int newstate) {
             ledOn[ledMap[2]] = newstate > 0;
             setChanged();
             notifyObservers();
           }
+          @Override
           public void fireBeforeTransition(int arg0, int arg1) {
           }
         };
     }
     if (index-- >=0) {
         ledProbes[3] = new FiniteStateMachine.Probe() {
+          @Override
           public void fireAfterTransition(int old, int newstate) {
             ledOn[ledMap[3]] = newstate > 0;
             setChanged();
             notifyObservers();
           }
+          @Override
           public void fireBeforeTransition(int arg0, int arg1) {
           }
         };
     }
 
     //led probe always active for cooja timeline
-    for (int i=0;i<leds.leds.length;i++) {
+    for (int i = 0; i < leds.leds.length; i++) {
         leds.leds[i].getFSM().insertProbe(ledProbes[i]);
     }
     probesInserted = true;
 
   }
 
+  @Override
   public void removed() {
     super.removed();
     /* TODO Remove probes */
   }
 
+  @Override
   public boolean isAnyOn() {
     for (int i=0; i<4; i++) if (ledOn[i]) return true;
     return false;
@@ -168,20 +185,25 @@ public class AvroraLED extends LED {
     return ledOn[LED_BLUE];
   }
 
+  @Override
   public boolean isGreenOn() {
     return ledOn[LED_GREEN];
   }
 
+  @Override
   public boolean isRedOn() {
     return ledOn[LED_RED];
   }
 
+  @Override
   public boolean isYellowOn()  {
     return ledOn[LED_YELLOW];
   }
 
+  @Override
   public JPanel getInterfaceVisualizer() {
     final JPanel panel = new JPanel() {
+      @Override
       public void paintComponent(Graphics g) {
         super.paintComponent(g);
 /*
@@ -196,25 +218,41 @@ public class AvroraLED extends LED {
         int x = 20;
         int y = 4;
         int d = 25;
-        for (int i=0; i<leds.leds.length; i++) {
+        for (int i = 0; i < leds.leds.length; i++) {
             if (ledOn[ledMap[i]]) {
                 switch (ledMap[i]) {
-                    case LED_BLUE:g.setColor(BLUE);break;
-                    case LED_GREEN:g.setColor(GREEN);break;
-                    case LED_RED:g.setColor(RED);break;
-                    case LED_YELLOW:g.setColor(YELLOW);break;
+                    case LED_BLUE:
+                      g.setColor(BLUE);
+                      break;
+                    case LED_GREEN:
+                      g.setColor(GREEN);
+                      break;
+                    case LED_RED:
+                      g.setColor(RED);
+                      break;
+                    case LED_YELLOW:
+                      g.setColor(YELLOW);
+                      break;
                 }
                 g.fillOval(x, y, d, d);
                 g.setColor(Color.BLACK);
                 g.drawOval(x, y, d, d);
             } else {
                 switch (ledMap[i]) {
-                    case LED_BLUE:g.setColor(DARK_BLUE);break;
-                    case LED_GREEN:g.setColor(DARK_GREEN);break;
-                    case LED_RED:g.setColor(DARK_RED);break;
-                    case LED_YELLOW:g.setColor(DARK_YELLOW);break;
+                    case LED_BLUE:
+                      g.setColor(DARK_BLUE);
+                      break;
+                    case LED_GREEN:
+                      g.setColor(DARK_GREEN);
+                      break;
+                    case LED_RED:
+                      g.setColor(DARK_RED);
+                      break;
+                    case LED_YELLOW:
+                      g.setColor(DARK_YELLOW);
+                      break;
                 }
-                g.fillOval(x + 5, y + 5, d-10, d-10);
+                g.fillOval(x + 5, y + 5, d - 10, d - 10);
             }
             x += 40;
         }
@@ -223,6 +261,7 @@ public class AvroraLED extends LED {
 
     Observer observer;
     this.addObserver(observer = new Observer() {
+      @Override
       public void update(Observable obs, Object obj) {
         panel.repaint();
       }
@@ -236,6 +275,7 @@ public class AvroraLED extends LED {
     return panel;
   }
 
+  @Override
   public void releaseInterfaceVisualizer(JPanel panel) {
     Observer observer = (Observer) panel.getClientProperty("intf_obs");
     if (observer == null) {
@@ -253,10 +293,12 @@ public class AvroraLED extends LED {
   }
 
 
+  @Override
   public Collection<Element> getConfigXML() {
     return null;
   }
 
+  @Override
   public void setConfigXML(Collection<Element> configXML, boolean visAvailable) {
   }
 

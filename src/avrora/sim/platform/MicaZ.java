@@ -66,11 +66,11 @@ public class MicaZ extends Platform {
          * @param p the program to load onto the node @return a new instance of the <code>Mica2</code> platform
          */
          //             protected static final Simulation mysim = null;
-        public Platform newPlatform(int id, Program p) {
+        public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
             cd.newClock("external", 32768);
 
-            return new MicaZ(new ATMega128(id, new SingleSimulation(), cd, p));
+            return new MicaZ(new ATMega128(id, sim, cd, p));
         }
     }
 

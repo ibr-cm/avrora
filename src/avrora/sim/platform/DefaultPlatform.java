@@ -88,11 +88,11 @@ public class DefaultPlatform extends Platform {
          * @param p the program to load into the platform @return a new instance of the <code>Platform</code> interface for this platform
          */
              protected static final Simulation mysim = null;
-    //    public Platform newPlatform(int id, Simulation sim, Program p) {
-                public Platform newPlatform(int id, Program p) {
+        public Platform newPlatform(int id, Simulation sim, Program p) {
+   //             public Platform newPlatform(int id, Program p) {
             ClockDomain cd = new ClockDomain(mainClockSpeed);
             cd.newClock("external", extClockSpeed);
-            return new DefaultPlatform(id, mcf.newMicrocontroller(id, mysim, cd, p));
+            return new DefaultPlatform(id, mcf.newMicrocontroller(id, sim, cd, p));
         }
     }
 

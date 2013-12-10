@@ -66,10 +66,10 @@ public class Tiny85 extends Platform {
          * @return a new instance of the <code>Tiny85</code> platform
          */
          //             protected static final Simulation mysim = null;
-        public Platform newPlatform(int id, Program p) {
+        public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
           //  cd.newClock("external", 32768);
-            return new Tiny85(new ATTiny85(id, new SingleSimulation(), cd, p));
+            return new Tiny85(new ATTiny85(id, sim, cd, p));
         }
     }
 

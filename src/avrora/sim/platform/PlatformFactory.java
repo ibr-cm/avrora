@@ -51,7 +51,7 @@ public interface PlatformFactory {
      * @param sim
      *@param p the program to load into the platform @return a new instance of the <code>Platform</code> interface for this platform
      */
- //   public Platform newPlatform(int id, Simulation sim, Program p);
-        public Platform newPlatform(int id, Program p);
+    public Platform newPlatform(int id, Simulation sim, Program p);
+ //       public Platform newPlatform(int id, Program p);
 
 }

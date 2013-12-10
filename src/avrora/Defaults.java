@@ -49,7 +49,7 @@ import avrora.syntax.elf.ELFParser;
 import avrora.syntax.objdump.*;
 import avrora.syntax.raw.RAWReader;
 import avrora.test.*;
-//import avrora.test.sim.SimTestHarness;
+import avrora.test.sim.SimTestHarness;
 import cck.help.*;
 import cck.test.TestEngine;
 import cck.text.StringUtil;
@@ -117,6 +117,7 @@ public class Defaults {
             monitorMap.addClass("virgil", VirgilMonitor.class);
             monitorMap.addClass("real-time", RealTimeMonitor.class);
             monitorMap.addClass("sniffer", SnifferMonitor.class);
+            monitorMap.addClass("retaddr", RetAddrWatch.class);
 
             HelpCategory hc = new HelpCategory("monitors", "Help for the supported simulation monitors.");
             hc.addOptionValueSection("SIMULATION MONITORS", "Avrora's simulator offers the ability to install execution " +
@@ -133,7 +134,7 @@ public class Defaults {
         if (harnessMap == null) {
             harnessMap = new ClassMap("Test Harness", TestEngine.Harness.class);
             //-- DEFAULT TEST HARNESSES
- //           harnessMap.addClass("simulator", SimTestHarness.class);
+            harnessMap.addClass("simulator", SimTestHarness.class);
             harnessMap.addClass("simplifier", SimplifierTestHarness.class);
             harnessMap.addClass("probes", ProbeTestHarness.class);
             harnessMap.addClass("disassembler", DisassemblerTestHarness.class);
@@ -215,11 +216,11 @@ public class Defaults {
         if (platforms == null) {
             platforms = new ClassMap("Platform", PlatformFactory.class);
             //-- DEFAULT PLATFORMS
- //           platforms.addClass("mica2", Mica2.Factory.class);
+            platforms.addClass("mica2", Mica2.Factory.class);
             platforms.addClass("micaz", MicaZ.Factory.class);
- //           platforms.addClass("seres", Seres.Factory.class);
- //           platforms.addClass("superbot", Superbot.Factory.class);
- //           platforms.addClass("telos", Telos.Factory.class);
+            platforms.addClass("seres", Seres.Factory.class);
+            platforms.addClass("superbot", Superbot.Factory.class);
+            platforms.addClass("telos", Telos.Factory.class);
         }
     }
 

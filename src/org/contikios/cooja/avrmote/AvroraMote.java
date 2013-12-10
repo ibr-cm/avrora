@@ -58,6 +58,7 @@ import avrora.sim.mcu.AtmelMicrocontroller;
 import avrora.sim.mcu.EEPROM;
 import avrora.sim.platform.Platform;
 import avrora.sim.platform.PlatformFactory;
+import avrora.sim.types.SingleSimulation;
 
 /**
  * @author Joakim Eriksson, Fredrik Osterlind, David Kopf
@@ -94,7 +95,7 @@ public abstract class AvroraMote extends AbstractEmulatedMote implements Watchpo
       LoadableProgram program = new LoadableProgram(fileELF);
       program.load();
       sourceMapping = program.getProgram().getSourceMapping();
-      platform = factory.newPlatform(1, program.getProgram());
+      platform = factory.newPlatform(1, new SingleSimulation(), program.getProgram());
       AtmelMicrocontroller cpu = (AtmelMicrocontroller) platform.getMicrocontroller();
       EEPROM = (EEPROM) cpu.getDevice("eeprom");
       AVRProperties avrProperties = (AVRProperties) cpu.getProperties();

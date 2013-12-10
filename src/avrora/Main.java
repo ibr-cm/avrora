@@ -347,7 +347,6 @@ public class Main {
         ProgramReader reader = Defaults.getProgramReader(INPUT.get());
         reader.options.process(mainOptions);
         Program program = reader.read(args);
-        Status.begin("Flash size " + program.program_end);
         Status.success();
         return program;
     }

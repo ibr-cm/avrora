@@ -65,11 +65,11 @@ public class RFA1 extends Platform {
          * @param sim the simulation
          * @param p the program to load onto the node @return a new instance of the <code>Mica2</code> platform
          */
-        public Platform newPlatform(int id, Program p) {
+        public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
             cd.newClock("external", 32768);
 
-            return new RFA1(new ATMega128RFA1(id, new SingleSimulation(), cd, p));
+            return new RFA1(new ATMega128RFA1(id, sim, cd, p));
         }
     }
 

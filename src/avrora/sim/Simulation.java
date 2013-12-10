@@ -153,7 +153,7 @@ public abstract class Simulation extends HelpCategory {
          */
         protected void instantiate() {
             // create the simulator object
-            platform = platformFactory.newPlatform(id, path.getProgram());
+            platform = platformFactory.newPlatform(id, Simulation.this, path.getProgram());
             simulator = platform.getMicrocontroller().getSimulator();
             processTimeout();
             processInterruptSched();

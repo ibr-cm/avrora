@@ -65,11 +65,11 @@ public class Raven extends Platform {
          * @param sim the simulation
          * @param p the program to load onto the node @return a new instance of the <code>Mica2</code> platform
          */
-        public Platform newPlatform(int id, Program p) {
+        public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
             cd.newClock("external", 32768);
 
-            return new Raven(new ATMega1284p(id, new SingleSimulation(), cd, p));
+            return new Raven(new ATMega1284p(id, sim, cd, p));
         }
     }
 
