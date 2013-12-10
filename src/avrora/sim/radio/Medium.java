@@ -376,7 +376,6 @@ public class Medium {
                     boolean one = false;
                     double rssi = 0.0;
                     double SNR = 0;
-                    double BER = 0;
                     assert it.size() > 0;
                     for (Transmission t : it) {
                         if (one) {//more than one transmission
@@ -391,16 +390,16 @@ public class Medium {
                             rssi = Pr;
                             SNR = Pr - Pn;
                         }
-                        double snr = Math.pow(10D, (SNR / 10D));
-                        //ebno = snr / spectral efficiency = snr / log(1 + snr)
-                        double ebno = snr / Math.log(1 + snr);
-                        //BER vs Ebno in AWGN channel
-                        double x = Math.sqrt(2 * ebno);
-                        double x2 = Math.pow(x, 2);
-                        BER = Math.exp(-x2 / 2) / (1.64D * x + Math.sqrt(0.76D * (x2) + 4D));
-                        setBER(BER);
-                        setRSSI(rssi);
                     }
+                    double snr = Math.pow(10D, (SNR / 10D));
+                    //ebno = snr / spectral efficiency = snr / log(1 + snr)
+                    double ebno = snr / Math.log(1 + snr);
+                    //BER vs Ebno in AWGN channel
+                    double x = Math.sqrt(2 * ebno);
+                    double x2 = Math.pow(x, 2);
+                    double BER = Math.exp(-x2 / 2) / (1.64D * x + Math.sqrt(0.76D * (x2) + 4D));
+                    setBER(BER);
+                    setRSSI(rssi);
                     // merge transmissions into a single byte and send it to receiver
                     // we return val in order to get rssi and corr value
                     char val = medium.arbitrator.mergeTransmissions(Receiver.this, it, oneBitBeforeNow - BYTE_SIZE, (int) clock.cyclesToMillis(clock.getCount()));
