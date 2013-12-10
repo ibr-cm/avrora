@@ -141,6 +141,7 @@ public class ExternalFlash {
 
         protected Page(int numBytes) {
             bytes = new short[numBytes];
+            java.util.Arrays.fill(bytes, (short)0xff);  // empty flash is filled with 0xff, not 0!
         }
         void debug() {
             if (printer != null) {
