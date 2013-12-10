@@ -39,7 +39,16 @@ package avrora.sim.state;
  * @author Ben L. Titzer
  */
 public interface BooleanView {
+    
+    /** Listener for <code>onValueSet</code> events. */
+    public interface ValueSetListener {
+        /** Called when the value of this view is set (although it is not guaranteed that it was changed). */
+        public void onValueSet(BooleanView view, boolean newValue);
+    }
+    
     boolean getValue();
 
     void setValue(boolean v);
+    
+    void setValueSetListener(ValueSetListener listener);
 }

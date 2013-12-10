@@ -291,18 +291,16 @@ public class Arithmetic {
         return m1 < m2 ? m1 : m2;
     }
 
-    public static byte packBits(boolean b0, boolean b1, boolean b2, boolean b3,
-                                boolean b4, boolean b5, boolean b6, boolean b7) {
-        int val = 0;
-        if ( b0 ) val |= 0x1;
-        if ( b1 ) val |= (0x1 << 1);
-        if ( b2 ) val |= (0x1 << 2);
-        if ( b3 ) val |= (0x1 << 3);
-        if ( b4 ) val |= (0x1 << 4);
-        if ( b5 ) val |= (0x1 << 5);
-        if ( b6 ) val |= (0x1 << 6);
-        if ( b7 ) val |= (0x1 << 7);
-        return (byte)val;
+    public static byte packBits(int b7, int b6, int b5, int b4, int b3, int b2, int b1, int b0) {
+        return (byte)((b0 > 0 ? (1 << 0) : 0) |
+                        (b1 > 0 ? (1 << 1) : 0) |
+                        (b2 > 0 ? (1 << 2) : 0) |
+                        (b3 > 0 ? (1 << 3) : 0) |
+                        (b4 > 0 ? (1 << 4) : 0) |
+                        (b5 > 0 ? (1 << 5) : 0) |
+                        (b6 > 0 ? (1 << 6) : 0) |
+                        (b7 > 0 ? (1 << 7) : 0));
+                
     }
 
     public static int roundup(int val, int den) {

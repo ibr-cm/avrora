@@ -39,6 +39,10 @@ package avrora.sim.platform;
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.Simulator;
 import avrora.sim.output.SimPrinter;
+import avrora.sim.state.BooleanView;
+import avrora.sim.state.BooleanView.ValueSetListener;
+import avrora.sim.state.Register;
+import avrora.sim.state.RegisterUtil;
 import avrora.sim.clock.Clock;
 import avrora.sim.energy.Energy;
 import avrora.sim.mcu.Microcontroller;
@@ -71,7 +75,8 @@ public class ExternalFlash {
     private int dfTempByte;
     private short dfStatus;		// Dataflash Status Register
     private double delay;		// delay while busy in ms
-    private boolean so, si;		// serial output, serial input
+    private BooleanView so = RegisterUtil.booleanView(new Register(1), 0); // serial output 
+    private boolean si;		// serial output, serial input
     private int icPage;		    // internal address counter
     private boolean tick;
     private short step;
@@ -137,7 +142,7 @@ public class ExternalFlash {
         protected Page(int numBytes) {
             bytes = new short[numBytes];
         }
-		void debug() {
+        void debug() {
             if (printer != null) {
                 int i;
                 for(i = 0; i < bytes.length; i++) {
@@ -181,7 +186,7 @@ public class ExternalFlash {
 
     private void setMemoryPage(int num, Page val) {
         memory.setPage(num, val);
-		val.debug();
+        val.debug();
     }
 
     private Page getBuffer1() {
@@ -390,7 +395,7 @@ public class ExternalFlash {
 
                         // <<<<<<<< high-to-low <<<<<<<<
                         if (isReading) {
-							//echo("dfByteOffset = " + dfByteOffset);
+                            //echo("dfByteOffset = " + dfByteOffset);
                             //set so bitwise
                             setSO();
 
@@ -476,7 +481,7 @@ public class ExternalFlash {
             }
 
             // write relevant bit to so
-            so = (temp & 1 << 7 - i) > 0; // MSB first
+            so.setValue((temp & 1 << 7 - i) > 0); // MSB first
 
         }
 
@@ -634,10 +639,19 @@ public class ExternalFlash {
     }
 
     // Flash_RXD as input pin from SO
-    protected class PD2Input implements Microcontroller.Pin.Input {
+    protected class PD2Input extends Microcontroller.Pin.ListenableInput implements ValueSetListener {
+        public PD2Input() {
+            so.setValueSetListener(this);
+        }
+        
         // connected to serial output of dataflash
         public boolean read() {
-            return so;
+            return so.getValue();
+        }
+        
+        @Override
+        public void onValueSet(BooleanView view, boolean newValue) {
+            notifyListeners(newValue);
         }
     }
 

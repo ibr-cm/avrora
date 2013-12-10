@@ -13,6 +13,7 @@ package avrora.sim.state;
  */
 public class BooleanRegister implements BooleanView {
 
+    protected ValueSetListener listener;
     protected boolean value;
 
 
@@ -22,5 +23,12 @@ public class BooleanRegister implements BooleanView {
 
     public void setValue(boolean v) {
         value = v;
+        if (listener != null) {
+            listener.onValueSet(this, v);
+        }
+    }
+
+    public void setValueSetListener(ValueSetListener listener) {
+        this.listener = listener;
     }
 }

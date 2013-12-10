@@ -64,13 +64,15 @@ public class RegisterUtil {
         }
     }
 
-    public static class BoolView implements BooleanView {
+    public static class BoolView implements BooleanView, RegisterView.RegisterValueSetListener {
         protected final RegisterView reg;
         protected final byte low;
+        protected BooleanView.ValueSetListener listener; 
 
         public BoolView(RegisterView r, byte l) {
             reg = r;
             low = l;
+            r.registerValueSetListener(this);
         }
 
         public boolean getValue() {
@@ -81,12 +83,26 @@ public class RegisterUtil {
             if ( v ) reg.setValue(reg.getValue() | 1 << low);
             else reg.setValue(reg.getValue() & ~(1 << low));
         }
+        
+        public void onValueSet(RegisterView view, int oldValue, int newValue) {
+            if (listener != null && ((oldValue ^ newValue) & (1 << low)) != 0) {
+                listener.onValueSet(this, getValue());
+            }
+        }
+
+        public void setValueSetListener(ValueSetListener listener) {
+            this.listener = listener;
+        }
     }
 
-    public static class ByteArrayView implements RegisterView {
+    public static class ByteArrayView extends AbstractRegisterView implements RegisterView {
         protected final byte[] values;
         protected final int index;
 
+        /** 
+         * @param v Array which is viewed. If used in conjunction with listeners, caller has to guarantee not to 
+         * modify the affected array value, but use .setValue instead.
+         */
         public ByteArrayView(byte[] v, int i) {
             values = v;
             index = i;
@@ -99,14 +115,20 @@ public class RegisterUtil {
         }
 
         public void setValue(int val) {
+            int oldVal = getValue();
             values[index] = (byte)val;
+            notify(oldVal, val);
         }
     }
 
-    public static class CharArrayView implements RegisterView {
+    public static class CharArrayView extends AbstractRegisterView implements RegisterView {
         protected final char[] values;
         protected final int index;
 
+        /** 
+         * @param v Array which is viewed. If used in conjunction with listeners, caller has to guarantee not to 
+         * modify the affected array value, but use .setValue instead.
+         */
         public CharArrayView(char[] v, int i) {
             values = v;
             index = i;
@@ -119,11 +141,13 @@ public class RegisterUtil {
         }
 
         public void setValue(int val) {
+            int oldVal = getValue();
             values[index] = (char)val;
+            notify(oldVal, val);
         }
     }
 
-    public static class BitRangeView implements RegisterView {
+    public static class BitRangeView extends AbstractRegisterView implements RegisterView, RegisterView.RegisterValueSetListener {
         protected final RegisterView reg;
         protected final byte low;
         protected final byte width;
@@ -134,6 +158,7 @@ public class RegisterUtil {
             mask = Arithmetic.getBitRangeMask(l, h);
             width = (byte)(h - l + 1);
             reg = r;
+            r.registerValueSetListener(this);
         }
 
         public int getWidth() {
@@ -146,6 +171,14 @@ public class RegisterUtil {
 
         public void setValue(int val) {
             reg.setValue(reg.getValue() & ~mask | ((val << low) & mask));
+        }
+
+        public void onValueSet(RegisterView view, int oldValue, int newValue) {
+            oldValue &= mask;
+            newValue &= mask;
+            if (oldValue != newValue) {
+                notify(oldValue >> low, newValue >> low);
+            }
         }
     }
 
@@ -179,6 +212,10 @@ public class RegisterUtil {
                 res = res & ~(1 << bits[cntr]) | nbit << bits[cntr];
             }
             reg.setValue(res);
+        }
+
+        public void registerValueSetListener(RegisterValueSetListener listener) {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -214,6 +251,10 @@ public class RegisterUtil {
                 p += r.getWidth();
                 val = val >> p;
             }
+        }
+        
+        public void registerValueSetListener(RegisterValueSetListener listener) {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -265,7 +306,7 @@ public class RegisterUtil {
         return new BitRangeView(sup, (byte)low, (byte)low);
     }
 
-    public static RegisterView bitRangeView(RegisterView sup, int low, int high) {
+    public static BitRangeView bitRangeView(RegisterView sup, int low, int high) {
         return new BitRangeView(sup, (byte)low, (byte)high);
     }
 

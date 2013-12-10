@@ -120,10 +120,10 @@ public class Seres extends Platform {
         westPinRx.enableConnect();
 
         // receive interrupt pins
-        PinWire northPinInt = new PinWire(sim, Terminal.COLOR_YELLOW, "North Int", 1 + 2, mcu);
-        PinWire eastPinInt = new PinWire(sim, Terminal.COLOR_GREEN, "East Int", 2 + 2, mcu);
-        PinWire southPinInt = new PinWire(sim, Terminal.COLOR_RED, "South Int", 2, mcu);
-        PinWire westPinInt = new PinWire(sim, Terminal.COLOR_BLUE, "West Int", 6 + 2, mcu);
+        PinWire northPinInt = new PinWire(sim, Terminal.COLOR_YELLOW, "North Int", mcu);
+        PinWire eastPinInt = new PinWire(sim, Terminal.COLOR_GREEN, "East Int", mcu);
+        PinWire southPinInt = new PinWire(sim, Terminal.COLOR_RED, "South Int", mcu);
+        PinWire westPinInt = new PinWire(sim, Terminal.COLOR_BLUE, "West Int", mcu);
 
         // connect receive interrupt pins to physical pins
         mcu.getPin("INT1").connectInput(northPinInt.wireInput);

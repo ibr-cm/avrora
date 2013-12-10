@@ -38,6 +38,8 @@ import avrora.core.Program;
 import avrora.sim.*;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.energy.Energy;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 import cck.util.Arithmetic;
 import java.util.HashMap;
 
@@ -375,7 +377,7 @@ public class ATMega128 extends ATMegaFamily {
         installDevices();
         new Energy("CPU", modeAmpere, sleepState, simulator.getEnergyControl());
     }
-
+    
     protected void installPins() {
         for (int cntr = 0; cntr < properties.num_pins; cntr++)
             pins[cntr] = new ATMegaFamily.Pin(cntr);
@@ -384,6 +386,18 @@ public class ATMega128 extends ATMegaFamily {
     protected void installDevices() {
         // set up the external interrupt mask and flag registers and interrupt range
         EIFR_reg = buildInterruptRange(true, "EIMSK", "EIFR", 2, 8);
+        
+        // register all interrupts
+        RegisterView EICRA = (RegisterView)getIOReg("EICRA");
+        RegisterView EICRB = (RegisterView)getIOReg("EICRB");
+        pins[25] = new INTPin(25, EIFR_reg, 0, RegisterUtil.bitRangeView(EICRA, 0, 1)); // INT0
+        pins[26] = new INTPin(26, EIFR_reg, 1, RegisterUtil.bitRangeView(EICRA, 2, 3)); // INT1
+        pins[27] = new INTPin(27, EIFR_reg, 2, RegisterUtil.bitRangeView(EICRA, 4, 5)); // INT2
+        pins[28] = new INTPin(28, EIFR_reg, 3, RegisterUtil.bitRangeView(EICRA, 6, 7)); // INT3
+        pins[6] = new INTPin(6, EIFR_reg, 4, RegisterUtil.bitRangeView(EICRB, 0, 1)); // INT4
+        pins[7] = new INTPin(7, EIFR_reg, 5, RegisterUtil.bitRangeView(EICRB, 2, 3)); // INT5
+        pins[8] = new INTPin(8, EIFR_reg, 6, RegisterUtil.bitRangeView(EICRB, 4, 5)); // INT6
+        pins[9] = new INTPin(9, EIFR_reg, 7, RegisterUtil.bitRangeView(EICRB, 6, 7)); // INT7
 
         // set up the timer mask and flag registers and interrupt range
         TIFR_reg = buildInterruptRange(false, "TIMSK", "TIFR", 17, 8);

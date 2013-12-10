@@ -39,6 +39,7 @@ import avrora.sim.clock.Clock;
 import avrora.sim.clock.Synchronizer;
 import avrora.sim.energy.Energy;
 import avrora.sim.mcu.*;
+import avrora.sim.mcu.Microcontroller.Pin.ListenableBooleanViewInput;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
 
@@ -923,12 +924,7 @@ public class CC1000Radio implements Radio {
             }
         }
 
-        protected class PDATAInput implements Microcontroller.Pin.Input {
-            boolean outputPin;
-            public boolean read() {
-                return outputPin;
-            }
-        }
+        protected class PDATAInput extends ListenableBooleanViewInput { }
 
         protected class PDATAOutput implements Microcontroller.Pin.Output {
 
@@ -1006,7 +1002,7 @@ public class CC1000Radio implements Radio {
         }
 
         private void outputReadBit() {
-            PDATA_out.outputPin = Arithmetic.getBit(readData, 14 - bitsRead);
+            PDATA_out.setLevel(Arithmetic.getBit(readData, 14 - bitsRead));
         }
 
     }

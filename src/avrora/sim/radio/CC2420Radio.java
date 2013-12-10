@@ -42,6 +42,7 @@ import avrora.sim.clock.Synchronizer;
 import avrora.sim.energy.Energy;
 import avrora.sim.mcu.ADC;
 import avrora.sim.mcu.Microcontroller;
+import avrora.sim.mcu.Microcontroller.Pin.InputListener;
 import avrora.sim.mcu.SPI;
 import avrora.sim.mcu.SPIDevice;
 import avrora.sim.output.SimPrinter;
@@ -54,6 +55,7 @@ import avrora.sim.state.RegisterView;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
 import cck.util.Util;
+import java.util.LinkedList;
 
 /**
  * The <code>CC2420Radio</code> implements a simulation of the CC2420 radio
@@ -184,7 +186,6 @@ public class CC2420Radio implements Radio {
     public final SPIInterface spiInterface = new SPIInterface();
     public final ADCInterface adcInterface = new ADCInterface();
 
-    public int FIFOP_interrupt = -1;
 
     protected final SimPrinter printer,myprinter;
 
@@ -294,8 +295,8 @@ public class CC2420Radio implements Radio {
         statusRegister.setValue(0);
 
         // restore default CCA and SFD values.
-        CCA_pin.level = CCA_assessor;
-        SFD_pin.level = SFD_value;
+        CCA_pin.setLevelView(CCA_assessor);
+        SFD_pin.setLevelView(SFD_value);
 
         FIFO_active = true;// the default is active high for all of these pins
         FIFOP_active = true;
@@ -308,16 +309,16 @@ public class CC2420Radio implements Radio {
         ClearFlag = false;
 
         // reset pins.
-        FIFO_pin.level.setValue(!FIFO_active);
-        FIFOP_pin.level.setValue(!FIFOP_active);
+        FIFO_pin.setLevel(!FIFO_active);
+        FIFOP_pin.setLevel(!FIFOP_active);
 
         transmitter.shutdown();
         receiver.shutdown();
     }
 
     public void setSFDView(BooleanView sfd) {
-        if (SFD_pin.level == SFD_value) {
-            SFD_pin.level = sfd;
+        if (SFD_pin.getLevelView() == SFD_value) {
+            SFD_pin.setLevelView(sfd);
         }
         SFD_value = sfd;
     }
@@ -365,10 +366,18 @@ public class CC2420Radio implements Radio {
                 break;
             case IOCFG0:
                 // set the polarities for the output pins.
+                boolean FIFOwasActive = FIFO_pin.getLevel() == FIFO_active;
+                boolean FIFOPwasActive = FIFOP_pin.getLevel() == FIFOP_active;
+                boolean SFDwasActive = SFD_pin.getLevel() == SFD_active;
+                boolean CCAwasActive = CCA_pin.getLevel() == CCA_active;
                 FIFO_active = !Arithmetic.getBit(val, 10);
                 FIFOP_active = !Arithmetic.getBit(val, 9);
                 SFD_active = !Arithmetic.getBit(val, 8);
                 CCA_active = !Arithmetic.getBit(val, 7);
+                FIFO_pin.setLevel(FIFOwasActive ? FIFO_active : !FIFO_active);
+                FIFOP_pin.setLevel(FIFOPwasActive ? FIFOP_active : !FIFOP_active);
+                SFD_pin.setLevel(SFDwasActive ? SFD_active : !SFD_active);
+                CCA_pin.setLevel(CCAwasActive ? CCA_active : !CCA_active);
                 break;
         }
         computeStatus();
@@ -384,12 +393,12 @@ public class CC2420Radio implements Radio {
     private void setCCAMux(int ccaMux) {
         // TODO: handle all the possible CCA multiplexing sources
         // and possibility of active low.
-        if (ccaMux == 24) CCA_pin.level = oscStable;
+        if (ccaMux == 24) CCA_pin.setLevelView(oscStable);
         else {
             if (ccaMux != 0) {
                 throw Util.unimplemented();
             }
-            CCA_pin.level = CCA_assessor;
+            CCA_pin.setLevelView(CCA_assessor);
         }
     }
 
@@ -446,8 +455,8 @@ public class CC2420Radio implements Radio {
                 case SFLUSHRX:
                     rxFIFO.clear();
                     receiver.resetOverflow();
-                    FIFO_pin.level.setValue(!FIFO_active);
-                    FIFOP_pin.level.setValue(!FIFOP_active);
+                    FIFO_pin.setLevel(!FIFO_active);
+                    FIFOP_pin.setLevel(!FIFOP_active);
                     SFD_value.setValue(!SFD_active);  // needed in case of an overflow
                     break;
                 case SFLUSHTX:
@@ -718,11 +727,11 @@ public class CC2420Radio implements Radio {
         if (fifo == rxFIFO) {
             if (fifo.empty()) {
                 // reset the FIFO pin when the read FIFO is empty.
-                FIFO_pin.level.setValue(!FIFO_active);
+                FIFO_pin.setLevel(!FIFO_active);
             }
             if (fifo.size() < getFIFOThreshold()) {
                 // reset FIFOP pin when the number of bytes in the FIFO is below threshold
-                FIFOP_pin.level.setValue(!FIFOP_active);
+                FIFOP_pin.setLevel(!FIFOP_active);
             }
         }
         return val;
@@ -780,6 +789,13 @@ public class CC2420Radio implements Radio {
                 return false;
             else
                 return receiver.isChannelClear(readRegister(RSSI),readRegister(MDMCTRL0));
+        }
+
+        public void setValueSetListener(ValueSetListener listener) {
+            if (printer != null) {
+                // TODO: Implement value-change events for this view
+                printer.println("CC2420 WARN: ValueSet events for the ClearChannelAssessor are not implemented.");
+            }
         }
     }
 
@@ -1277,7 +1293,7 @@ public class CC2420Radio implements Radio {
                     } else if (counter == length) {
                            myprinter.println("CC2420 noautocrc");
                         // no AUTOCRC, but reached end of packet.
-                        signalFIFOP();
+                        FIFOP_pin.setLevel(FIFOP_active);
                         SFD_value.setValue(!SFD_active);
                         clearBER();  // will otherwise be done by getCorrelation() in state RECV_CRC_2
                         lastCRCok = false;
@@ -1320,7 +1336,7 @@ public class CC2420Radio implements Radio {
 
                     if (fifoAdd(b)) {
                         // signal FIFOP and unsignal SFD
-                        signalFIFOP();
+                        FIFOP_pin.setLevel(FIFOP_active);
                         SFD_value.setValue(!SFD_active);
                         if (lastCRCok && autoACK.getValue() && (rxFIFO.peek(1) & 0x20) == 0x20) {//autoACK
                             //send ack if we are not receiving ack frame
@@ -1355,19 +1371,19 @@ public class CC2420Radio implements Radio {
             rxFIFO.add(c);
             if (rxFIFO.overFlow()) {
                 // an RX overflow has occurred.
-                FIFO_pin.level.setValue(!FIFO_active);
-                signalFIFOP();
+                FIFO_pin.setLevel(!FIFO_active);
+                FIFOP_pin.setLevel(FIFOP_active);
                 state = RECV_OVERFLOW;
                 lastCRCok = false;
                 return false;
             }
             else {
-                FIFO_pin.level.setValue(FIFO_active);
+                FIFO_pin.setLevel(FIFO_active);
                 if (rxFIFO.size() >= getFIFOThreshold()) {
                     // TODO: when address recognition is on FIFOP will remain
                     // low until the frame passed address recognition completely.
                     // The current matchAddress() does not support this.
-                    signalFIFOP();
+                    FIFOP_pin.setLevel(FIFOP_active);
                 }
             }
             return true;
@@ -1438,25 +1454,12 @@ public class CC2420Radio implements Radio {
             rxFIFO.dropLast();
             // unset FIFO/FIFOP pins if necessary
             if (rxFIFO.empty()) {
-                FIFO_pin.level.setValue(!FIFO_active);
+                FIFO_pin.setLevel(!FIFO_active);
             }
             if (rxFIFO.size() < getFIFOThreshold()) {
-                FIFOP_pin.level.setValue(!FIFOP_active);
+                FIFOP_pin.setLevel(!FIFOP_active);
             }
-        }
 
-        private void signalFIFOP() {
-            FIFOP_pin.level.setValue(FIFOP_active);
-            if (FIFOP_interrupt > 0) {
-                sim.getInterpreter().getInterruptTable().post(FIFOP_interrupt);
-            }
-        }
-
-        private void unsignalFIFOP() {
-            FIFOP_pin.level.setValue(!FIFOP_active);
-            if (FIFOP_interrupt > 0) {
-                sim.getInterpreter().getInterruptTable().unpost(FIFOP_interrupt);
-            }
         }
 
         protected boolean inPacket() {
@@ -1509,6 +1512,8 @@ public class CC2420Radio implements Radio {
      * The <code>CC2420Pin</code>() class models pins that are inputs and outputs to the CC2420 chip.
      */
     public class CC2420Pin implements Microcontroller.Pin.Input, Microcontroller.Pin.Output {
+        
+        protected LinkedList<InputListener> listeners = new LinkedList<>();
         protected final String name;
         protected boolean level;
 
@@ -1526,6 +1531,9 @@ public class CC2420Radio implements Radio {
            //     if (printer != null) {
             //        printer.println("CC2420 Write pin " + name + " -> " + level);
            //     }
+	        for (InputListener l : listeners) {
+                     l.onInputChanged(this, level);
+                 }
             }
         }
 
@@ -1535,20 +1543,27 @@ public class CC2420Radio implements Radio {
          //   }
             return level;
         }
+        public void registerListener(InputListener listener) {
+            listeners.add(listener);
+        }
+
+        public void unregisterListener(InputListener listener) {
+            listeners.remove(listener);
+        }
     }
 
-    public class CC2420Output implements Microcontroller.Pin.Input {
+    public class CC2420Output extends Microcontroller.Pin.ListenableBooleanViewInput implements Microcontroller.Pin.Input {
 
-        protected BooleanView level;
+        //protected BooleanView level;
         protected final String name;
 
         public CC2420Output(String n, BooleanView lvl) {
+            super(lvl);
             name = n;
-            level = lvl;
         }
 
         public boolean read() {
-            boolean val = level.getValue();
+            boolean val = super.read();
         //    if (printer != null) {
         //        printer.println("CC2420 Read pin " + name + " -> " + val);
         //    }

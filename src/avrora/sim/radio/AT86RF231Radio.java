@@ -46,6 +46,7 @@ import avrora.sim.state.BooleanView;
 import avrora.sim.state.ByteFIFO;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
+import java.util.LinkedList;
 
 /**
  * The <code>AT86RF231Radio</code> implements a simulation of the Atmel
@@ -773,6 +774,13 @@ public class AT86RF231Radio implements Radio {
         public boolean getValue() {
           if (DEBUGV && printer!=null) printer.println("RF231: CleanChannelAssesor.getValue");
           return true;
+        }
+
+        public void setValueSetListener(ValueSetListener listener) {
+            if (printer != null) {
+                // TODO: Implement value-change events for this view
+                printer.println("AT86RF231 WARN: ValueSet events for the ClearChannelAssessor are not implemented.");
+            }
         }
     }
 
@@ -1686,6 +1694,8 @@ public class AT86RF231Radio implements Radio {
      * The <code>RF231Pin</code>() class models pins that are inputs and outputs to the RF231 chip.
      */
     public class RF231Pin implements Microcontroller.Pin.Input, Microcontroller.Pin.Output {
+      
+        protected LinkedList<Microcontroller.Pin.InputListener> listeners = new LinkedList<>();
         protected final String name;
         protected boolean level;
 
@@ -1708,21 +1718,29 @@ public class AT86RF231Radio implements Radio {
             if (DEBUGV && printer!=null) printer.println("RF231 Read pin " + name + " -> " + level);
             return level;
         }
+        public void registerListener(Microcontroller.Pin.InputListener listener) {
+             listeners.add(listener);
+         }
+
+         public void unregisterListener(Microcontroller.Pin.InputListener listener) {
+             listeners.remove(listener);
+         }
     }
 
-    public class RF231Output implements Microcontroller.Pin.Input {
+    public class RF231Output extends Microcontroller.Pin.ListenableBooleanViewInput implements Microcontroller.Pin.Input {
 
-        protected BooleanView level;
+        //protected BooleanView level;
         protected final String name;
 
         public RF231Output(String n, BooleanView lvl) {
+            super(lvl);
             name = n;
-            level = lvl;
         }
 
         public boolean read() {
-            boolean val = level.getValue();
-            if (DEBUGV && printer!=null) printer.println("RF231 Read (output) pin " + name + " -> " + val);
+            boolean val = super.read();
+            if (DEBUGV && printer!=null)
+              printer.println("RF231 Read (output) pin " + name + " -> " + val);
             return val;
         }
     }

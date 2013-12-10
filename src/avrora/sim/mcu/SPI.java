@@ -152,6 +152,9 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
         public void fire() {
             if (SPCR_reg._enabled.getValue()) {
                 SPSR_reg.clearSPIF();//after every reading SPSR must be a cleared
+                if (connectedDevice == null) {
+                    throw new Error("No device connected to SPI - did you specify a platform?");
+                }
                 receive(connectedDevice.exchange(frame));
                 transmitting = false;
                 postSPIInterrupt();

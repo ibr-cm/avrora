@@ -33,12 +33,15 @@
 package avrora.sim.platform;
 
 import avrora.sim.FiniteStateMachine;
+import avrora.sim.FiniteStateMachine.Probe;
 import avrora.sim.Simulator;
 import avrora.sim.output.SimPrinter;
 import avrora.sim.clock.Clock;
 import avrora.sim.mcu.ATMegaFamily;
 import avrora.sim.mcu.Microcontroller;
+import avrora.sim.mcu.Microcontroller.Pin.InputListener;
 import avrora.sim.util.SimUtil;
+import cck.text.Printer;
 import cck.text.Terminal;
 
 
@@ -103,15 +106,13 @@ public class PinWire {
 
         this.colorNum = colorNum;
         this.pinName = pinName;
-        isInterruptPin = false;
-        interruptNum = 0;
         atmel = null;
 
-       	propDelay = clock.millisToCycles(0.0014);
+        propDelay = clock.millisToCycles(0.0014);
 
     }
 
-    protected PinWire(Simulator s, int colorNum, String pinName, int interruptNum, Microcontroller mcu) {
+    protected PinWire(Simulator s, int colorNum, String pinName, Microcontroller mcu) {
 
         sim = s;
         Clock clock = sim.getClock();
@@ -127,15 +128,11 @@ public class PinWire {
         this.colorNum = colorNum;
         this.pinName = pinName;
         atmel = (ATMegaFamily) mcu;
-        isInterruptPin = true;
-        this.interruptNum = interruptNum;
-
-       	propDelay = clock.millisToCycles(0.0014);
-
+        propDelay = clock.millisToCycles(0.0014);
     }
 
     public String readName() {
-    	return pinName;
+        return pinName;
     }
 
     public void enableConnect() {
@@ -180,32 +177,16 @@ public class PinWire {
             buf.append(modeName[afterState]);
             printer.printBuffer(buf);
             
-            // if this is an interrupt pin, and the transition triggers an interrupt
-            // post an interrupt
-            if (isInterruptPin) {
-
-                // for now we only trigger on a rising edge
-                if (beforeState == 0 && afterState == 1) {
-
-                    // add delay event before flagging EIFR
-
-                    // flag the EIFR register
-                    ATMegaFamily.FlagRegister flag = atmel.getEIFR_reg();
-                    flag.flagBit(interruptNum - 2);
-
-                }
-            }
+            wireInput.onStateChange(afterState == 1);
         }
     }
 
-    class WireInput implements Microcontroller.Pin.Input {
+    class WireInput extends Microcontroller.Pin.ListenableInput {
 
         /**
          * Constructor
          */
-        protected WireInput() {
-            // do nothing for now
-        }
+        protected WireInput() { }
 
         /**
          * The <code>enableInput()</code> method is called by the simulator when the program changes the
@@ -228,10 +209,16 @@ public class PinWire {
             // read the current state and return boolean value
             return state.getCurrentState() == 1;
         }
+        
+        /**
+         * Called when the state of the pinwire has changed
+         */
+        public void onStateChange(boolean newState) {
+            notifyListeners(newState);
+        }
     }
 
     class WireOutput implements Microcontroller.Pin.Output {
-
 
         /**
          * Constructor
@@ -258,8 +245,8 @@ public class PinWire {
          */
         public void write(boolean level) {
 
-        	// propagate signal after 1.4 uS =
-        	//sim.insertEvent(new WirePropagationEvent(level), propDelay);
+            // propagate signal after 1.4 uS =
+            //sim.insertEvent(new WirePropagationEvent(level), propDelay);
 
 
             if (level)
@@ -270,19 +257,19 @@ public class PinWire {
         }
 
         protected class WirePropagationEvent implements Simulator.Event {
-        	private boolean value;
+            private boolean value;
 
-			public WirePropagationEvent(boolean value) {
-				this.value = value;
-			}
+            public WirePropagationEvent(boolean value) {
+                this.value = value;
+            }
 
-			// propagate signal to the pin finally
-			public void fire() {
-		        if (value)
-	                state.transition(1);
-	            else
-	                state.transition(0);
-			}
+            // propagate signal to the pin finally
+            public void fire() {
+                if (value)
+                    state.transition(1);
+                else
+                    state.transition(0);
+            }
         }
 
     }

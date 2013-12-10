@@ -34,8 +34,15 @@ package avrora.sim.mcu;
 
 import avrora.arch.avr.AVRProperties;
 import avrora.sim.*;
+import avrora.sim.InterruptTable.Notification;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.clock.MainClock;
+import avrora.sim.mcu.ATMegaFamily.FlagRegister;
+import avrora.sim.mcu.DefaultMCU.Pin;
+import avrora.sim.mcu.Microcontroller.Pin.Input;
+import avrora.sim.state.BooleanView;
+import avrora.sim.state.RegisterUtil.BitRangeView;
+import cck.text.Printer;
 import cck.text.StringUtil;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
@@ -104,7 +111,7 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
      */
     protected ActiveRegister installIOReg(String name, ActiveRegister reg) {
         interpreter.installIOReg(properties.getIOReg(name), reg);
-	return reg;
+    return reg;
     }
 
     /**
@@ -245,5 +252,190 @@ public abstract class AtmelMicrocontroller extends DefaultMCU {
     public MCUProperties getProperties() {
         return properties;
     }
+    
+    private enum InterruptType {
+        
+        /**
+         * Low Level of pin generates an interrupt.
+         */
+         LowLevel ((0 << 1) | 0),
+         
+         /**
+          * Any change of level generates an interrupt. (Only for EICRB interrupts).
+          */
+         AnyLevel ((0 << 1) | 1),
+         
+         /**
+          * A falling edge causes an interrupt.
+          */
+         FallingEdge((1 << 1) | 0),
+         
+         /**
+          * A raising edge causes an interrupt.
+          */
+         RisingEdge((1 << 1) | 1);
+                 
+         private int bitValue;
+         
+         InterruptType(int bitValue) {
+           this.bitValue = bitValue;
+         }
+         
+         /**
+          * Returns the bit value of this setting.
+          */
+         public int getBitValue() {
+             return bitValue;
+         }
+    }
 
+    /**
+     * The <code>INTPin</code> class implements a model of a pin of the Atmel family which can
+     * cause Interrupts when a change in level occurs.
+     */
+    protected class INTPin extends Pin implements Pin.InputListener {
+        
+        /** 
+         * Notification for events occurring on an InterruptTable. Used for handling repetitive LowLevel-interrupts. 
+         */
+        class InterruptTableNotification implements InterruptTable.Notification {
+            
+            /** 
+             * Returns true if this notification is still valid and in use.
+             */
+            public boolean isStillValid() {
+                if (EICRx_bits.getValue() != InterruptType.LowLevel.getBitValue()) {
+                    return false; // InterruptType was changed
+                }
+                if (read() != false) {
+                    return false; // no longer a low level.
+                }
+                return true;
+            }
+            
+            private Notification underlyingNotification;
+
+            public InterruptTableNotification(InterruptTable.Notification underlyingNotification) {
+                this.underlyingNotification = underlyingNotification;
+            }
+            
+            @Override
+            public void force(int inum) {
+                if (underlyingNotification != null) {
+                    underlyingNotification.force(inum);
+                }
+            }
+
+            @Override
+            public void invoke(int inum) {
+                if (underlyingNotification != null) {
+                    underlyingNotification.invoke(inum);
+                }
+                
+                if (isStillValid()) {
+                    // Re-post the interrupt
+                    EIFR_reg.flagBit(intNum);
+                } 
+                else {
+                    
+                    // Remove the notification, and restore the original one.
+                    EIFR_reg.interpreter.getInterruptTable().registerInternalNotification(underlyingNotification, intNum);
+                    
+                }
+            }
+        }
+        
+        private boolean oldValue;
+        private FlagRegister EIFR_reg;
+        private int intNum;
+        private BitRangeView EICRx_bits;
+        private InterruptTableNotification notification;
+        
+        protected INTPin(int pinNum, FlagRegister eifr, int flagNum, BitRangeView eicrb) {
+            super(pinNum);
+            
+            EIFR_reg = eifr;
+            this.intNum = flagNum;
+            EICRx_bits = eicrb;
+
+            oldValue = read();
+        }
+
+        public void connectInput(Input i) {
+            if (input != null) {
+                input.unregisterListener(this);
+            }
+            super.connectInput(i);
+            if (i != null) {
+                try {
+                    i.registerListener(this);
+                } catch (UnsupportedOperationException ex) {
+                    Printer.STDERR.println("[WARN] Input target "+i+" does not support Listeners. EIFR #"+intNum+" won't trigger.");
+                }
+                updateSensedLevel(read());
+            }
+        }
+
+        protected void write(boolean value) {
+            super.write(value);
+            
+            if (outputDir) {
+                // Write to a PORT may also trigger an interrupt
+                updateSensedLevel(read());
+            }
+        }
+
+        public void onInputChanged(Input input, boolean newValue) {
+            updateSensedLevel(newValue);
+        }
+        
+        private boolean triggersInterrupt(boolean oldValue, boolean newValue) {
+            int eicrb = EICRx_bits.getValue();
+            
+            if (eicrb == InterruptType.LowLevel.getBitValue()) { // no level change required
+                if (!newValue) {
+                    return true;
+                }
+            }
+            
+            if (oldValue == newValue) {
+                return false;
+            }
+            
+            
+            if (eicrb == InterruptType.AnyLevel.getBitValue()) {
+                // NOTE(mlinder): INT0-INT3 on ATMega128 should not necessarily support this ("reserved for future use")
+                return true;
+            } else if (eicrb == InterruptType.FallingEdge.getBitValue()) {
+                if (oldValue && !newValue) {
+                    return true;
+                }
+            } else if (eicrb == InterruptType.RisingEdge.getBitValue()) {
+                if (!oldValue && newValue) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        private void updateSensedLevel(boolean newValue) {
+            // Check if we can trigger an interrupt			
+            if (triggersInterrupt(oldValue, newValue)) {
+                if (EICRx_bits.getValue() == InterruptType.LowLevel.getBitValue()) {
+                    // Add a notification so that this interrupt is re-triggered
+                    InterruptTable table = EIFR_reg.interpreter.getInterruptTable();
+                    Notification oldNotification = table.getInternalNotification(intNum);
+                    if (oldNotification != notification) {
+                        notification = new InterruptTableNotification(oldNotification);
+                        table.registerInternalNotification(notification, intNum); // Replace/Proxy the FlagRegister.Notification
+                    }
+                }
+                
+                // Modify the interrupt EIFR table
+                EIFR_reg.flagBit(intNum); // use .flagBit as .setValue won't trigger an interrupt 
+            }
+            
+            oldValue = newValue;
+        }
+    }
 }

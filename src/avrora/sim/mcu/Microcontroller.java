@@ -32,9 +32,13 @@
 
 package avrora.sim.mcu;
 
+import java.util.LinkedList;
+
 import avrora.sim.Simulator;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.platform.Platform;
+import avrora.sim.state.BooleanRegister;
+import avrora.sim.state.BooleanView;
 
 /**
  * The <code>Microcontroller</code> interface corresponds to a hardware device that implements the AVR
@@ -53,6 +57,19 @@ public interface Microcontroller {
      */
     public interface Pin {
         /**
+         * Listener which will be called if the value of a pin changes.
+         */
+        public interface InputListener {
+            /** 
+             * Called when the value of <code>input</code> was changed.
+             * 
+             * @param input input which was affected
+             * @param newValue new value of the input 
+             */
+            void onInputChanged(Input input, boolean newValue);
+        }
+        
+        /**
          * The <code>Input</code> interface represents an input pin. When the pin is configured to be an input
          * and the microcontroller attempts to read from this pin, the installed instance of this interface
          * will be called.
@@ -65,6 +82,130 @@ public interface Microcontroller {
              * @return true if the level of the pin is high; false otherwise
              */
             public boolean read();
+            
+            /**
+             * Registers a {@link PinChangeListener}.
+             * 
+             * @param listener listener to register
+             */
+            public void registerListener(InputListener listener);
+            
+            /**
+             * Unregisters a {@link PinChangeListener} if found, or does nothing otherwise.
+             * 
+             * @param listener listener to unregister.
+             */
+            public void unregisterListener(InputListener listener);
+        }
+        
+        /** ListenableInput which is implemented using a BooleanView */
+        public class ListenableBooleanViewInput extends ListenableInput implements BooleanView.ValueSetListener {
+            
+            /***
+             * Value of this input
+             */
+            private BooleanView level;
+            
+            /**
+             * Creates this input pin and creates a new BooleanRegister as a value basis.
+             */
+            public ListenableBooleanViewInput() {
+                this(new BooleanRegister());
+            }
+            /**
+             * Creates this input pin and uses an existing BooleanView
+             * @param view existing BooleanView to use
+             */
+            public ListenableBooleanViewInput(BooleanView view) {
+                setLevelView(view);
+            }
+
+            /** 
+             * Returns the view used as pin level
+             */
+            public BooleanView getLevelView() {
+                return level;
+            }
+            
+            /**
+             * Changes the view used for pin level
+             */
+            public void setLevelView(BooleanView view) {
+                boolean hadLevel = (level != null);
+                if (hadLevel) { // unregister previously registered views
+                    level.setValueSetListener(null);
+                }
+                level = view;
+                level.setValueSetListener(this);
+                if (hadLevel) {
+                    notifyListeners(level.getValue()); // value might have changed -> re-test this!
+                }
+            }
+            
+            /**
+             * Changes the level of this pin by modifying the underlying view.
+             */
+            public void setLevel(boolean newLevel) {
+                level.setValue(newLevel);
+            }
+            
+            /**
+             * Returns the level of this pin by reading the underlying view.
+             * @return
+             */
+            public boolean getLevel() {
+                return level.getValue();
+            }
+
+            @Override
+            public boolean read() {
+                return level.getValue();
+            }
+            
+            @Override
+            public void onValueSet(BooleanView view, boolean newValue) {
+                this.notifyListeners(newValue);
+            }       	
+        }
+        
+        /** Abstract implementation of <code>Input</code> which supports InputListeners. */
+        public abstract class ListenableInput implements Input {
+            
+            private LinkedList<InputListener> listeners;
+            private boolean oldValue;
+            
+            /** Checks if a change in level has occured, and notifies all listeners. */
+            protected void update() {
+                boolean newValue = read();
+                if (oldValue != newValue) {
+                    notifyListeners(newValue);
+                    oldValue = newValue;
+                }
+            }
+            
+            /** Notifies every listener about a changed value. */
+            protected void notifyListeners(boolean newValue) {
+                if (listeners != null) {
+                    for (InputListener l : listeners) {
+                        l.onInputChanged(this, newValue);
+                    }
+                }
+            }
+
+            public void registerListener(InputListener listener) {
+                if (listeners == null) {
+                    listeners = new LinkedList<InputListener>();
+                }
+                listeners.add(listener);
+            }
+
+            public void unregisterListener(InputListener listener) {
+                if (listeners != null) {
+                    if (listeners.remove(listener) && listeners.isEmpty()) {
+                        listeners = null;
+                    }
+                }
+            }
         }
 
         /**
@@ -81,7 +222,7 @@ public interface Microcontroller {
              */
             public void write(boolean level);
         }
-
+        
         /**
          * The <code>connect()</code> method will connect this pin to the specified input. Attempts by the
          * microcontroller to read from this pin when it is configured as an input will then call this

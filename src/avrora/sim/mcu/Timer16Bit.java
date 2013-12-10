@@ -73,6 +73,7 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
     
     public class InputCapturePin implements BooleanView {
         boolean level;
+        private ValueSetListener listener;
 
         public boolean getValue() {
             return level;
@@ -84,7 +85,14 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
                 // the ICESn (input capture edge select) bit determines if a rising (1) or falling (0) edge is used as trigger
                 if ((ICESn_flag.value == 1) == level)
                   captureInput();
+                if (listener != null) {
+                    listener.onValueSet(this, v);
+                }
             }
+        }
+
+        public void setValueSetListener(ValueSetListener listener) {
+            this.listener = listener;
         }
     }
 
@@ -114,6 +122,7 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
             force = rset.installField("FOC"+n+c, new FOC_Field());
             flagBit = fb;
             flagReg = fr;
+
             installIOReg("OCR"+n+unit+"H", new OCRnxTempHighRegister(OCRnXH_reg));
             installIOReg("OCR"+n+unit+"L", OCRnX_reg);
         }
@@ -252,7 +261,6 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
         highTempReg = new RWRegister();
 
         compareUnits = new OutputCompareUnit[numUnits];
-
         newOCU(0, numUnits, m, rset, 'A', OCFnA, xTIFR_reg);
         newOCU(1, numUnits, m, rset, 'B', OCFnB, xTIFR_reg);
         newOCU(2, numUnits, m, rset, 'C', OCFnC, cTIFR_reg);  // OCFnC can have a different register!
@@ -324,10 +332,10 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
      * Flags the overflow interrupt for this timer.
      */
     protected void overflow() {
-        if (false && devicePrinter != null) {
+        /*if (devicePrinter != null) {
             boolean enabled = xTIMSK_reg.readBit(TOIEn);
             devicePrinter.println("Timer" + n + ".overFlow (enabled: " + enabled + ')' + "  ");
-        }
+        }*/
         // set the overflow flag for this timer
         xTIFR_reg.flagBit(TOVn);
     }
@@ -413,11 +421,12 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
     private void resetPeriod(int nPeriod) {
         if (nPeriod == 0) {
             // disable the timer.
-            if (false && devicePrinter != null) devicePrinter.println("Timer" + n + " disabled");
+            //if (devicePrinter != null) devicePrinter.println("Timer" + n + " disabled");
             if (ticker != null) timerClock.removeEvent(ticker);
         } else {
             // enable the timer.
-            if (false && devicePrinter != null) devicePrinter.println("Timer" + n + " enabled: period = " + nPeriod + " mode = " + WGMn.value);
+            //if (devicePrinter != null)
+            //    devicePrinter.println("Timer" + n + " enabled: period = " + nPeriod + " mode = " + WGMn.value);
             if (ticker != null) timerClock.removeEvent(ticker);
             ticker = tickers[WGMn.value];
             period = nPeriod;
@@ -644,3 +653,4 @@ public abstract class Timer16Bit extends AtmelInternalDevice {
             compareUnits[cntr].flush();
     }
 }
+

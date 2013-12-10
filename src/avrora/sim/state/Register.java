@@ -49,7 +49,7 @@ import avrora.sim.util.TransactionalList;
  *
  * @author Ben L. Titzer
  */
-public class Register implements RegisterView {
+public class Register extends AbstractRegisterView implements RegisterView {
 
     public final int width;
     public final int mask;
@@ -116,6 +116,7 @@ public class Register implements RegisterView {
             }
             watches.endTransaction();
         }
+        notify(oldv, newv);
     }
     /**
      * The <code>read()</code> method reads a value from this register. This method
@@ -150,10 +151,13 @@ public class Register implements RegisterView {
      * the notification of any objects in the notification list. This interface should not
      * be used by client (user) code, but is intended for subfields and devices using
      * subfields.
+     * It will, however, trigger registered ValueSetListeners
      * @param val the value to which to set the register
      */
     public void setValue(int val) {
+        int oldVal = value;
         value = val & mask;
+        notify(oldVal, value);
     }
 
     /**

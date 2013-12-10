@@ -81,5 +81,13 @@ public interface RegisterView {
      * @param val the new value of the bits
      */
     public void setValue(int val);
+    
+    /** Listener for <code>onValueSet</code> events. */
+    public interface RegisterValueSetListener {
+        /** Called whenever the value of this view is set (although may have, but not necessarily has to have changed). */
+        public void onValueSet(RegisterView view, int oldValue, int newValue);
+    }
+    
+    void registerValueSetListener(RegisterValueSetListener listener);
 }
 

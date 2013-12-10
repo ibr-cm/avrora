@@ -221,6 +221,13 @@ public class InterruptTable {
     public void registerInternalNotification(Notification n, int inum) {
         notify[inum] = n;
     }
+    
+    /**
+     * Returns the previously registered notification for the specified interrupt.
+     */
+    public Notification getInternalNotification(int inum) {
+        return notify[inum];
+    }
 
     /**
      * The <code>getPostedInterrupts()</code> method returns a long integer that represents a bit map

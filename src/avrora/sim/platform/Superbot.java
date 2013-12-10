@@ -53,7 +53,7 @@ public class Superbot extends Platform {
     protected PinConnect pinConnect;
 
     private Superbot(Microcontroller m) {
-    	super(m);
+        super(m);
         mcu = m;
         sim = m.getSimulator();
         addDevices();
@@ -84,26 +84,26 @@ public class Superbot extends Platform {
         PinWire LED6PinTx = new PinWire(sim, Terminal.COLOR_BLUE, "LED6 Tx");
 
         // connect transmit pins to physical pins
-   		mcu.getPin("PC3").connectInput(LED1PinTx.wireInput);
-		mcu.getPin("PC3").connectOutput(LED1PinTx.wireOutput);
-		mcu.getPin("PC2").connectInput(LED2PinTx.wireInput);
-		mcu.getPin("PC2").connectOutput(LED2PinTx.wireOutput);
-		mcu.getPin("PC1").connectInput(LED3PinTx.wireInput);
-		mcu.getPin("PC1").connectOutput(LED3PinTx.wireOutput);
-		mcu.getPin("PC0").connectInput(LED4PinTx.wireInput);
-		mcu.getPin("PC0").connectOutput(LED4PinTx.wireOutput);
-		mcu.getPin("PD6").connectInput(LED5PinTx.wireInput);
-		mcu.getPin("PD6").connectOutput(LED5PinTx.wireOutput);
-		mcu.getPin("PD5").connectInput(LED6PinTx.wireInput);
-		mcu.getPin("PD5").connectOutput(LED6PinTx.wireOutput);
+        mcu.getPin("PC3").connectInput(LED1PinTx.wireInput);
+        mcu.getPin("PC3").connectOutput(LED1PinTx.wireOutput);
+        mcu.getPin("PC2").connectInput(LED2PinTx.wireInput);
+        mcu.getPin("PC2").connectOutput(LED2PinTx.wireOutput);
+        mcu.getPin("PC1").connectInput(LED3PinTx.wireInput);
+        mcu.getPin("PC1").connectOutput(LED3PinTx.wireOutput);
+        mcu.getPin("PC0").connectInput(LED4PinTx.wireInput);
+        mcu.getPin("PC0").connectOutput(LED4PinTx.wireOutput);
+        mcu.getPin("PD6").connectInput(LED5PinTx.wireInput);
+        mcu.getPin("PD6").connectOutput(LED5PinTx.wireOutput);
+        mcu.getPin("PD5").connectInput(LED6PinTx.wireInput);
+        mcu.getPin("PD5").connectOutput(LED6PinTx.wireOutput);
 
-		// enable printing on output pins
-		LED1PinTx.enableConnect();
-		LED2PinTx.enableConnect();
-		LED3PinTx.enableConnect();
-		LED4PinTx.enableConnect();
-		LED5PinTx.enableConnect();
-		LED6PinTx.enableConnect();
+        // enable printing on output pins
+        LED1PinTx.enableConnect();
+        LED2PinTx.enableConnect();
+        LED3PinTx.enableConnect();
+        LED4PinTx.enableConnect();
+        LED5PinTx.enableConnect();
+        LED6PinTx.enableConnect();
 
         // receive pins
         PinWire LED1PinRx = new PinWire(sim, Terminal.COLOR_YELLOW, "LED1 Rx");
@@ -114,63 +114,63 @@ public class Superbot extends Platform {
         PinWire LED6PinRx = new PinWire(sim, Terminal.COLOR_BLUE, "LED6 Rx");
 
         // connect receive pins to physical pins
-   		mcu.getPin("PF0").connectInput(LED1PinRx.wireInput);
-		mcu.getPin("PF0").connectOutput(LED1PinRx.wireOutput);
-		mcu.getPin("PF1").connectInput(LED2PinRx.wireInput);
-		mcu.getPin("PF1").connectOutput(LED2PinRx.wireOutput);
-		mcu.getPin("PF2").connectInput(LED3PinRx.wireInput);
-		mcu.getPin("PF2").connectOutput(LED3PinRx.wireOutput);
-		mcu.getPin("PF3").connectInput(LED4PinRx.wireInput);
-		mcu.getPin("PF3").connectOutput(LED4PinRx.wireOutput);
-		mcu.getPin("PF4").connectInput(LED5PinRx.wireInput);
-		mcu.getPin("PF4").connectOutput(LED5PinRx.wireOutput);
-		mcu.getPin("PF5").connectInput(LED6PinRx.wireInput);
-		mcu.getPin("PF5").connectOutput(LED6PinRx.wireOutput);
+        mcu.getPin("PF0").connectInput(LED1PinRx.wireInput);
+        mcu.getPin("PF0").connectOutput(LED1PinRx.wireOutput);
+        mcu.getPin("PF1").connectInput(LED2PinRx.wireInput);
+        mcu.getPin("PF1").connectOutput(LED2PinRx.wireOutput);
+        mcu.getPin("PF2").connectInput(LED3PinRx.wireInput);
+        mcu.getPin("PF2").connectOutput(LED3PinRx.wireOutput);
+        mcu.getPin("PF3").connectInput(LED4PinRx.wireInput);
+        mcu.getPin("PF3").connectOutput(LED4PinRx.wireOutput);
+        mcu.getPin("PF4").connectInput(LED5PinRx.wireInput);
+        mcu.getPin("PF4").connectOutput(LED5PinRx.wireOutput);
+        mcu.getPin("PF5").connectInput(LED6PinRx.wireInput);
+        mcu.getPin("PF5").connectOutput(LED6PinRx.wireOutput);
 
-		// enable printing on output pins
-		LED1PinRx.enableConnect();
-		LED2PinRx.enableConnect();
-		LED3PinRx.enableConnect();
-		LED4PinRx.enableConnect();
-		LED5PinRx.enableConnect();
-		LED6PinRx.enableConnect();
+        // enable printing on output pins
+        LED1PinRx.enableConnect();
+        LED2PinRx.enableConnect();
+        LED3PinRx.enableConnect();
+        LED4PinRx.enableConnect();
+        LED5PinRx.enableConnect();
+        LED6PinRx.enableConnect();
 
         // receive interrupt pins
-        PinWire LED1PinInt = new PinWire(sim, Terminal.COLOR_YELLOW, "LED1 Int", 1+2, mcu);
-        PinWire LED2PinInt = new PinWire(sim, Terminal.COLOR_GREEN, "LED2 Int", 2+2, mcu);
-        PinWire LED3PinInt = new PinWire(sim, Terminal.COLOR_RED, "LED3 Int", 3+2, mcu);
-        PinWire LED4PinInt = new PinWire(sim, Terminal.COLOR_BLUE, "LED4 Int", 4+2, mcu);
-        PinWire LED5PinInt = new PinWire(sim, Terminal.COLOR_RED, "LED5 Int", 5+2, mcu);
-        PinWire LED6PinInt = new PinWire(sim, Terminal.COLOR_BLUE, "LED6 Int", 6+2, mcu);
+        PinWire LED1PinInt = new PinWire(sim, Terminal.COLOR_YELLOW, "LED1 Int", mcu);
+        PinWire LED2PinInt = new PinWire(sim, Terminal.COLOR_GREEN, "LED2 Int", mcu);
+        PinWire LED3PinInt = new PinWire(sim, Terminal.COLOR_RED, "LED3 Int", mcu);
+        PinWire LED4PinInt = new PinWire(sim, Terminal.COLOR_BLUE, "LED4 Int", mcu);
+        PinWire LED5PinInt = new PinWire(sim, Terminal.COLOR_RED, "LED5 Int", mcu);
+        PinWire LED6PinInt = new PinWire(sim, Terminal.COLOR_BLUE, "LED6 Int", mcu);
 
         // connect receive interrupt pins to physical pins
-   		mcu.getPin("INT1").connectInput(LED1PinInt.wireInput);
-		mcu.getPin("INT1").connectOutput(LED1PinInt.wireOutput);
-		mcu.getPin("INT2").connectInput(LED2PinInt.wireInput);
-		mcu.getPin("INT2").connectOutput(LED2PinInt.wireOutput);
-		mcu.getPin("INT3").connectInput(LED3PinInt.wireInput);
-		mcu.getPin("INT3").connectOutput(LED3PinInt.wireOutput);
-		mcu.getPin("INT4").connectInput(LED4PinInt.wireInput);
-		mcu.getPin("INT4").connectOutput(LED4PinInt.wireOutput);
-		mcu.getPin("INT5").connectInput(LED5PinInt.wireInput);
-		mcu.getPin("INT5").connectOutput(LED5PinInt.wireOutput);
-		mcu.getPin("INT6").connectInput(LED6PinInt.wireInput);
-		mcu.getPin("INT6").connectOutput(LED6PinInt.wireOutput);
+        mcu.getPin("INT1").connectInput(LED1PinInt.wireInput);
+        mcu.getPin("INT1").connectOutput(LED1PinInt.wireOutput);
+        mcu.getPin("INT2").connectInput(LED2PinInt.wireInput);
+        mcu.getPin("INT2").connectOutput(LED2PinInt.wireOutput);
+        mcu.getPin("INT3").connectInput(LED3PinInt.wireInput);
+        mcu.getPin("INT3").connectOutput(LED3PinInt.wireOutput);
+        mcu.getPin("INT4").connectInput(LED4PinInt.wireInput);
+        mcu.getPin("INT4").connectOutput(LED4PinInt.wireOutput);
+        mcu.getPin("INT5").connectInput(LED5PinInt.wireInput);
+        mcu.getPin("INT5").connectOutput(LED5PinInt.wireOutput);
+        mcu.getPin("INT6").connectInput(LED6PinInt.wireInput);
+        mcu.getPin("INT6").connectOutput(LED6PinInt.wireOutput);
 
-		// enable printing on output pins
-		LED1PinInt.enableConnect();
-		LED2PinInt.enableConnect();
-		LED3PinInt.enableConnect();
-		LED4PinInt.enableConnect();
-		LED5PinInt.enableConnect();
-		LED6PinInt.enableConnect();
+        // enable printing on output pins
+        LED1PinInt.enableConnect();
+        LED2PinInt.enableConnect();
+        LED3PinInt.enableConnect();
+        LED4PinInt.enableConnect();
+        LED5PinInt.enableConnect();
+        LED6PinInt.enableConnect();
 
-		// pin management device
+        // pin management device
         pinConnect = PinConnect.pinConnect;
 
         pinConnect.addSuperbotNode(mcu, LED1PinTx, LED2PinTx, LED3PinTx, LED4PinTx, LED5PinTx, LED6PinTx,
-        		LED1PinRx, LED2PinRx, LED3PinRx, LED4PinRx, LED5PinRx, LED6PinRx,
-				LED1PinInt, LED2PinInt, LED3PinInt, LED4PinInt, LED5PinInt, LED6PinInt);
+                LED1PinRx, LED2PinRx, LED3PinRx, LED4PinRx, LED5PinRx, LED6PinRx,
+                LED1PinInt, LED2PinInt, LED3PinInt, LED4PinInt, LED5PinInt, LED6PinInt);
     }
 
 }

@@ -34,6 +34,7 @@ package avrora.sim;
 
 import cck.util.Arithmetic;
 import cck.util.Util;
+import avrora.sim.state.AbstractRegisterView;
 import avrora.sim.state.RegisterView;
 
 /**
@@ -42,7 +43,7 @@ import avrora.sim.state.RegisterView;
  *
  * @author Ben L. Titzer
  */
-public class RWRegister implements ActiveRegister, RegisterView {
+public class RWRegister extends AbstractRegisterView implements ActiveRegister, RegisterView {
 
     public byte value;
 
@@ -63,7 +64,9 @@ public class RWRegister implements ActiveRegister, RegisterView {
      * @param val the value to write
      */
     public void write(byte val) {
+        byte old = value;
         value = val;
+        notify(old, value);
     }
 
     /**
@@ -85,6 +88,8 @@ public class RWRegister implements ActiveRegister, RegisterView {
     }
 
     public void setValue(int val) {
+        byte old = value;
         value = (byte)val;
+        notify(old, val);
     }
 }
