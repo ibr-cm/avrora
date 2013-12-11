@@ -66,39 +66,29 @@ public class ELFParser extends ProgramReader {
         super("The \"elf\" format loader reads a program from an ELF (Executable and Linkable " + "Format) as a binary and disassembles the sections corresponding to executable code.");
     }
 
+    @Override
     public Program read(String[] args) throws Exception {
         if (args.length == 0) Util.userError("no input files");
         if (args.length != 1) Util.userError("input type \"elf\" accepts only one file at a time.");
 
         String fname = args[0];
         Main.checkFileExists(fname);
-
-        RandomAccessFile fis = new RandomAccessFile(fname, "r");
-
-        // read the ELF header
-        try {
-            header = ELFLoader.readELFHeader(fis);
-        } catch (ELFHeader.FormatError e) {
-            Util.userError(fname, "invalid ELF header");
+        Program p;
+        try (RandomAccessFile fis = new RandomAccessFile(fname, "r")) {
+            try {
+                header = ELFLoader.readELFHeader(fis);
+            } catch (ELFHeader.FormatError e) {
+                Util.userError(fname, "invalid ELF header");
+            }
+            arch = getArchitecture();
+            pht = ELFLoader.readPHT(fis, header);
+            if (SYMBOLS.get()) {
+                sht = ELFLoader.readSHT(fis, header);
+                shstrtab = sht.getStringTable();
+            }
+            p = loadSections(fis);
+            loadSymbolTables(p, fis);
         }
-
-        arch = getArchitecture();
-
-        // read the program header table (if it exists)
-        pht = ELFLoader.readPHT(fis, header);
-
-        // read the section header table (if it exists)
-        if (SYMBOLS.get()) {
-            sht = ELFLoader.readSHT(fis, header);
-            shstrtab = sht.getStringTable();
-        }
-        // load the sections from the ELF file
-        Program p = loadSections(fis);
-
-        // read the symbol tables (if they exist)
-        loadSymbolTables(p, fis);
-
-        fis.close();
 
         return p;
     }
@@ -114,12 +104,14 @@ public class ELFParser extends ProgramReader {
         }
     }
 
+    @Override
     public AbstractArchitecture getArchitecture() {
         String specarch = ARCH.get();
         String filearch = header.getArchitecture();
         AbstractArchitecture farch = ArchitectureRegistry.getArchitecture(filearch);
-        if (!"".equals(specarch) && farch != ArchitectureRegistry.getArchitecture(specarch))
+        if (!"".equals(specarch) && farch != ArchitectureRegistry.getArchitecture(specarch)) {
             Util.userError("ELF Error", "expected " + StringUtil.quote(specarch) + " architecture, but header reports " + StringUtil.quote(filearch));
+        }
         return farch;
     }
 
@@ -128,14 +120,15 @@ public class ELFParser extends ProgramReader {
         // ignore fuses
         ELFDataInputStream is = new ELFDataInputStream(header, fis);
         Program p = createProgram();
-        for (int cntr = 0; cntr < pht.entries.length; cntr++) {
-            ELFProgramHeaderTable.Entry32 e = pht.entries[cntr];
-           if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x820000)) {
-     //                   if (e.isLoadable() && (e.p_filesz > 0) ) {
+        for (ELFProgramHeaderTable.Entry32 e : pht.entries) {
+            if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x820000)) {
+                //                   if (e.isLoadable() && (e.p_filesz > 0) ) {
                 fis.seek(e.p_offset);
                 byte[] sect = is.read_section(e.p_offset, e.p_filesz);
                 p.writeProgramBytes(sect, e.p_paddr);
-                if (e.isExecutable()) disassembleSection(sect, e, p);
+                if (e.isExecutable()) {
+                    disassembleSection(sect, e, p);
+                }
             }
         }
         return p;
@@ -146,16 +139,21 @@ public class ELFParser extends ProgramReader {
         // Ignore fuses at 0x820000
         int minp = Integer.MAX_VALUE;
         int maxp = 0;
-        for (int cntr = 0; cntr < pht.entries.length; cntr++) {
-            ELFProgramHeaderTable.Entry32 e = pht.entries[cntr];
-  //         if (e.isLoadable() && (e.p_filesz > 0) ) {
+        for (ELFProgramHeaderTable.Entry32 e : pht.entries) {
+            //         if (e.isLoadable() && (e.p_filesz > 0) ) {
             if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x820000)) {
                 int start = e.p_paddr;
                 int end = start + e.p_filesz;
-                if (start < minp) minp = start;
-                if (end > maxp) maxp = end;
+                if (start < minp) {
+                    minp = start;
+                }
+                if (end > maxp) {
+                    maxp = end;
+                }
             }
         }
+        System.out.println(minp);
+        System.out.println(maxp);
         return new Program(arch, minp, maxp);
     }
 
@@ -163,26 +161,28 @@ public class ELFParser extends ProgramReader {
         AbstractDisassembler d = arch.getDisassembler();
         for (int off = 0; off < sect.length; off += 2) {
             AbstractInstr i = d.disassemble(e.p_paddr, off, sect);
-            if (i != null) p.writeInstr(i, e.p_paddr + off);
+            if (i != null) {
+                p.writeInstr(i, e.p_paddr + off);
+            }
         }
     }
 
     private void addSymbols(SourceMapping map, ELFSymbolTable stab, ELFStringTable str) {
-        for (int cntr = 0; cntr < stab.entries.length; cntr++) {
-            ELFSymbolTable.Entry e = stab.entries[cntr];
+        for (ELFSymbolTable.Entry e : stab.entries) {
             if (e.isFunction() || e.isObject()) {
                 String section = sht.getSectionName(e.st_shndx);
-                String name = ELFDumpAction.getName(str, e.st_name);
-                map.newLocation(section, name, e.st_value, findLMA(e), e.st_size);
+                String st_name = ELFDumpAction.getName(str, e.st_name);
+                map.newLocation(section, st_name, e.st_value, findLMA(e), e.st_size);
             }
         }
     }
 
     private int findLMA(ELFSymbolTable.Entry e) {
         int vma_start = sht.entries[e.st_shndx].sh_addr;
-        for ( int i = 0; i < pht.entries.length; i++ ) {
-            if ( pht.entries[i].p_vaddr == vma_start )
-                return e.st_value - vma_start + pht.entries[i].p_paddr;
+        for (ELFProgramHeaderTable.Entry32 entrie : pht.entries) {
+            if (entrie.p_vaddr == vma_start) {
+                return e.st_value - vma_start + entrie.p_paddr;
+            }
         }
         return 0;
     }

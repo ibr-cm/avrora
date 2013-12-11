@@ -372,19 +372,20 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         SREG = pr.getIOReg("SREG");
 
         // only look for the RAMPZ register if the flash is more than 64kb
-
-        if ( pr.hasIOReg("RAMPZ") )
+        if (pr.hasIOReg("RAMPZ")) {
             RAMPZ = pr.getIOReg("RAMPZ");
-        else
+        } else {
             RAMPZ = -1;
+        }
             //fuses cause large program sizes
   //       Util.warning(" RAMPZ " + RAMPZ);
         // if program will not fit onto hardware, error
     //     Util.warning(" program end " + p.program_end);
     //             Util.warning(" flash size " + pr.flash_size);
-        
+
+        // Doesn't work with raven binaries
         //if (p.program_end > pr.flash_size)
-        //    throw Util.failure("program will not fit into " + pr.flash_size + " bytes");
+        //    throw Util.failure("program (" + p.program_end +" bytes) will not fit into " + pr.flash_size + " bytes");
 
         // beginning address of SRAM array
         sram_start = toSRAM(pr.ioreg_size);
@@ -401,12 +402,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         // create the behavior for the volatile region
         sram_volatile = new VolatileBehavior[sram_start];
         VolatileBehavior b = new VolatileBehavior();
-        for ( int i = 0; i < sram_volatile.length; i++ )
+        for (int i = 0; i < sram_volatile.length; i++) {
             sram_volatile[i] = b;
+        }
         // support the old ActiveRegisters with wrappers
         ioregs = registers.share();
-        for ( int i = 0; i < ioregs.length; i++ )
+        for (int i = 0; i < ioregs.length; i++) {
             sram_volatile[toSRAM(i)] = new IORegBehavior(ioregs[i]);
+        }
 
         // set up the status register volatile
         sram_volatile[toSRAM(SREG)] = new SREGBehavior();
@@ -444,19 +447,23 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     protected abstract void runLoop();
 
     /**
-     * The <code>getInterruptVectorAddress()</code> method computes the location in memory to jump to for the
-     * given interrupt number. On the Atmega128, the starting point is the beginning of memory and each
-     * interrupt vector slot is 4 bytes. On older architectures, this is not the case, therefore this method
+     * The <code>getInterruptVectorAddress()</code> method computes the location
+     * in memory to jump to for the
+     * given interrupt number. On the Atmega128, the starting point is the
+     * beginning of memory and each
+     * interrupt vector slot is 4 bytes. On older architectures, this is not the
+     * case, therefore this method
      * has to be implemented according to the specific device being simulated.
      *
      * @param inum the interrupt number
-     * @return the byte address that represents the address in the program to jump to when this interrupt is
-     *         fired
+     * @return the byte address that represents the address in the program to
+     * jump to when this interrupt is
+     * fired
      */
     protected int getInterruptVectorAddress(int inum) {
     //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
-    //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
-        if ( getFlashByte(0) == 0x0c ) {
+        //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
+        if (getFlashByte(0) == 0x0c) {
             return interruptBase + (inum - 1) * 4;
         } else {
             return interruptBase + (inum - 1) * 2;
@@ -466,29 +473,41 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
 
     /**
      * The <code>setPosted()<code> method is used by external devices to post and unpost interrupts.
+     *
      * @param inum the interrupt number to post or unpost
-     * @param post true if the interrupt should be posted; false if the interrupt should be unposted
+     * @param post true if the interrupt should be posted; false if the
+     * interrupt should be unposted
      */
     public void setPosted(int inum, boolean post) {
-        if ( post ) interrupts.post(inum);
-        else interrupts.unpost(inum);
+        if (post) {
+            interrupts.post(inum);
+        } else {
+            interrupts.unpost(inum);
+        }
     }
 
     /**
-     * The <code>setEnabled()</code> method is used by external devices (and mask registers) to enable
+     * The <code>setEnabled()</code> method is used by external devices (and
+     * mask registers) to enable
      * and disable interrupts.
+     *
      * @param inum the interrupt number to enable or disable
-     * @param enabled true if the interrupt should be enabled; false if the interrupt should be disabled
+     * @param enabled true if the interrupt should be enabled; false if the
+     * interrupt should be disabled
      */
     public void setEnabled(int inum, boolean enabled) {
-        if ( enabled ) {
+        if (enabled) {
             innerLoop = false;
             interrupts.enable(inum);
-        } else interrupts.disable(inum);
+        } else {
+            interrupts.disable(inum);
+        }
     }
 
     /**
-     * The <code>insertProbe()</code> method is used internally to insert a probe on a particular instruction.
+     * The <code>insertProbe()</code> method is used internally to insert a
+     * probe on a particular instruction.
+     *
      * @param p the probe to insert on an instruction
      * @param addr the address of the instruction on which to insert the probe
      */
@@ -498,19 +517,23 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>insertExceptionWatch()</code> method registers an </code>ExceptionWatch</code> to listen for
+     * The <code>insertExceptionWatch()</code> method registers an
+     * </code>ExceptionWatch</code> to listen for
      * exceptional conditions in the machine.
      *
      * @param watch The <code>ExceptionWatch</code> instance to add.
      */
     @Override
     protected void insertErrorWatch(Simulator.Watch watch) {
-        if ( error_watch == null ) error_watch = new MulticastWatch();
+        if (error_watch == null) {
+            error_watch = new MulticastWatch();
+        }
         error_watch.add(watch);
     }
 
     /**
-     * The <code>insertProbe()</code> method allows a probe to be inserted that is executed before and after
+     * The <code>insertProbe()</code> method allows a probe to be inserted that
+     * is executed before and after
      * every instruction that is executed by the simulator
      *
      * @param p the probe to insert
