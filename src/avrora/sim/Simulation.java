@@ -45,7 +45,6 @@ import avrora.sim.util.InterruptScheduler;
 import avrora.sim.output.SimPrinter;
 import cck.help.HelpCategory;
 import cck.util.*;
-import cck.text.Verbose;
 
 import java.util.*;
 import java.io.*;
@@ -173,8 +172,8 @@ public abstract class Simulation extends HelpCategory {
             this.id = id;
             this.platformFactory = pf;
             this.path = p;
-            this.monitors = new LinkedList<Monitor>();
-            this.guiMonitors = new LinkedList<GuiMonitor>();
+            this.monitors = new LinkedList<>();
+            this.guiMonitors = new LinkedList<>();
         }
 
         /**
@@ -235,8 +234,7 @@ public abstract class Simulation extends HelpCategory {
                 FileInputStream f;
                 // FIXME: break of abstraction (getDevice is specific to
                 // AtmelMicrocontroller)
-                AtmelMicrocontroller mcu = (AtmelMicrocontroller) platform
-                        .getMicrocontroller();
+                AtmelMicrocontroller mcu = (AtmelMicrocontroller) platform.getMicrocontroller();
                 EEPROM eeprom = (EEPROM) mcu.getDevice("eeprom");
                 byte[] image;
 
@@ -389,7 +387,7 @@ public abstract class Simulation extends HelpCategory {
         super(str, h);
         nodes = new Node[16];
         synchronizer = s;
-        monitorFactoryList = new LinkedList<MonitorFactory>();
+        monitorFactoryList = new LinkedList<>();
     }
 
     /**
@@ -439,8 +437,9 @@ public abstract class Simulation extends HelpCategory {
             return null;
         int id = num_nodes++;
         Node n = newNode(id, pf, pp);
-        if (id >= nodes.length)
+        if (id >= nodes.length) {
             grow();
+        }
         nodes[id] = n;
         return n;
     }
@@ -550,9 +549,7 @@ public abstract class Simulation extends HelpCategory {
     }
 
     protected void instantiateNodes() {
-        // instantiate all of the nodes (and create threads)
-        for (int cntr = 0; cntr < nodes.length; cntr++) {
-            Node n = nodes[cntr];
+        for ( Node n : nodes ) {
             if (n == null)
                 continue;
 
@@ -656,10 +653,12 @@ public abstract class Simulation extends HelpCategory {
             scan();
         }
 
+        @Override
         public boolean hasNext() {
             return cursor < nodes.length;
         }
 
+        @Override
         public Node next() {
             if (cursor >= nodes.length)
                 throw new NoSuchElementException();
@@ -677,6 +676,7 @@ public abstract class Simulation extends HelpCategory {
             }
         }
 
+        @Override
         public void remove() {
             throw Util.unimplemented();
         }

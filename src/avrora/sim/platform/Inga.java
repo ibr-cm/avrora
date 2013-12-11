@@ -37,13 +37,8 @@ import avrora.sim.Simulator;
 import avrora.sim.Simulation;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.mcu.*;
-import avrora.sim.platform.sensors.LightSensor;
-import avrora.sim.platform.sensors.SensorBoard;
-//import avrora.sim.platform.sensors.AccelSensor;
-//import avrora.sim.platform.sensors.AccelSensorPower;
 import avrora.sim.radio.*;
 import cck.text.Terminal;
-import avrora.sim.types.SingleSimulation;
 
 /**
  * The <code>Raven</code> class is an implementation of the <code>Platform</code> interface that represents
@@ -64,7 +59,9 @@ public class Inga extends Platform {
          * @param id the integer ID of the node
          * @param sim the simulation
          * @param p the program to load onto the node @return a new instance of the <code>Mica2</code> platform
+         * @return new Inga platform
          */
+        @Override
         public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
             cd.newClock("external", 32768);
@@ -89,7 +86,7 @@ public class Inga extends Platform {
      * but LED's can be added for simulation debugging.
      * Warning: running such code on the hardware will drive the selected port outputs!
      */
-    protected void addDevices() {
+    private void addDevices() {
         LED red = new LED(sim, Terminal.COLOR_RED, "Red");
         LED green = new LED(sim, Terminal.COLOR_GREEN, "Green");
         LED blue = new LED(sim, Terminal.COLOR_BLUE, "Blue");

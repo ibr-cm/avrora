@@ -133,11 +133,12 @@ public class Main {
         banner();
 
         Action a = Defaults.getAction(ACTION.get());
-        if (a == null)
+        if (a == null) {
             Util.userError("Unknown Action", StringUtil.quote(ACTION.get()));
-
-        a.options.process(mainOptions);
-        a.run(mainOptions.getArguments());
+        } else {
+            a.options.process(mainOptions);
+            a.run(mainOptions.getArguments());
+        }
     }
 
     private static void loadUserDefaults() throws IOException {
@@ -325,8 +326,9 @@ public class Main {
         Terminal.htmlColors = HTML.get();
         Status.ENABLED = STATUS.get();
         Status.TIMING = STATUS_TIMING.get();
-        for (String str : VERBOSE.get())
+        for ( String str : VERBOSE.get() ) {
             Verbose.setVerbose(str, true);
+        }
     }
 
     /**
@@ -341,7 +343,7 @@ public class Main {
      *                   error, etc
      */
     public static Program loadProgram(String[] args) throws Exception {
-        Status.begin("Loading "+args[0]);
+        Status.begin("Loading " + args[0]);
         ProgramReader reader = Defaults.getProgramReader(INPUT.get());
         reader.options.process(mainOptions);
         Program program = reader.read(args);
@@ -350,8 +352,8 @@ public class Main {
     }
 
     public static void checkFilesExist(String[] files) {
-        for ( int cntr = 0; cntr < files.length; cntr++ ) {
-            checkFileExists(files[cntr]);
+        for ( String file : files ) {
+            checkFileExists(file);
         }
     }
 

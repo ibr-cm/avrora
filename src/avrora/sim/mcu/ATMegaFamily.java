@@ -73,11 +73,13 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             return val;
         }
 
+        @Override
         public void force(int inum) {
             val = true;
             interpreter.setPosted(inum, true);
         }
 
+        @Override
         public void invoke(int inum) {
             if (autoclear) {
                 val = false;
@@ -96,10 +98,12 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
                 this.bit = bit;
             }
 
+            @Override
             public void force(int inum) {
                 value = Arithmetic.setBit(value, bit, true);
             }
 
+            @Override
             public void invoke(int inum) {
                 value = Arithmetic.setBit(value, bit, false);
                 interpreter.setPosted(inum, false);
@@ -122,6 +126,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             }
         }
 
+        @Override
         public void write(byte val) {
             value = (byte) (value & ~val);
             for (int cntr = 0; cntr < 8; cntr++) {
@@ -161,6 +166,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             interpreter = interp;
         }
 
+        @Override
         public void write(byte val) {
             value = val;
             for (int cntr = 0; cntr < 8; cntr++) {
@@ -186,6 +192,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             pins = p;
         }
 
+        @Override
         public void write(byte val) {
             for (int cntr = 0; cntr < 8; cntr++)
                 if (pins[cntr] != null) pins[cntr].setOutputDir(Arithmetic.getBit(val, cntr));
@@ -205,6 +212,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             pins = p;
         }
 
+        @Override
         public void write(byte val) {
             for (int cntr = 0; cntr < 8; cntr++)
                 if (pins[cntr] != null) pins[cntr].write(Arithmetic.getBit(val, cntr));
@@ -224,6 +232,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             pins = p;
         }
 
+        @Override
         public byte read() {
             int value = 0;
             for (int i = 0; i<8; i++) if (pins[i] != null) value |= pins[i].read() ? 1 << i : 0;
@@ -239,6 +248,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             return (byte) value;
         }
 
+        @Override
         public void write(byte val) {
             // ignore writes.
         }
@@ -268,6 +278,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             static final int OCR0UB = 1;
             static final int TCR0UB = 0;
 
+            @Override
             public void write(byte val) {
                 super.write((byte) (0xf & val));
                 decode(val);
@@ -331,6 +342,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             static final int AS2     = 5;
             static final int EXCLK   = 6;           
 
+            @Override
             public void write(byte val) {
                 super.write((byte) (0x60 & val));
                 decode(val);
@@ -353,6 +365,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
      */
     protected class Timer1 extends Timer16Bit {
 
+        @Override
         protected void initValues() {
             // bit numbers
             OCIEnA = 4;
@@ -386,6 +399,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
      */
     protected class Timer1A extends Timer16Bit {
 
+        @Override
         protected void initValues() {
             // bit numbers
             OCIEnA = 1;
@@ -423,6 +437,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
      */
     protected class Timer3 extends Timer16Bit {
 
+        @Override
         protected void initValues() {
             // bit numbers
             OCIEnA = 4; // all OCIEn on ETIMSK
@@ -455,6 +470,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
      */
     protected class Timer3A extends Timer16Bit {
 
+        @Override
         protected void initValues() {
             // bit numbers
             OCIEnA = 1;
@@ -573,6 +589,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             return view.getValue();
         }
 
+        @Override
         public void force(int inum) {
             view.setValue(true);
             interpreter.setPosted(inum, true);
@@ -582,6 +599,7 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
             interpreter.setPosted(inum, view.getValue());
         }
 
+        @Override
         public void invoke(int inum) {
             if (autoclear) {
                 view.setValue(false);

@@ -115,6 +115,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * instance.
          * @return a reference to the simulator associated with this state instance.
          */
+        @Override
         public Simulator getSimulator() {
             return simulator;
         }
@@ -125,6 +126,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * pending, etc.
          * @return a reference to the <code>InterruptTable</code> instance
          */
+        @Override
         public InterruptTable getInterruptTable() {
             return interrupts;
         }
@@ -135,6 +137,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @param reg the register to read
          * @return the current value of the register
          */
+        @Override
         public byte getRegisterByte(LegacyRegister reg) {
             registerRead = reg.getNumber();
             return sram[registerRead];
@@ -146,6 +149,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @param reg the register to read
          * @return the current unsigned value of the register
          */
+        @Override
         public int getRegisterUnsigned(LegacyRegister reg) {
             registerRead = reg.getNumber();
             return sram[registerRead] & 0xff;
@@ -160,10 +164,11 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @param reg the low register of the pair to read
          * @return the current unsigned word value of the register pair
          */
+        @Override
         public int getRegisterWord(LegacyRegister reg)  {
             int number = reg.getNumber();
             registerRead = number;
-            registerRead2 = number+1;
+            registerRead2 = number + 1;
             return Arithmetic.uword(sram[number], sram[number+1]);
         }
 
@@ -174,16 +179,33 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return the value of the status register as a byte.
          */
+        @Override
         public byte getSREG() {
             int value = 0;
-            if (I) value |= LegacyState.SREG_I_MASK;
-            if (T) value |= LegacyState.SREG_T_MASK;
-            if (H) value |= LegacyState.SREG_H_MASK;
-            if (S) value |= LegacyState.SREG_S_MASK;
-            if (V) value |= LegacyState.SREG_V_MASK;
-            if (N) value |= LegacyState.SREG_N_MASK;
-            if (Z) value |= LegacyState.SREG_Z_MASK;
-            if (C) value |= LegacyState.SREG_C_MASK;
+            if ( I ) {
+                value |= LegacyState.SREG_I_MASK;
+            }
+            if ( T ) {
+                value |= LegacyState.SREG_T_MASK;
+            }
+            if ( H ) {
+                value |= LegacyState.SREG_H_MASK;
+            }
+            if ( S ) {
+                value |= LegacyState.SREG_S_MASK;
+            }
+            if ( V ) {
+                value |= LegacyState.SREG_V_MASK;
+            }
+            if ( N ) {
+                value |= LegacyState.SREG_N_MASK;
+            }
+            if ( Z ) {
+                value |= LegacyState.SREG_Z_MASK;
+            }
+            if ( C ) {
+                value |= LegacyState.SREG_C_MASK;
+            }
             return (byte) value;
         }
 
@@ -200,6 +222,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return the value on the top of the stack
          */
+        @Override
         public byte getStackByte() {
             int address = getSP();
             return getDataByte(address);
@@ -212,6 +235,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return the value of the stack pointer as a byte address
          */
+        @Override
         public int getSP() {
             byte low = SPL_reg.value;
             byte high = SPH_reg.value;
@@ -223,6 +247,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return the program counter as a byte address
          */
+        @Override
         public int getPC() {
             return pc;
         }
@@ -238,6 +263,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @return a reference to the <code>LegacyInstr</code> object representing the instruction at that address in
          *         the program
          */
+        @Override
         public AbstractInstr getInstr(int address) {
             return flash.readInstr(address);
         }
@@ -250,6 +276,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @return the value of the data memory at the specified address
          * @throws ArrayIndexOutOfBoundsException if the specified address is not the valid memory range
          */
+        @Override
         public byte getDataByte(int address) {
             return readSRAM(UNINSTRUMENTED, address);
         }
@@ -265,6 +292,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @return the byte value of the program memory at the specified address
          * @throws ArrayIndexOutOfBoundsException if the specified address is not the valid program memory range
          */
+        @Override
         public byte getProgramByte(int address) {
             return flash.get(address);
         }
@@ -277,6 +305,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @param ioreg the IO register number
          * @return the value of the IO register
          */
+        @Override
         public byte getIORegisterByte(int ioreg) {
             return getAR(ioreg).read();
         }
@@ -289,6 +318,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          * @param ioreg the IO register number to retrieve
          * @return a reference to the <code>ActiveRegister</code> instance of the specified IO register
          */
+        @Override
         public ActiveRegister getIOReg(int ioreg) {
             return getAR(ioreg);
         }
@@ -302,6 +332,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return the number of clock cycles elapsed in the simulation
          */
+        @Override
         public long getCycles() {
             return clock.getCount();
         }
@@ -312,6 +343,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
          *
          * @return an integer code representing the current sleep mode
          */
+        @Override
         public int getSleepMode() {
             throw Util.unimplemented();
         }
@@ -351,8 +383,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     //     Util.warning(" program end " + p.program_end);
     //             Util.warning(" flash size " + pr.flash_size);
         
-    //    if (p.program_end > pr.flash_size)
-     //       throw Util.failure("program will not fit into " + pr.flash_size + " bytes");
+        //if (p.program_end > pr.flash_size)
+        //    throw Util.failure("program will not fit into " + pr.flash_size + " bytes");
 
         // beginning address of SRAM array
         sram_start = toSRAM(pr.ioreg_size);
@@ -392,16 +424,19 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         SPH_reg = (RWRegister) ioregs[pr.getIOReg("SPH")];
     }
 
+    @Override
     public void start() {
         shouldRun = true;
         runLoop();
     }
 
+    @Override
     public void stop() {
         shouldRun = false;
         innerLoop = false;
     }
 
+    @Override
     public State getState() {
         return state;
     }
@@ -419,10 +454,13 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      *         fired
      */
     protected int getInterruptVectorAddress(int inum) {
- //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
- //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
-        if (getFlashByte(0) == 0x0c) return interruptBase + (inum - 1) * 4;
-        else return interruptBase + (inum - 1) * 2;
+    //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
+    //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
+        if ( getFlashByte(0) == 0x0c ) {
+            return interruptBase + (inum - 1) * 4;
+        } else {
+            return interruptBase + (inum - 1) * 2;
+        }
 
     }
 
@@ -454,6 +492,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * @param p the probe to insert on an instruction
      * @param addr the address of the instruction on which to insert the probe
      */
+    @Override
     protected void insertProbe(Simulator.Probe p, int addr) {
         flash.insertProbe(addr, p);
     }
@@ -464,6 +503,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      *
      * @param watch The <code>ExceptionWatch</code> instance to add.
      */
+    @Override
     protected void insertErrorWatch(Simulator.Watch watch) {
         if ( error_watch == null ) error_watch = new MulticastWatch();
         error_watch.add(watch);
@@ -475,6 +515,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      *
      * @param p the probe to insert
      */
+    @Override
     public void insertProbe(Simulator.Probe p) {
         innerLoop = false;
         globalProbe.add(p);
@@ -485,6 +526,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * @param p the probe to remove from an instruction
      * @param addr the address of the instruction from which to remove the probe
      */
+    @Override
     public void removeProbe(Simulator.Probe p, int addr) {
         flash.removeProbe(addr, p);
     }
@@ -496,6 +538,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      *
      * @param b the probe to remove
      */
+    @Override
     public void removeProbe(Simulator.Probe b) {
         innerLoop = false;
         globalProbe.remove(b);
@@ -506,6 +549,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * @param p the watch to insert on a memory location
      * @param data_addr the address of the memory location on which to insert the watch
      */
+    @Override
     protected void insertWatch(Simulator.Watch p, int data_addr) {
         if (sram_watches == null)
             sram_watches = new MulticastWatch[sram.length];
@@ -521,6 +565,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * @param p the watch to remove from the memory location
      * @param data_addr the address of the memory location from which to remove the watch
      */
+    @Override
     protected void removeWatch(Simulator.Watch p, int data_addr) {
         if (sram_watches == null)
             return;
@@ -548,6 +593,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * they are working
      * @param cycles the number of cycles to delay the execution
      */
+    @Override
     protected void delay(long cycles) {
         innerLoop = false;
         delayCycles += cycles;
@@ -738,9 +784,11 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         IORegBehavior(ActiveRegister r) {
             reg = r;
         }
+        @Override
         public int read(int cur) {
             return reg.read();
         }
+        @Override
         public int write(int cur, int nv) {
             reg.write((byte)nv);
             return nv;
@@ -748,22 +796,44 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     private class SREGBehavior extends VolatileBehavior {
+        @Override
         public int read(int cur) {
             int val = 0;
-            if (I) val |= LegacyState.SREG_I_MASK;
-            if (T) val |= LegacyState.SREG_T_MASK;
-            if (H) val |= LegacyState.SREG_H_MASK;
-            if (S) val |= LegacyState.SREG_S_MASK;
-            if (V) val |= LegacyState.SREG_V_MASK;
-            if (N) val |= LegacyState.SREG_N_MASK;
-            if (Z) val |= LegacyState.SREG_Z_MASK;
-            if (C) val |= LegacyState.SREG_C_MASK;
+            if ( I ) {
+                val |= LegacyState.SREG_I_MASK;
+            }
+            if ( T ) {
+                val |= LegacyState.SREG_T_MASK;
+            }
+            if ( H ) {
+                val |= LegacyState.SREG_H_MASK;
+            }
+            if ( S ) {
+                val |= LegacyState.SREG_S_MASK;
+            }
+            if ( V ) {
+                val |= LegacyState.SREG_V_MASK;
+            }
+            if ( N ) {
+                val |= LegacyState.SREG_N_MASK;
+            }
+            if ( Z ) {
+                val |= LegacyState.SREG_Z_MASK;
+            }
+            if ( C ) {
+                val |= LegacyState.SREG_C_MASK;
+            }
             return (byte) val;
         }
+
+        @Override
         public int write(int cur, int nv) {
             boolean enabled = (nv & LegacyState.SREG_I_MASK) != 0;
-            if (enabled) enableInterrupts();
-            else disableInterrupts();
+            if ( enabled ) {
+                enableInterrupts();
+            } else {
+                disableInterrupts();
+            }
             T = (nv & LegacyState.SREG_T_MASK) != 0;
             H = (nv & LegacyState.SREG_H_MASK) != 0;
             S = (nv & LegacyState.SREG_S_MASK) != 0;

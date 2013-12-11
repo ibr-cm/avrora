@@ -98,7 +98,9 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
 
     public void receive(Frame frame) {
         SPDR_reg.receiveReg.write(frame.data);
-        if (!SPCR_reg._master.getValue() && !transferEvent.transmitting) postSPIInterrupt();
+        if (!SPCR_reg._master.getValue() && !transferEvent.transmitting) {
+            postSPIInterrupt();
+        }
     }
 
     public SPI(AtmelMicrocontroller m) {
@@ -141,9 +143,9 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
         protected void enableTransfer() {
 
             if (SPCR_reg._master.getValue() && SPCR_reg._enabled.getValue() && !transmitting) {
-         //       if (devicePrinter != null) {
-           //         devicePrinter.println("SPI: Master mode. Enabling transfer. ");
-          //      }
+                //if (devicePrinter != null) {
+                //    devicePrinter.println("SPI: Master mode. Enabling transfer. ");
+                //}
                 SPSR_reg.clearSPIF();
                 transmitting = true;
                 frame = newFrame(SPDR_reg.transmitReg.read());
@@ -191,7 +193,6 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
                 super.write(val);
                 transferEvent.enableTransfer();
             }
-
         }
 
         SPDReg() {
@@ -262,17 +263,26 @@ public class SPI extends AtmelInternalDevice implements SPIDevice, InterruptTabl
 
             // calculate the period of the clock
             int divider = 0;
-            switch (_spr.getValue()) {
-                case 0: divider = 4; break;
-                case 1: divider = 16; break;
-                case 2: divider = 64; break;
-                case 3: divider = 128; break;
+            switch ( _spr.getValue() ) {
+                case 0:
+                    divider = 4;
+                    break;
+                case 1:
+                    divider = 16;
+                    break;
+                case 2:
+                    divider = 64;
+                    break;
+                case 3:
+                    divider = 128;
+                    break;
             }
 
-            if (SPSR_reg._spi2x.getValue()) divider /= 2;
+            if ( SPSR_reg._spi2x.getValue() ) {
+                divider /= 2;
+            }
             period = divider * 8;
         }
-
     }
 
     /**

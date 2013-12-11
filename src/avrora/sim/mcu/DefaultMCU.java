@@ -77,6 +77,7 @@ public abstract class DefaultMCU implements Microcontroller {
      *
      * @return a reference to the register set of this microcontroller instance
      */
+    @Override
     public RegisterSet getRegisterSet() {
         return registers;
     }
@@ -90,6 +91,7 @@ public abstract class DefaultMCU implements Microcontroller {
      * @return a reference to the <code>Pin</code> object corresponding to the named pin if it exists; null
      *         otherwise
      */
+    @Override
     public Microcontroller.Pin getPin(int num) {
         if (num < 0 || num > pins.length) return null;
         return pins[num];
@@ -109,6 +111,7 @@ public abstract class DefaultMCU implements Microcontroller {
      * The <code>getSimulator()</code> method gets a reference to the simulator for this microcontroller instance.
      * @return a reference to the simulator instance for this microcontroller
      */
+    @Override
     public Simulator getSimulator() {
         return simulator;
     }
@@ -117,6 +120,7 @@ public abstract class DefaultMCU implements Microcontroller {
      * The <code>getPlatform()</code> method returns the platform for this microcontroller.
      * @return the platform instance containing this microcontroller
      */
+    @Override
     public Platform getPlatform() {
         return platform;
     }
@@ -125,6 +129,7 @@ public abstract class DefaultMCU implements Microcontroller {
      * The <code>setPlatform()</code> method sets the platform instance for this microcontroller
      * @param p the platform instance associated with this microcontroller
      */
+    @Override
     public void setPlatform(Platform p) {
         platform = p;
     }
@@ -134,6 +139,7 @@ public abstract class DefaultMCU implements Microcontroller {
      * this node that contains the main clock and any derived clocks for this microcontroller.
      * @return a reference to the clock domain for this microcontroller
      */
+    @Override
     public ClockDomain getClockDomain() {
         return clockDomain;
     }
@@ -156,10 +162,12 @@ public abstract class DefaultMCU implements Microcontroller {
             number = num;
         }
 
+        @Override
         public void connectOutput(Output o) {
             output = o;
         }
 
+        @Override
         public void connectInput(Input i) {
             input = i;
         }
@@ -190,11 +198,13 @@ public abstract class DefaultMCU implements Microcontroller {
         }
 
         private void printRead(boolean result) {
-            if (pinPrinter == null) pinPrinter = simulator.getPrinter("mcu.pin");
-         //   if (pinPrinter != null) {
+            if ( pinPrinter == null ) {
+                pinPrinter = simulator.getPrinter("mcu.pin");
+            }
+         //   if ( pinPrinter != null ) {
          //       String dir = getDirection();
          //       pinPrinter.println("READ PIN: " + number + ' ' + dir + "<- " + result);
-        //    }
+         //    }
         }
 
         private String getDirection() {

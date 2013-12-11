@@ -157,6 +157,7 @@ public class Simulator {
              * @param state   the state of the simulation
              * @param pc the address at which this instruction resides
              */
+            @Override
             public void fireBefore(State state, int pc) {
                 // do nothing
             }
@@ -168,6 +169,7 @@ public class Simulator {
              * @param state   the state of the simulation
              * @param pc the address at which this instruction resides
              */
+            @Override
             public void fireAfter(State state, int pc) {
                 // do nothing
             }
@@ -247,6 +249,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being entered
              */
+            @Override
             public void fireBeforeInvoke(State s, int inum) {
                 // do nothing.
             }
@@ -259,6 +262,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being entered
              */
+            @Override
             public void fireAfterInvoke(State s, int inum) {
                 // do nothing.
             }
@@ -270,6 +274,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being masked out
              */
+            @Override
             public void fireWhenDisabled(State s, int inum) {
                 // do nothing.
             }
@@ -281,6 +286,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being unmasked
              */
+            @Override
             public void fireWhenEnabled(State s, int inum) {
                 // do nothing.
             }
@@ -293,6 +299,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being posted
              */
+            @Override
             public void fireWhenPosted(State s, int inum) {
                 // do nothing.
             }
@@ -305,6 +312,7 @@ public class Simulator {
              * @param s the state of the simulator
              * @param inum the number of the interrupt being unposted
              */
+            @Override
             public void fireWhenUnposted(State s, int inum) {
                 // do nothing.
             }
@@ -382,6 +390,7 @@ public class Simulator {
              * @param state     the state of the simulation
              * @param data_addr the address of the data being referenced
              */
+            @Override
             public void fireBeforeRead(State state, int data_addr) {
                 // do nothing.
             }
@@ -395,6 +404,7 @@ public class Simulator {
              * @param data_addr the address of the data being referenced
              * @param value     the value being written to the memory location
              */
+            @Override
             public void fireBeforeWrite(State state, int data_addr, byte value) {
                 // do nothing.
             }
@@ -407,6 +417,7 @@ public class Simulator {
              * @param data_addr the address of the data being referenced
              * @param value     the value of the memory location being read
              */
+            @Override
             public void fireAfterRead(State state, int data_addr, byte value) {
                 // do nothing.
             }
@@ -420,6 +431,7 @@ public class Simulator {
              * @param data_addr the address of the data being referenced
              * @param value     the value being written to the memory location
              */
+            @Override
             public void fireAfterWrite(State state, int data_addr, byte value) {
                 // do nothing.
             }

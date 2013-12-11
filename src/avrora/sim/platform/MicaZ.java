@@ -43,7 +43,7 @@ import avrora.sim.platform.sensors.AccelSensor;
 import avrora.sim.platform.sensors.AccelSensorPower;
 import avrora.sim.radio.*;
 import cck.text.Terminal;
-import avrora.sim.types.SingleSimulation;
+
 /**
  * The <code>MicaZ</code> class is an implementation of the <code>Platform</code> interface that represents
  * both a specific microcontroller and the devices connected to it. This implementation therefore uses the
@@ -64,8 +64,10 @@ public class MicaZ extends Platform {
          * @param id the integer ID of the node
          * @param sim the simulation
          * @param p the program to load onto the node @return a new instance of the <code>Mica2</code> platform
+         * @return new MicaZ platform
          */
          //             protected static final Simulation mysim = null;
+        @Override
         public Platform newPlatform(int id, Simulation sim, Program p) {
             ClockDomain cd = new ClockDomain(MAIN_HZ);
             cd.newClock("external", 32768);
@@ -94,7 +96,7 @@ public class MicaZ extends Platform {
      * The <code>addDevices()</code> method is used to add the external (off-chip) devices to the
      * platform. For the mica2, these include the LEDs, the radio, and the sensor board.
      */
-    protected void addDevices() {
+    private void addDevices() {
         LED yellow = new LED(sim, Terminal.COLOR_YELLOW, "Yellow");
         LED green = new LED(sim, Terminal.COLOR_GREEN, "Green");
         LED red = new LED(sim, Terminal.COLOR_RED, "Red");
