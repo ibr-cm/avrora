@@ -116,8 +116,8 @@ public class ATMega1284p extends ATMegaFamily {
 
     static {
         // statically initialize the pin assignments for this microcontroller
-        HashMap pinAssignments = new HashMap(150);
-        HashMap interruptAssignments = new HashMap(50);
+        HashMap<String, Integer> pinAssignments = new HashMap<>(150);
+        HashMap<String, Integer> interruptAssignments = new HashMap<>(50);
     if (false) {  //PDIP
     } else {      //TQFP
         addPin(pinAssignments, 1, "PB5", "PCINT13", "ICP3", "MOSI");
@@ -366,32 +366,30 @@ public class ATMega1284p extends ATMegaFamily {
          * properties of this hardware device and has been initialized with the specified program.
          *
          * @param sim
-         *@param p the program to load onto the microcontroller @return a <code>Microcontroller</code> instance that represents the specific hardware device with the
+         * @param p the program to load onto the microcontroller @return a <code>Microcontroller</code> instance that represents the specific hardware device with the
          *         program loaded onto it
          */
-        public Microcontroller newMicrocontroller(int id, Simulation sim, ClockDomain cd, Program p) { //for current avrora source
-        return new ATMega1284p(id, sim, cd, p);
-        //public Microcontroller newMicrocontroller(int id, ClockDomain cd, Program p) {   // for old avrora jar
-        //   return new ATMega1284p(id, cd, p);
+        @Override
+        public Microcontroller newMicrocontroller(int id, Simulation sim, ClockDomain cd, Program p) {
+            return new ATMega1284p(id, sim, cd, p);
         }
 
     }
 
-     public ATMega1284p(int id, Simulation sim, ClockDomain cd, Program p) {//for current avrora source
-    //public ATMega1284p(int id, ClockDomain cd, Program p) {// for old avrora jar
+     public ATMega1284p(int id, Simulation sim, ClockDomain cd, Program p) {
         super(cd, props, new FiniteStateMachine(cd.getMainClock(), MODE_ACTIVE, idleModeNames, transitionTimeMatrix));
-        simulator = sim.createSimulator(id, LegacyInterpreter.FACTORY, this, p);//for current avrora source
-        //simulator = new Simulator(id, LegacyInterpreter.FACTORY, this, p);// for old avrora jar
+        simulator = sim.createSimulator(id, LegacyInterpreter.FACTORY, this, p);
+
         interpreter = (AtmelInterpreter)simulator.getInterpreter();
         SMCR_reg = getIOReg("SMCR");
         installPins();
         installDevices();
-        new Energy("CPU", modeAmpere, sleepState, simulator.getEnergyControl());//for current avrora source
-        //new Energy("CPU", modeAmpere, sleepState);//for old avrora jar
+        new Energy("CPU", modeAmpere, sleepState, simulator.getEnergyControl());
+
         byte SRAM = interpreter.getDataByte(0xff);
     }
 
-    protected void installPins() {
+    protected final void installPins() {
         for (int cntr = 0; cntr < properties.num_pins; cntr++)
             pins[cntr] = new ATMegaFamily.Pin(cntr);
     }
@@ -400,7 +398,7 @@ public class ATMega1284p extends ATMegaFamily {
     protected FlagRegister TIFR2_reg,MTIFR2_reg;
     protected MaskRegister TIMSK2_reg,MTIMSK2_reg;
     
-    protected void installDevices() {
+    protected final void installDevices() {
         // set up the external interrupt mask and flag registers and interrupt range
   //      EIFR_reg = buildInterruptRange(true, "EIMSK", "EIFR", 2, 8);
 
@@ -447,8 +445,8 @@ public class ATMega1284p extends ATMegaFamily {
         buildPort('D');
 
         addDevice(new EEPROM(properties.eeprom_size, this));
-        addDevice(new USART("0", this));
-        addDevice(new USART("1", this));
+        addDevice(new USART("0", this, true));
+        addDevice(new USART("1", this, true));
 
         addDevice(new SPI(this));
         addDevice(new ADC(this, 8));
