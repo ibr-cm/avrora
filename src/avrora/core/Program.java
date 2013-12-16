@@ -110,7 +110,7 @@ public class Program {
         flash_instrs = arch.newInstrArray(size);
         Arrays.fill(flash_data, (byte)0xff);
 
-        indirectEdges = new HashMap<Integer, List<Integer>>();
+        indirectEdges = new HashMap<>();
     }
 
     /**

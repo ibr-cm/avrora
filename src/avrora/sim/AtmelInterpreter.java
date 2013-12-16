@@ -29,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package avrora.sim;
 
 import avrora.arch.AbstractInstr;
@@ -43,8 +42,10 @@ import cck.util.Arithmetic;
 import cck.util.Util;
 
 /**
- * The <code>BaseInterpreter</code> class represents a base class of the legacy interpreter and the generated
- * interpreter(s) that stores the state of the executing program, e.g. registers and flags, etc.
+ * The <code>BaseInterpreter</code> class represents a base class of the legacy
+ * interpreter and the generated
+ * interpreter(s) that stores the state of the executing program, e.g. registers
+ * and flags, etc.
  *
  * @author Ben L. Titzer
  */
@@ -83,7 +84,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
 
     public final int RAMPZ; // location of the RAMPZ IO register
     public final int SREG; // location of the SREG IO register
-    
+
     /* These added for cooja avrora debugger */
     public int registerWritten;  //The last register written
     public int registerWritten2; //If a word write occurred
@@ -111,9 +112,12 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     public class StateImpl implements LegacyState {
 
         /**
-         * The <code>getSimulator()</code> method returns the simulator associated with this state
+         * The <code>getSimulator()</code> method returns the simulator
+         * associated with this state
          * instance.
-         * @return a reference to the simulator associated with this state instance.
+         *
+         * @return a reference to the simulator associated with this state
+         * instance.
          */
         @Override
         public Simulator getSimulator() {
@@ -121,9 +125,12 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getInterruptTable()</code> method gets a reference to the interrupt table,
-         * which contains information about each interrupt, such as whether it is enabled, posted,
+         * The <code>getInterruptTable()</code> method gets a reference to the
+         * interrupt table,
+         * which contains information about each interrupt, such as whether it
+         * is enabled, posted,
          * pending, etc.
+         *
          * @return a reference to the <code>InterruptTable</code> instance
          */
         @Override
@@ -144,7 +151,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * Read a general purpose register's current value as an integer, without any sign extension.
+         * Read a general purpose register's current value as an integer,
+         * without any sign extension.
          *
          * @param reg the register to read
          * @return the current unsigned value of the register
@@ -156,68 +164,72 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * Read a general purpose register pair as an unsigned word. This method will read the value of the
-         * specified register and the value of the next register in numerical order and return the two values
-         * combined as an unsigned integer The specified register should be less than r31, because r32 (the next
+         * Read a general purpose register pair as an unsigned word. This method
+         * will read the value of the
+         * specified register and the value of the next register in numerical
+         * order and return the two values
+         * combined as an unsigned integer The specified register should be less
+         * than r31, because r32 (the next
          * register) does not exist.
          *
          * @param reg the low register of the pair to read
          * @return the current unsigned word value of the register pair
          */
         @Override
-        public int getRegisterWord(LegacyRegister reg)  {
+        public int getRegisterWord(LegacyRegister reg) {
             int number = reg.getNumber();
             registerRead = number;
             registerRead2 = number + 1;
-            return Arithmetic.uword(sram[number], sram[number+1]);
+            return Arithmetic.uword(sram[number], sram[number + 1]);
         }
 
-
         /**
-         * The <code>getSREG()</code> method reads the value of the status register. The status register contains
-         * the I, T, H, S, V, N, Z, and C flags, in order from highest-order to lowest-order.
+         * The <code>getSREG()</code> method reads the value of the status
+         * register. The status register contains
+         * the I, T, H, S, V, N, Z, and C flags, in order from highest-order to
+         * lowest-order.
          *
          * @return the value of the status register as a byte.
          */
         @Override
         public byte getSREG() {
             int value = 0;
-            if ( I ) {
+            if (I) {
                 value |= LegacyState.SREG_I_MASK;
             }
-            if ( T ) {
+            if (T) {
                 value |= LegacyState.SREG_T_MASK;
             }
-            if ( H ) {
+            if (H) {
                 value |= LegacyState.SREG_H_MASK;
             }
-            if ( S ) {
+            if (S) {
                 value |= LegacyState.SREG_S_MASK;
             }
-            if ( V ) {
+            if (V) {
                 value |= LegacyState.SREG_V_MASK;
             }
-            if ( N ) {
+            if (N) {
                 value |= LegacyState.SREG_N_MASK;
             }
-            if ( Z ) {
+            if (Z) {
                 value |= LegacyState.SREG_Z_MASK;
             }
-            if ( C ) {
+            if (C) {
                 value |= LegacyState.SREG_C_MASK;
             }
             return (byte) value;
         }
 
-
         public boolean getFlag(int bit) {
             return AtmelInterpreter.this.getFlag(bit);
         }
 
-
         /**
-         * The <code>getStackByte()</code> method reads a byte from the address specified by SP+1. This method
-         * should not be called with an empty stack, as it will cause an exception consistent with trying to read
+         * The <code>getStackByte()</code> method reads a byte from the address
+         * specified by SP+1. This method
+         * should not be called with an empty stack, as it will cause an
+         * exception consistent with trying to read
          * non-existent memory.
          *
          * @return the value on the top of the stack
@@ -229,8 +241,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getSP()</code> method reads the current value of the stack pointer. Since the stack pointer
-         * is stored in two IO registers, this method will cause the invocation of the <code>.read()</code> method
+         * The <code>getSP()</code> method reads the current value of the stack
+         * pointer. Since the stack pointer
+         * is stored in two IO registers, this method will cause the invocation
+         * of the <code>.read()</code> method
          * on each of the <code>IOReg</code> objects that store these values.
          *
          * @return the value of the stack pointer as a byte address
@@ -253,15 +267,20 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getInstr()</code> can be used to retrieve a reference to the <code>LegacyInstr</code> object
-         * representing the instruction at the specified program address. Care should be taken that the address in
-         * program memory specified does not contain data. This is because Avrora does have a functioning
-         * disassembler and assumes that the <code>LegacyInstr</code> objects for each instruction in the program are
+         * The <code>getInstr()</code> can be used to retrieve a reference to
+         * the <code>LegacyInstr</code> object
+         * representing the instruction at the specified program address. Care
+         * should be taken that the address in
+         * program memory specified does not contain data. This is because
+         * Avrora does have a functioning
+         * disassembler and assumes that the <code>LegacyInstr</code> objects
+         * for each instruction in the program are
          * known a priori.
          *
          * @param address the byte address from which to read the instruction
-         * @return a reference to the <code>LegacyInstr</code> object representing the instruction at that address in
-         *         the program
+         * @return a reference to the <code>LegacyInstr</code> object
+         * representing the instruction at that address in
+         * the program
          */
         @Override
         public AbstractInstr getInstr(int address) {
@@ -269,12 +288,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getDataByte()</code> method reads a byte value from the data memory (SRAM) at the specified
+         * The <code>getDataByte()</code> method reads a byte value from the
+         * data memory (SRAM) at the specified
          * address.
          *
          * @param address the byte address to read
          * @return the value of the data memory at the specified address
-         * @throws ArrayIndexOutOfBoundsException if the specified address is not the valid memory range
+         * @throws ArrayIndexOutOfBoundsException if the specified address is
+         * not the valid memory range
          */
         @Override
         public byte getDataByte(int address) {
@@ -282,15 +303,21 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getProgramByte()</code> method reads a byte value from the program (Flash) memory. The flash
-         * memory generally stores read-only values and the instructions of the program. Care should be taken that
-         * the program memory at the specified address does not contain an instruction. This is because, in
-         * general, programs should not read instructions as data, and secondly, because no assembler is present
-         * in Avrora and therefore the actual byte value of an instruction may not be known.
+         * The <code>getProgramByte()</code> method reads a byte value from the
+         * program (Flash) memory. The flash
+         * memory generally stores read-only values and the instructions of the
+         * program. Care should be taken that
+         * the program memory at the specified address does not contain an
+         * instruction. This is because, in
+         * general, programs should not read instructions as data, and secondly,
+         * because no assembler is present
+         * in Avrora and therefore the actual byte value of an instruction may
+         * not be known.
          *
          * @param address the byte address at which to read
          * @return the byte value of the program memory at the specified address
-         * @throws ArrayIndexOutOfBoundsException if the specified address is not the valid program memory range
+         * @throws ArrayIndexOutOfBoundsException if the specified address is
+         * not the valid program memory range
          */
         @Override
         public byte getProgramByte(int address) {
@@ -298,8 +325,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getIORegisterByte()</code> method reads the value of an IO register. Invocation of this
-         * method causes an invocatiobn of the <code>.read()</code> method on the corresponding internal
+         * The <code>getIORegisterByte()</code> method reads the value of an IO
+         * register. Invocation of this
+         * method causes an invocatiobn of the <code>.read()</code> method on
+         * the corresponding internal
          * <code>IOReg</code> object, and its value returned.
          *
          * @param ioreg the IO register number
@@ -311,12 +340,16 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getIOReg()</code> method is used to retrieve a reference to the actual <code>IOReg</code>
-         * instance stored internally in the state. This is generally only used in the simulator and device
-         * implementations, and clients should probably not call this memory directly.
+         * The <code>getIOReg()</code> method is used to retrieve a reference to
+         * the actual <code>IOReg</code>
+         * instance stored internally in the state. This is generally only used
+         * in the simulator and device
+         * implementations, and clients should probably not call this memory
+         * directly.
          *
          * @param ioreg the IO register number to retrieve
-         * @return a reference to the <code>ActiveRegister</code> instance of the specified IO register
+         * @return a reference to the <code>ActiveRegister</code> instance of
+         * the specified IO register
          */
         @Override
         public ActiveRegister getIOReg(int ioreg) {
@@ -328,7 +361,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getCycles()</code> method returns the clock cycle count recorded so far in the simulation.
+         * The <code>getCycles()</code> method returns the clock cycle count
+         * recorded so far in the simulation.
          *
          * @return the number of clock cycles elapsed in the simulation
          */
@@ -338,7 +372,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         }
 
         /**
-         * The <code>getSleepMode()</code> method returns an integer code describing which sleep mode the
+         * The <code>getSleepMode()</code> method returns an integer code
+         * describing which sleep mode the
          * microcontroller is currently in.
          *
          * @return an integer code representing the current sleep mode
@@ -351,10 +386,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The constructor for the <code>BaseInterpreter</code> class initializes the node's flash,
-     * SRAM, general purpose registers, IO registers, and loads the program onto the flash. It
-     * uses the <code>MicrocontrollerProperties</code> instance to configure the interpreter
+     * The constructor for the <code>BaseInterpreter</code> class initializes
+     * the node's flash,
+     * SRAM, general purpose registers, IO registers, and loads the program onto
+     * the flash. It
+     * uses the <code>MicrocontrollerProperties</code> instance to configure the
+     * interpreter
      * such as the size of flash, SRAM, and location of IO registers.
+     *
      * @param simulator the simulator instance for this interpreter
      * @param p the program to load onto this interpreter instance
      * @param pr the properties of the microcontroller being simulated
@@ -377,15 +416,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         } else {
             RAMPZ = -1;
         }
-            //fuses cause large program sizes
-  //       Util.warning(" RAMPZ " + RAMPZ);
-        // if program will not fit onto hardware, error
-    //     Util.warning(" program end " + p.program_end);
-    //             Util.warning(" flash size " + pr.flash_size);
 
-        // Doesn't work with raven binaries
-        //if (p.program_end > pr.flash_size)
-        //    throw Util.failure("program (" + p.program_end +" bytes) will not fit into " + pr.flash_size + " bytes");
+        if (p.program_end > pr.flash_size) {
+            throw Util.failure("program (" + p.program_end + " bytes) will not fit into " + pr.flash_size + " bytes");
+        }
 
         // beginning address of SRAM array
         sram_start = toSRAM(pr.ioreg_size);
@@ -461,7 +495,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
      * fired
      */
     protected int getInterruptVectorAddress(int inum) {
-    //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
+        //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
         //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
         if (getFlashByte(0) == 0x0c) {
             return interruptBase + (inum - 1) * 4;
@@ -545,7 +579,9 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>removeProbe()</code> method is used internally to remove a probe from a particular instruction.
+     * The <code>removeProbe()</code> method is used internally to remove a
+     * probe from a particular instruction.
+     *
      * @param p the probe to remove from an instruction
      * @param addr the address of the instruction from which to remove the probe
      */
@@ -555,8 +591,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>removeProbe()</code> method removes a probe from the global probe table (the probes executed
-     * before and after every instruction). The comparison used is reference equality, not
+     * The <code>removeProbe()</code> method removes a probe from the global
+     * probe table (the probes executed
+     * before and after every instruction). The comparison used is reference
+     * equality, not
      * <code>.equals()</code>.
      *
      * @param b the probe to remove
@@ -568,41 +606,56 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>insertWatch()</code> method is used internally to insert a watch on a particular memory location.
+     * The <code>insertWatch()</code> method is used internally to insert a
+     * watch on a particular memory location.
+     *
      * @param p the watch to insert on a memory location
-     * @param data_addr the address of the memory location on which to insert the watch
+     * @param data_addr the address of the memory location on which to insert
+     * the watch
      */
     @Override
     protected void insertWatch(Simulator.Watch p, int data_addr) {
-        if (sram_watches == null)
+        if (sram_watches == null) {
             sram_watches = new MulticastWatch[sram.length];
+        }
 
         // add the probe to the multicast probe present at the location (if there is one)
         MulticastWatch w = sram_watches[data_addr];
-        if (w == null) w = sram_watches[data_addr] = new MulticastWatch();
+        if (w == null) {
+            w = sram_watches[data_addr] = new MulticastWatch();
+        }
         w.add(p);
     }
 
     /**
-     * The <code>removeWatch()</code> method is used internally to remove a watch from a particular memory location.
+     * The <code>removeWatch()</code> method is used internally to remove a
+     * watch from a particular memory location.
+     *
      * @param p the watch to remove from the memory location
-     * @param data_addr the address of the memory location from which to remove the watch
+     * @param data_addr the address of the memory location from which to remove
+     * the watch
      */
     @Override
     protected void removeWatch(Simulator.Watch p, int data_addr) {
-        if (sram_watches == null)
+        if (sram_watches == null) {
             return;
+        }
 
         // remove the probe from the multicast probe present at the location (if there is one)
         MulticastWatch w = sram_watches[data_addr];
-        if (w == null) return;
+        if (w == null) {
+            return;
+        }
         w.remove(p);
     }
 
     /**
-     * The <code>advanceClock()</code> method advances the clock by the specified number of cycles. It SHOULD NOT
-     * be used externally. It also clears the <code>cyclesConsumed</code> variable that is used to track the
+     * The <code>advanceClock()</code> method advances the clock by the
+     * specified number of cycles. It SHOULD NOT
+     * be used externally. It also clears the <code>cyclesConsumed</code>
+     * variable that is used to track the
      * number of cycles consumed by a single instruction.
+     *
      * @param delta the number of cycles to advance the clock
      */
     protected void advanceClock(long delta) {
@@ -611,9 +664,12 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>delay()</code> method is used to add some delay cycles before the next instruction is executed.
-     * This is necessary because some devices such as the EEPROM actually delay execution of instructions while
+     * The <code>delay()</code> method is used to add some delay cycles before
+     * the next instruction is executed.
+     * This is necessary because some devices such as the EEPROM actually delay
+     * execution of instructions while
      * they are working
+     *
      * @param cycles the number of cycles to delay the execution
      */
     @Override
@@ -623,7 +679,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>storeProgramMemory()</code> method is called when the program executes the SPM instruction
+     * The <code>storeProgramMemory()</code> method is called when the program
+     * executes the SPM instruction
      * which stores to the program memory.
      */
     protected void storeProgramMemory() {
@@ -647,7 +704,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * Read a general purpose register's current value as an integer, without any sign extension.
+     * Read a general purpose register's current value as an integer, without
+     * any sign extension.
      *
      * @param reg the register to read
      * @return the current unsigned value of the register
@@ -658,7 +716,9 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>getRegisterUnsigned()</code> method reads a register's value (without sign extension)
+     * The <code>getRegisterUnsigned()</code> method reads a register's value
+     * (without sign extension)
+     *
      * @param reg the index into the register file
      * @return the value of the register as an unsigned integer
      */
@@ -668,30 +728,36 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * Read a general purpose register pair as an unsigned word. This method will read the value of the
-     * specified register and the value of the next register in numerical order and return the two values
-     * combined as an unsigned integer The specified register should be less than r31, because r32 (the next
+     * Read a general purpose register pair as an unsigned word. This method
+     * will read the value of the
+     * specified register and the value of the next register in numerical order
+     * and return the two values
+     * combined as an unsigned integer The specified register should be less
+     * than r31, because r32 (the next
      * register) does not exist.
      *
      * @param reg the low register of the pair to read
      * @return the current unsigned word value of the register pair
      */
     public int getRegisterWord(LegacyRegister reg) {
-    /* This was the code when registerRead not used to flag reads to debugger
-        byte low = getRegisterByte(reg);
-        byte high = getRegisterByte(reg.nextRegister());
-    */
-    /* This is a little faster, note registerRead2 is returning the low byte in this case */
+        /* This was the code when registerRead not used to flag reads to debugger
+         byte low = getRegisterByte(reg);
+         byte high = getRegisterByte(reg.nextRegister());
+         */
+        /* This is a little faster, note registerRead2 is returning the low byte in this case */
         byte low = getRegisterByte(reg);
         registerRead2 = registerRead;
-        byte high = getRegisterByte(registerRead+1);
+        byte high = getRegisterByte(registerRead + 1);
         return Arithmetic.uword(low, high);
     }
 
     /**
-     * Read a general purpose register pair as an unsigned word. This method will read the value of the
-     * specified register and the value of the next register in numerical order and return the two values
-     * combined as an unsigned integer The specified register should be less than r31, because r32 (the next
+     * Read a general purpose register pair as an unsigned word. This method
+     * will read the value of the
+     * specified register and the value of the next register in numerical order
+     * and return the two values
+     * combined as an unsigned integer The specified register should be less
+     * than r31, because r32 (the next
      * register) does not exist.
      *
      * @param reg the low register of the pair to read
@@ -706,14 +772,22 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
 
     public boolean getFlag(int bit) {
         switch (bit) {
-            case LegacyState.SREG_I: return I;
-            case LegacyState.SREG_T: return T;
-            case LegacyState.SREG_H: return H;
-            case LegacyState.SREG_S: return S;
-            case LegacyState.SREG_V: return V;
-            case LegacyState.SREG_N: return N;
-            case LegacyState.SREG_Z: return Z;
-            case LegacyState.SREG_C: return C;
+            case LegacyState.SREG_I:
+                return I;
+            case LegacyState.SREG_T:
+                return T;
+            case LegacyState.SREG_H:
+                return H;
+            case LegacyState.SREG_S:
+                return S;
+            case LegacyState.SREG_V:
+                return V;
+            case LegacyState.SREG_N:
+                return N;
+            case LegacyState.SREG_Z:
+                return Z;
+            case LegacyState.SREG_C:
+                return C;
         }
         return false;
     }
@@ -721,16 +795,33 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     public void setFlag(int bit, boolean on) {
         switch (bit) {
             case LegacyState.SREG_I:
-                if (on) enableInterrupts();
-                else disableInterrupts();
+                if (on) {
+                    enableInterrupts();
+                } else {
+                    disableInterrupts();
+                }
                 break;
-            case LegacyState.SREG_T: T = on; break;
-            case LegacyState.SREG_H: H = on; break;
-            case LegacyState.SREG_S: S = on; break;
-            case LegacyState.SREG_V: V = on; break;
-            case LegacyState.SREG_N: N = on; break;
-            case LegacyState.SREG_Z: Z = on; break;
-            case LegacyState.SREG_C: C = on; break;
+            case LegacyState.SREG_T:
+                T = on;
+                break;
+            case LegacyState.SREG_H:
+                H = on;
+                break;
+            case LegacyState.SREG_S:
+                S = on;
+                break;
+            case LegacyState.SREG_V:
+                V = on;
+                break;
+            case LegacyState.SREG_N:
+                N = on;
+                break;
+            case LegacyState.SREG_Z:
+                Z = on;
+                break;
+            case LegacyState.SREG_C:
+                C = on;
+                break;
         }
     }
 
@@ -745,29 +836,33 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>getDataByte()</code> method reads a byte value from the data memory (SRAM) at the specified
+     * The <code>getDataByte()</code> method reads a byte value from the data
+     * memory (SRAM) at the specified
      * address.
      *
      * @param address the byte address to read
      * @return the value of the data memory at the specified address
      * @throws ArrayIndexOutOfBoundsException
-     *          if the specified address is not the valid memory range
+     * if the specified address is not the valid memory range
      */
     public byte getDataByte(int address) {
         return readSRAM(INSTRUMENTED, address);
     }
 
     private byte readSRAM(boolean w, int addr) {
-        if ( addr < 0 ) {
+        if (addr < 0) {
             // an error.
             return fireReadError(w, addr);
-        } else if ( addr < sram.length ) {
+        } else if (addr < sram.length) {
             // a valid RAM access.
             // PERFORMANCE: consider wrapping in if(sram_watches)
             byte val;
             fireBeforeRead(w, addr);
-            if ( addr < sram_start ) val = sram[addr] = readVolatile(addr);
-            else val = sram[addr];
+            if (addr < sram_start) {
+                val = sram[addr] = readVolatile(addr);
+            } else {
+                val = sram[addr];
+            }
             fireAfterRead(w, addr, val);
             return val;
         } else {
@@ -777,15 +872,18 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     private void writeSRAM(boolean w, int addr, byte val) {
-        if ( addr < 0 ) {
+        if (addr < 0) {
             // an error.
             fireWriteError(w, addr, val);
-        } else if ( addr < sram.length ) {
+        } else if (addr < sram.length) {
             // a valid RAM access.
             // PERFORMANCE: consider wrapping in if(sram_watches)
             fireBeforeWrite(w, addr, val);
-            if ( addr < sram_start ) sram[addr] = writeVolatile(addr, val);
-            else sram[addr] = val;
+            if (addr < sram_start) {
+                sram[addr] = writeVolatile(addr, val);
+            } else {
+                sram[addr] = val;
+            }
             fireAfterWrite(w, addr, val);
         } else {
             // an error.
@@ -794,56 +892,65 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     private void fireWriteError(boolean w, int addr, byte val) {
-        if ( w && error_watch != null ) error_watch.fireBeforeWrite(state, addr, val);
+        if (w && error_watch != null) {
+            error_watch.fireBeforeWrite(state, addr, val);
+        }
     }
 
     private byte fireReadError(boolean w, int addr) {
-        if ( w && error_watch != null ) error_watch.fireBeforeRead(state, addr);
+        if (w && error_watch != null) {
+            error_watch.fireBeforeRead(state, addr);
+        }
         return 0;
     }
 
     private static class IORegBehavior extends VolatileBehavior {
+
         final ActiveRegister reg;
+
         IORegBehavior(ActiveRegister r) {
             reg = r;
         }
+
         @Override
         public int read(int cur) {
             return reg.read();
         }
+
         @Override
         public int write(int cur, int nv) {
-            reg.write((byte)nv);
+            reg.write((byte) nv);
             return nv;
         }
     }
 
     private class SREGBehavior extends VolatileBehavior {
+
         @Override
         public int read(int cur) {
             int val = 0;
-            if ( I ) {
+            if (I) {
                 val |= LegacyState.SREG_I_MASK;
             }
-            if ( T ) {
+            if (T) {
                 val |= LegacyState.SREG_T_MASK;
             }
-            if ( H ) {
+            if (H) {
                 val |= LegacyState.SREG_H_MASK;
             }
-            if ( S ) {
+            if (S) {
                 val |= LegacyState.SREG_S_MASK;
             }
-            if ( V ) {
+            if (V) {
                 val |= LegacyState.SREG_V_MASK;
             }
-            if ( N ) {
+            if (N) {
                 val |= LegacyState.SREG_N_MASK;
             }
-            if ( Z ) {
+            if (Z) {
                 val |= LegacyState.SREG_Z_MASK;
             }
-            if ( C ) {
+            if (C) {
                 val |= LegacyState.SREG_C_MASK;
             }
             return (byte) val;
@@ -852,7 +959,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
         @Override
         public int write(int cur, int nv) {
             boolean enabled = (nv & LegacyState.SREG_I_MASK) != 0;
-            if ( enabled ) {
+            if (enabled) {
                 enableInterrupts();
             } else {
                 disableInterrupts();
@@ -879,48 +986,61 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     private void fireBeforeRead(boolean w, int addr) {
-        if ( w && sram_watches != null ) {
+        if (w && sram_watches != null) {
             Simulator.Watch p = sram_watches[addr];
-            if ( p != null ) p.fireBeforeRead(state, addr);
+            if (p != null) {
+                p.fireBeforeRead(state, addr);
+            }
         }
     }
 
     private void fireAfterRead(boolean w, int addr, byte val) {
-        if ( w && sram_watches != null ) {
+        if (w && sram_watches != null) {
             Simulator.Watch p = sram_watches[addr];
-            if ( p != null ) p.fireAfterRead(state, addr, val);
+            if (p != null) {
+                p.fireAfterRead(state, addr, val);
+            }
         }
     }
 
     private void fireBeforeWrite(boolean w, int addr, byte val) {
-        if ( w && sram_watches != null ) {
+        if (w && sram_watches != null) {
             Simulator.Watch p = sram_watches[addr];
-            if ( p != null ) p.fireBeforeWrite(state, addr, val);
+            if (p != null) {
+                p.fireBeforeWrite(state, addr, val);
+            }
         }
     }
 
     private void fireAfterWrite(boolean w, int addr, byte val) {
-        if ( w && sram_watches != null ) {
+        if (w && sram_watches != null) {
             Simulator.Watch p = sram_watches[addr];
-            if ( p != null ) p.fireAfterWrite(state, addr, val);
+            if (p != null) {
+                p.fireAfterWrite(state, addr, val);
+            }
         }
     }
 
     /**
-     * The <code>getInstrSize()</code> method reads the size of the instruction at the given program address.
-     * This is needed in the interpreter to compute the target of a skip instruction (an instruction that
+     * The <code>getInstrSize()</code> method reads the size of the instruction
+     * at the given program address.
+     * This is needed in the interpreter to compute the target of a skip
+     * instruction (an instruction that
      * skips over the instruction following it).
      *
      * @param npc the program address of the instruction
-     * @return the size in bytes of the instruction at the specified program address
+     * @return the size in bytes of the instruction at the specified program
+     * address
      */
     public int getInstrSize(int npc) {
         return getInstr(npc).getSize();
     }
 
     /**
-     * The <code>getIORegisterByte()</code> method reads the value of an IO register. Invocation of this
-     * method causes an invocatiobn of the <code>.read()</code> method on the corresponding internal
+     * The <code>getIORegisterByte()</code> method reads the value of an IO
+     * register. Invocation of this
+     * method causes an invocatiobn of the <code>.read()</code> method on the
+     * corresponding internal
      * <code>IOReg</code> object, and its value returned.
      *
      * @param ioreg the IO register number
@@ -931,23 +1051,31 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>getProgramByte()</code> method reads a byte value from the program (Flash) memory. The flash
-     * memory generally stores read-only values and the instructions of the program. Care should be taken that
-     * the program memory at the specified address does not contain an instruction. This is because, in
-     * general, programs should not read instructions as data, and secondly, because no assembler is present
-     * in Avrora and therefore the actual byte value of an instruction may not be known.
+     * The <code>getProgramByte()</code> method reads a byte value from the
+     * program (Flash) memory. The flash
+     * memory generally stores read-only values and the instructions of the
+     * program. Care should be taken that
+     * the program memory at the specified address does not contain an
+     * instruction. This is because, in
+     * general, programs should not read instructions as data, and secondly,
+     * because no assembler is present
+     * in Avrora and therefore the actual byte value of an instruction may not
+     * be known.
      *
      * @param address the byte address at which to read
      * @return the byte value of the program memory at the specified address
-     * @throws InterpreterError.AddressOutOfBoundsException if the specified address is not the valid program memory range
+     * @throws InterpreterError.AddressOutOfBoundsException if the specified
+     * address is not the valid program memory range
      */
     public byte getFlashByte(int address) {
         return flash.read(address);
     }
 
     /**
-     * The <code>writeRegisterByte()</code> method writes a value to a general purpose register. This is a
-     * destructive update and should only be called from the appropriate places in the simulator.
+     * The <code>writeRegisterByte()</code> method writes a value to a general
+     * purpose register. This is a
+     * destructive update and should only be called from the appropriate places
+     * in the simulator.
      *
      * @param reg the register to write the value to
      * @param val the value to write to the register
@@ -959,10 +1087,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>writeRegisterWord</code> method writes a word value to a general purpose register pair. This is
-     * a destructive update and should only be called from the appropriate places in the simulator. The
-     * specified register and the next register in numerical order are updated with the low-order and
-     * high-order byte of the value passed, respectively. The specified register should be less than r31,
+     * The <code>writeRegisterWord</code> method writes a word value to a
+     * general purpose register pair. This is
+     * a destructive update and should only be called from the appropriate
+     * places in the simulator. The
+     * specified register and the next register in numerical order are updated
+     * with the low-order and
+     * high-order byte of the value passed, respectively. The specified register
+     * should be less than r31,
      * since r32 (the next register) does not exist.
      *
      * @param reg the low register of the pair to write
@@ -977,8 +1109,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>writeRegisterByte()</code> method writes a value to a general purpose register. This is a
-     * destructive update and should only be called from the appropriate places in the simulator.
+     * The <code>writeRegisterByte()</code> method writes a value to a general
+     * purpose register. This is a
+     * destructive update and should only be called from the appropriate places
+     * in the simulator.
      *
      * @param reg the register to write the value to
      * @param val the value to write to the register
@@ -988,10 +1122,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>writeRegisterWord</code> method writes a word value to a general purpose register pair. This is
-     * a destructive update and should only be called from the appropriate places in the simulator. The
-     * specified register and the next register in numerical order are updated with the low-order and
-     * high-order byte of the value passed, respectively. The specified register should be less than r31,
+     * The <code>writeRegisterWord</code> method writes a word value to a
+     * general purpose register pair. This is
+     * a destructive update and should only be called from the appropriate
+     * places in the simulator. The
+     * specified register and the next register in numerical order are updated
+     * with the low-order and
+     * high-order byte of the value passed, respectively. The specified register
+     * should be less than r31,
      * since r32 (the next register) does not exist.
      *
      * @param reg the low register of the pair to write
@@ -1005,23 +1143,30 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>writeDataByte()</code> method writes a value to the data memory (SRAM) of the state. This is
-     * generally meant for the simulator, related classes, and device implementations to use, but could also
+     * The <code>writeDataByte()</code> method writes a value to the data memory
+     * (SRAM) of the state. This is
+     * generally meant for the simulator, related classes, and device
+     * implementations to use, but could also
      * be used by debuggers and other tools.
      *
      * @param address the byte address at which to write the value
-     * @param val     the value to write
+     * @param val the value to write
      */
     public void writeDataByte(int address, byte val) {
         writeSRAM(INSTRUMENTED, address, val);
     }
 
     /**
-     * The <code>writeFlashByte()</code> method updates the flash memory one byte at a time.
-     * WARNING: this method should NOT BE CALLED UNLESS EXTREME CARE IS TAKEN. The program
-     * cannot alter its own flash data except through the flash writing procedure supported
-     * in <code>ReprogrammableCodeSegment</code>. This method is only meant for updating
+     * The <code>writeFlashByte()</code> method updates the flash memory one
+     * byte at a time.
+     * WARNING: this method should NOT BE CALLED UNLESS EXTREME CARE IS TAKEN.
+     * The program
+     * cannot alter its own flash data except through the flash writing
+     * procedure supported
+     * in <code>ReprogrammableCodeSegment</code>. This method is only meant for
+     * updating
      * node ID's that are stored in flash. DO NOT USE during execution!
+     *
      * @param address the address of the byte in flash
      * @param val the new value to write into the flash
      */
@@ -1030,12 +1175,14 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>installIOReg()</code> method installs the specified <code>IOReg</code> object to the specified IO
-     * register number. This method is generally only used in the simulator and in device implementations to
+     * The <code>installIOReg()</code> method installs the specified
+     * <code>IOReg</code> object to the specified IO
+     * register number. This method is generally only used in the simulator and
+     * in device implementations to
      * set up the state correctly during initialization.
      *
      * @param ioreg the IO register number
-     * @param reg   the <code>IOReg<code> object to install
+     * @param reg the <code>IOReg<code> object to install
      */
     public void installIOReg(int ioreg, ActiveRegister reg) {
         sram_volatile[toSRAM(ioreg)] = new IORegBehavior(reg);
@@ -1055,22 +1202,28 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>writeIORegisterByte()</code> method writes a value to the specified IO register. This is
-     * generally only used internally to the simulator and device implementations, and client interfaces
+     * The <code>writeIORegisterByte()</code> method writes a value to the
+     * specified IO register. This is
+     * generally only used internally to the simulator and device
+     * implementations, and client interfaces
      * should probably not call this method.
      *
      * @param ioreg the IO register number to which to write the value
-     * @param val   the value to write to the IO register
+     * @param val the value to write to the IO register
      */
     public void writeIORegisterByte(int ioreg, byte val) {
         writeSRAM(INSTRUMENTED, toSRAM(ioreg), val);
     }
 
     /**
-     * The <code>popByte()</code> method pops a byte from the stack by reading from the address pointed to by
-     * SP+1 and incrementing the stack pointer. This method, like all of the other methods that change the
-     * state, should probably only be used within the simulator. This method should not be called with an
-     * empty stack, as it will cause an exception consistent with trying to read non-existent memory.
+     * The <code>popByte()</code> method pops a byte from the stack by reading
+     * from the address pointed to by
+     * SP+1 and incrementing the stack pointer. This method, like all of the
+     * other methods that change the
+     * state, should probably only be used within the simulator. This method
+     * should not be called with an
+     * empty stack, as it will cause an exception consistent with trying to read
+     * non-existent memory.
      *
      * @return the value on the top of the stack
      */
@@ -1081,9 +1234,12 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>pushByte()</code> method pushes a byte onto the stack by writing to the memory address
-     * pointed to by the stack pointer and decrementing the stack pointer. This method, like all of the other
-     * methods that change the state, should probably only be used within the simulator.
+     * The <code>pushByte()</code> method pushes a byte onto the stack by
+     * writing to the memory address
+     * pointed to by the stack pointer and decrementing the stack pointer. This
+     * method, like all of the other
+     * methods that change the state, should probably only be used within the
+     * simulator.
      *
      * @param val the value to push onto the stack
      */
@@ -1094,8 +1250,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>setSP()</code> method updates the value of the stack pointer. Generally the stack pointer is
-     * stored in two IO registers <code>SPL</code> and <code>SPH</code>. This method should generally only be
+     * The <code>setSP()</code> method updates the value of the stack pointer.
+     * Generally the stack pointer is
+     * stored in two IO registers <code>SPL</code> and <code>SPH</code>. This
+     * method should generally only be
      * used within the simulator.
      *
      * @param val the new value of the stack pointer
@@ -1106,7 +1264,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * This method sets the booting address of the interpreter. It should only be used before execution begins.
+     * This method sets the booting address of the interpreter. It should only
+     * be used before execution begins.
      *
      * @param npc the new PC to boot this interpreter from
      */
@@ -1115,7 +1274,9 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>getInterruptBase()</code> method returns the base address of the interrupt table.
+     * The <code>getInterruptBase()</code> method returns the base address of
+     * the interrupt table.
+     *
      * @return the base address of the interrupt table
      */
     public int getInterruptBase() {
@@ -1123,7 +1284,9 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>setInterruptBase()</code> method sets the base of the interrupt table.
+     * The <code>setInterruptBase()</code> method sets the base of the interrupt
+     * table.
+     *
      * @param npc the new base of the interrupt table
      */
     public void setInterruptBase(int npc) {
@@ -1131,23 +1294,30 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>getInstr()</code> can be used to retrieve a reference to the <code>LegacyInstr</code> object
-     * representing the instruction at the specified program address. Care should be taken that the address in
-     * program memory specified does not contain data. This is because Avrora does have a functioning
-     * disassembler and assumes that the <code>LegacyInstr</code> objects for each instruction in the program are
+     * The <code>getInstr()</code> can be used to retrieve a reference to the
+     * <code>LegacyInstr</code> object
+     * representing the instruction at the specified program address. Care
+     * should be taken that the address in
+     * program memory specified does not contain data. This is because Avrora
+     * does have a functioning
+     * disassembler and assumes that the <code>LegacyInstr</code> objects for
+     * each instruction in the program are
      * known a priori.
      *
      * @param address the byte address from which to read the instruction
-     * @return a reference to the <code>LegacyInstr</code> object representing the instruction at that address in
-     *         the program; null if there is no instruction at the specified address
+     * @return a reference to the <code>LegacyInstr</code> object representing
+     * the instruction at that address in
+     * the program; null if there is no instruction at the specified address
      */
     public LegacyInstr getInstr(int address) {
         return flash.readInstr(address);
     }
 
     /**
-     * The <code>getSP()</code> method reads the current value of the stack pointer. Since the stack pointer
-     * is stored in two IO registers, this method will cause the invocation of the <code>.read()</code> method
+     * The <code>getSP()</code> method reads the current value of the stack
+     * pointer. Since the stack pointer
+     * is stored in two IO registers, this method will cause the invocation of
+     * the <code>.read()</code> method
      * on each of the <code>IOReg</code> objects that store these values.
      *
      * @return the value of the stack pointer as a byte address
@@ -1168,7 +1338,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>disableInterrupts()</code> method disables all of the interrupts.
+     * The <code>disableInterrupts()</code> method disables all of the
+     * interrupts.
      */
     public void disableInterrupts() {
         I = false;
@@ -1176,7 +1347,8 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     }
 
     /**
-     * The <code>commit()</code> method is used internally to commit the results of the instructiobn just executed.
+     * The <code>commit()</code> method is used internally to commit the results
+     * of the instructiobn just executed.
      * This should only be used internally.
      */
     protected void commit() {

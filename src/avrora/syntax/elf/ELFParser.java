@@ -117,11 +117,11 @@ public class ELFParser extends ProgramReader {
 
     private Program loadSections(RandomAccessFile fis) throws IOException {
         // load each section
-        // ignore fuses
+        // ignore fuses and other stuff
         ELFDataInputStream is = new ELFDataInputStream(header, fis);
         Program p = createProgram();
         for (ELFProgramHeaderTable.Entry32 e : pht.entries) {
-            if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x820000)) {
+            if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x800000)) {
                 //                   if (e.isLoadable() && (e.p_filesz > 0) ) {
                 fis.seek(e.p_offset);
                 byte[] sect = is.read_section(e.p_offset, e.p_filesz);
@@ -136,12 +136,11 @@ public class ELFParser extends ProgramReader {
 
     private Program createProgram() {
         // find the dimensions of the program by searching loadable sections
-        // Ignore fuses at 0x820000
+        // Ignore fuses and other stuff at 0x800000
         int minp = Integer.MAX_VALUE;
         int maxp = 0;
         for (ELFProgramHeaderTable.Entry32 e : pht.entries) {
-            //         if (e.isLoadable() && (e.p_filesz > 0) ) {
-            if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x820000)) {
+            if (e.isLoadable() && (e.p_filesz > 0) && (e.p_paddr < 0x800000)) {
                 int start = e.p_paddr;
                 int end = start + e.p_filesz;
                 if (start < minp) {
