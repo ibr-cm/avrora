@@ -449,6 +449,7 @@ public class ATMega1284p extends ATMegaFamily {
         addDevice(new USART("1", this, true));
 
         addDevice(new SPI(this));
+        addDevice(new TWI(this));
         addDevice(new ADC(this, 8));
     }
 
