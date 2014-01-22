@@ -40,7 +40,7 @@ import avrora.sim.mcu.TWIDevice;
  */
 public class L3G4200D extends Sensor implements TWIDevice {
 
-    private final byte ADDRESS = (byte) 0xD2;
+    private final byte ADDRESS = (byte) 0xd2;
     private boolean active = false;
     private int writecount = 0;
     private byte reg = 0;
@@ -64,7 +64,7 @@ public class L3G4200D extends Sensor implements TWIDevice {
             return null;
         }
         byte data = 0x00;
-        if (reg == 0x0F) {
+        if (reg == 0x0f) {
             data = ADDRESS | 1;
         }
         return new TWIData(data, ack);
