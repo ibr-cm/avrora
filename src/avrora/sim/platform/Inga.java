@@ -33,11 +33,18 @@
 package avrora.sim.platform;
 
 import avrora.core.Program;
-import avrora.sim.Simulator;
 import avrora.sim.Simulation;
+import avrora.sim.Simulator;
 import avrora.sim.clock.ClockDomain;
-import avrora.sim.mcu.*;
-import avrora.sim.radio.*;
+import avrora.sim.mcu.ATMega1284p;
+import avrora.sim.mcu.AtmelMicrocontroller;
+import avrora.sim.mcu.Microcontroller;
+import avrora.sim.mcu.SPI;
+import avrora.sim.mcu.TWI;
+import avrora.sim.platform.sensors.BMP085;
+import avrora.sim.platform.sensors.L3G4200D;
+import avrora.sim.radio.AT86RF231Radio;
+import avrora.sim.radio.ATmega128RFA1Radio;
 import cck.text.Terminal;
 
 /**
@@ -116,6 +123,9 @@ public class Inga extends Platform {
         spi.connect(radio.spiInterface);
         addDevice("radio", radio);
         radio.RF231_interrupt = mcu.getProperties().getInterrupt("TIMER1 CAPT");
+        TWI twi = (TWI) ((AtmelMicrocontroller) mcu).getDevice("twi");
+        twi.connect(new BMP085());
+        twi.connect(new L3G4200D());
     }
 
 }
