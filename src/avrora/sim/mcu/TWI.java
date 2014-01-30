@@ -33,6 +33,7 @@ package avrora.sim.mcu;
 
 import avrora.sim.InterruptTable;
 import avrora.sim.RWRegister;
+import avrora.sim.Simulator;
 import avrora.sim.state.RegisterUtil;
 import avrora.sim.state.RegisterView;
 import java.util.LinkedList;
@@ -50,8 +51,9 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
     final TWAReg TWAR_reg;
     final TWAMReg TWAMR_reg;
     final LinkedList<TWIDevice> devices = new LinkedList<>();
+    final TransferEvent transferEvent = new TransferEvent();
     int interruptNum;
-    int period = 1;
+    int clock = 1;
 
     public TWI(AtmelMicrocontroller m) {
         super("twi", m);
@@ -72,17 +74,174 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
         installIOReg("TWAMR", TWAMR_reg);
         interpreter.getInterruptTable().registerInternalNotification(this, interruptNum);
 
-
     }
 
     @Override
     public void force(int inum) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
     }
 
     @Override
     public void invoke(int inum) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+    }
+    enum TransferMode {
+        NULL, START, STOP, ADDRESS, DATA_WRITE, DATA_READ;
+    };
+
+    protected class TransferEvent implements Simulator.Event {
+
+        boolean transmitting;
+        int status;
+        TransferMode mode = TransferMode.NULL;
+        
+        private byte data;
+        private boolean write;
+        private boolean rep_start;
+        private boolean ack_flag;
+
+        protected void enableWriteTransfer(byte data, boolean ack_flag) {
+            if (transmitting) {
+                return;
+            }
+            transmitting = true;
+            this.data = data;
+            this.ack_flag = ack_flag;
+            mode = TransferMode.DATA_WRITE;
+            mainClock.insertEvent(this, clock * 7);
+    
+        }
+
+        protected void enableReadTransfer(boolean ack_flag) {
+            if (transmitting) {
+                return;
+            }
+            transmitting = true;
+            this.ack_flag = ack_flag;
+            mode = TransferMode.DATA_READ;
+            mainClock.insertEvent(this, clock * 7);
+        }
+
+        protected void enableAddressTransfer(byte address, boolean write, boolean rep_start, boolean ack_flag) {
+            //(byte) (TWDR_reg.value & 0xfe), write, rep, ack_flag);
+            if (transmitting) {
+                return;
+            }
+            transmitting = true;
+            this.data = address;
+            this.write = write;
+            this.rep_start = rep_start;
+            this.ack_flag = ack_flag;
+            mode = TransferMode.ADDRESS;
+            mainClock.insertEvent(this, clock * 7);
+            
+        }
+
+        protected void enableStopTransfer() {
+            if (transmitting) {
+                return;
+            }
+            transmitting = true;
+            mode = TransferMode.STOP;
+            mainClock.insertEvent(this, clock * 2);
+            
+        }
+        protected void enableStartTransfer(int status) {
+            if (transmitting) {
+                return;
+            }
+            transmitting = true;
+            this.status = status;
+            mode = TransferMode.START;
+            mainClock.insertEvent(this, clock * 2);
+        }
+
+        @Override
+        public void fire() {
+            if (!transmitting) {
+                return;
+            }
+            Boolean ack = null;
+            switch (mode) {
+                case NULL:
+                    break;
+                case START:
+                    TWSR_reg.setStatus(status);
+                    TWCR_reg.setValue(TWCR_reg.value | (1 << TWCReg.TWINT));
+                    break;
+                case STOP:
+                    for (TWIDevice dev : devices) {
+                        dev.stop();
+                    }
+                    TWCR_reg.setValue(TWCR_reg.value & ~(1 << TWCReg.TWSTO));
+                    break;
+                case ADDRESS:
+                    
+                    for (TWIDevice dev : devices) {
+                        Boolean dev_ack = dev.start(data, write, rep_start, ack_flag);
+                        if (dev_ack != null) {
+                            ack = dev_ack;
+                        }
+                    }
+                    if (ack != null) {
+                        if (write) {
+                            if (ack) {
+                                TWSR_reg.setStatus(TWSReg.TWI_STATUS_SLA_W_ACK);
+                            } else {
+                                TWSR_reg.setStatus(TWSReg.TWI_STATUS_SLA_W_NACK);
+                            }
+                        } else {
+                            if (ack) {
+                                TWSR_reg.setStatus(TWSReg.TWI_STATUS_SLA_R_ACK);
+                            } else {
+                                TWSR_reg.setStatus(TWSReg.TWI_STATUS_SLA_R_NACK);
+                            }
+                        }
+                    }
+                    TWCR_reg.setValue(TWCR_reg.value | (1 << TWCReg.TWINT));
+                    break;
+                case DATA_READ:
+                    Byte result = null;
+                    for (TWIDevice dev : devices) {
+                        TWIData result_data = dev.readByte(ack_flag);
+                        if (result_data != null) {
+                            ack = result_data.ack;
+                            result = result_data.data;
+                        }
+                    }
+                    if (result != null) {
+                        TWDR_reg.setValue(result);
+                    }
+                    if (ack != null) {
+                        if (ack) {
+                            TWSR_reg.setStatus(TWSReg.TWI_STATUS_DATA_R_ACK);
+                        } else {
+                            TWSR_reg.setStatus(TWSReg.TWI_STATUS_DATA_R_NACK);
+                        }
+                    }
+                    TWCR_reg.setValue(TWCR_reg.value | (1 << TWCReg.TWINT));
+                    break;
+                case DATA_WRITE:
+                    for (TWIDevice dev : devices) {
+                        Boolean dev_ack = dev.writeByte(data, ack_flag);
+                        if (dev_ack != null) {
+                            ack = dev_ack;
+                        }
+                    }
+                    if (ack != null) {
+                        if (ack) {
+                            TWSR_reg.setStatus(TWSReg.TWI_STATUS_DATA_W_ACK);
+                        } else {
+                            TWSR_reg.setStatus(TWSReg.TWI_STATUS_DATA_W_NACK);
+                        }
+                    }
+                    TWCR_reg.setValue(TWCR_reg.value | (1 << TWCReg.TWINT));
+                    break;
+                default:
+            }
+            mode = TransferMode.NULL;
+            transmitting = false;
+        }
     }
 
     /**
@@ -101,165 +260,85 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
         /**
          * TWINT: TWI Interrupt Flag
          */
-        final RegisterView _int = RegisterUtil.bitView(this, TWINT);
+        final RegisterView _interrupt = RegisterUtil.bitView(this, TWINT);
         /**
          * TWEA: TWI Enable Acknowledge Bit
          */
-        final RegisterView _ea = RegisterUtil.bitView(this, TWEA);
+        final RegisterView _enable_ack = RegisterUtil.bitView(this, TWEA);
 
         /**
          * TWSTA: TWI START Condition Bit
          */
-        final RegisterView _sta = RegisterUtil.bitView(this, TWSTA);
+        final RegisterView _start = RegisterUtil.bitView(this, TWSTA);
 
         /**
          * TWSTO: TWI STOP Condition Bit
          */
-        final RegisterView _sto = RegisterUtil.bitView(this, TWSTO);
+        final RegisterView _stop = RegisterUtil.bitView(this, TWSTO);
 
         /**
          * TWWC: TWI Write Collision Flag
          */
-        final RegisterView _wc = RegisterUtil.bitView(this, TWWC);
+        final RegisterView _write_collision = RegisterUtil.bitView(this, TWWC);
 
         /**
          * TWEN: TWI: Enable Bit
          */
-        final RegisterView _en = RegisterUtil.bitView(this, TWEN);
+        final RegisterView _enable = RegisterUtil.bitView(this, TWEN);
 
         /**
-         * TWIE: TWI Enable Bit
+         * TWIE: TWI Interrupt Enable Bit
          */
-        final RegisterView _ie = RegisterUtil.bitView(this, TWIE);
+        final RegisterView _interrupt_enable = RegisterUtil.bitView(this, TWIE);
 
         public TWCReg() {
             setValue(0x00);
         }
         boolean started = false;
-        boolean rep = false;
-        boolean addr = false;
-        boolean write = false;
+        boolean rep_start = false;
+        boolean next_is_addr = false;
+        boolean write_mode = false;
+
         @Override
         public void write(byte val) {
+            // Bits 1 and 3 are read-only
             val = (byte) ((this.value & ~write_mask) | (val & write_mask));
+
             if ((val & (1 << TWINT)) != 0) {
                 val &= ~(1 << TWINT);
             }
             super.write(val);
             
-            if (_en.getValue() != 0) {
-                
-
-                if (_sta.getValue() != 0) {
-                    
-                    
+            if (_enable.getValue() != 0) {
+                if (_start.getValue() != 0) {
                     if (!started) {
-                        //System.out.printf("Do start\n");
-                        TWSR_reg.setValue(TWSReg.TWI_STATUS_START);
+                        transferEvent.enableStartTransfer(TWSReg.TWI_STATUS_START);
                         started = true;
                     } else {
-                        //System.out.printf("Do rep start\n");
-                        TWSR_reg.setValue(TWSReg.TWI_STATUS_START_REP);
-
+                        transferEvent.enableStartTransfer(TWSReg.TWI_STATUS_START_REP);
                     }
-                    addr = true;
-                    val |= (1 << TWINT);
-                } else if (_sto.getValue() != 0) {
-                    //System.out.printf("Do stop\n");
-                    for (TWIDevice dev : devices) {
-                        dev.stop();
-                    }
-                    val = (byte) (val & ~(1 << TWSTO));
+                    next_is_addr = true;
+                } else if (_stop.getValue() != 0) {
+                    transferEvent.enableStopTransfer();
                     started = false;
                 } else {
-                    //System.out.print(" twea " + _ea.getValue());
-                    boolean ack_flag = (_ea.getValue() != 0);
-                    Boolean ack = null;
-                    if (addr) {
-                        addr = false;
-                        write = ((TWDR_reg.value & 1) == 0);
-                        //System.out.printf(" Do addr %x, write %s\n", (int) (TWDR_reg.value) & 0xfe, write);
-                        
-                        
-                        for (TWIDevice dev : devices) {
-                            Boolean dev_ack = dev.start((byte) ((TWDR_reg.value) & 0xfe), rep, ack_flag);
-                            if (dev_ack != null) {
-                                ack = dev_ack;
-                            }
-                        rep = true;
-
-                        }
-                        if (write) {
-
-                            if (ack) {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_SLA_W_ACK);
-                            } else {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_SLA_W_NACK);
-                            }
-                        } else {
-                            if (ack) {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_SLA_R_ACK);
-                            } else {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_SLA_R_NACK);
-                            }
-                        }
+                    boolean ack_flag = (_enable_ack.getValue() != 0);
+                    if (next_is_addr) {
+                        next_is_addr = false;
+                        write_mode = ((TWDR_reg.value & 1) == 0);
+                        transferEvent.enableAddressTransfer((byte) (TWDR_reg.value & 0xfe), write_mode, rep_start, ack_flag);
+                        rep_start = true;
                     } else {
-                        if (write) {
-                            for (TWIDevice dev : devices) {
-                                Boolean dev_ack = dev.writeByte(TWDR_reg.value, ack_flag);
-                                if (dev_ack != null) {
-                                    ack = dev_ack;
-                                }
-                            }
-                            //System.out.printf(" Write data %x\n", (int) TWDR_reg.value & 0xff);
-                            if (ack) {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_DATA_W_ACK);
-                            } else {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_DATA_W_NACK);
-                            }
-
+                        if (write_mode) {
+                            transferEvent.enableWriteTransfer(TWDR_reg.value, ack_flag);
                         } else {
-                            Byte result = null;
-                            for (TWIDevice dev : devices) {
-                                TWIData data = dev.readByte(ack_flag);
-
-                                if (data != null) {
-                                    ack = data.ack;
-                                    result = data.data;
-                                    //TWDR_reg.setValue(data.data);
-                                    
-                                }
-                            }
-                            if (result != null) {
-                                TWDR_reg.setValue(result);
-                                //System.out.printf(" read data %x\n", (int) result & 0xff);
-                            } else {
-                                //System.out.printf(" read data ?\n");
-                            }
-                            if (ack) {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_DATA_R_ACK);
-                            } else {
-                                TWSR_reg.setValue(TWSReg.TWI_STATUS_DATA_R_NACK);
-                            }
+                            transferEvent.enableReadTransfer(ack_flag);
                         }
                     }
-                    val |= (1 << TWINT);
-                    /*if (_ea.getValue() != 0) {
-                     TWSR_reg.setValue(status_ack);
-                     } else {
-                        TWSR_reg.setValue(status_nack);
-                     }*/
                     
                 }
-                // start 2
-                // data 9
-                // stop 2
             }
-            // Bits 1 and 3 are read-only
-            super.write(val);
-            
         }
-
     }
 
     /**
@@ -415,6 +494,9 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
 
         static final int TWPS1 = 1;
         static final int TWPS0 = 0;
+
+        final RegisterView _twps = RegisterUtil.bitRangeView(this, TWPS0, TWPS1);
+
         static final int write_mask = 0x03;
 
         public TWSReg() {
@@ -425,6 +507,11 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
         public void write(byte val) {
             // only bits 0 and 1 are writeable
             super.write((byte) ((this.value & ~write_mask) | (val & write_mask)));
+            updateClock();
+        }
+
+        public void setStatus(int status) {
+            setValue((status | (0x03 & this.value)));
         }
 
     }
@@ -507,6 +594,19 @@ public class TWI extends AtmelInternalDevice implements InterruptTable.Notificat
         public TWBReg() {
             setValue(0x00);
         }
+
+        @Override
+        public void write(byte val) {
+            super.write(val);
+            updateClock();
+        }
+
+    }
+
+    private void updateClock() {
+        int twps = TWSR_reg._twps.getValue();
+        int twbr = TWBR_reg.getValue();
+        clock = 16 + 2 * (twbr) << (2 * twps);
     }
 
     public void connect(TWIDevice device) {

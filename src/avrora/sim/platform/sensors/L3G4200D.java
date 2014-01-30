@@ -71,7 +71,7 @@ public class L3G4200D extends Sensor implements TWIDevice {
     }
 
     @Override
-    public Boolean start(byte address, boolean rep, boolean ack) {
+    public Boolean start(byte address, boolean write, boolean rep, boolean ack) {
         //System.out.printf("l %x == %x %s\n", address & 0xff, ADDRESS & 0xff, address == ADDRESS);
         active = (address == ADDRESS);
         if (!active) {

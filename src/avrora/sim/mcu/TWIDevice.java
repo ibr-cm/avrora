@@ -41,7 +41,7 @@ public interface TWIDevice {
 
     public TWIData readByte(boolean ack);
 
-    public Boolean start(byte address, boolean rep, boolean ack);
+    public Boolean start(byte address, boolean write, boolean rep, boolean ack);
 
     public Boolean stop();
 }

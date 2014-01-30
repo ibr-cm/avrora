@@ -202,7 +202,7 @@ public class BMP085 extends Sensor implements TWIDevice {
     }
 
     @Override
-    public Boolean start(byte address, boolean rep, boolean ack) {
+    public Boolean start(byte address, boolean write, boolean rep, boolean ack) {
         active = (address == ADDRESS);
         if (!active) {
             return null;
