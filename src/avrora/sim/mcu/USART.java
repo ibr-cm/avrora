@@ -105,7 +105,7 @@ public class USART extends AtmelInternalDevice implements SPIDevice {
 
     @Override
     public SPI.Frame exchange(SPI.Frame frame) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -385,7 +385,6 @@ public class USART extends AtmelInternalDevice implements SPIDevice {
             
 
             transmitRegister.write(val);
-            //super.write(val);
             // we now have data in UDRE, so the user data register is not ready yet
             UCSRnA_reg.UDRE_flag.flag(false);
             if (UCSRnB_reg.readBit(TXENn)) {
