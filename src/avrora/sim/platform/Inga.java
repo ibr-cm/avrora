@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2004-2005, Regents of the University of California
+ * Copyright (c) 2013-2014, TU Braunschweig
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,19 +40,29 @@ import avrora.sim.mcu.ATMega1284p;
 import avrora.sim.mcu.AtmelMicrocontroller;
 import avrora.sim.mcu.Microcontroller;
 import avrora.sim.mcu.SPI;
+import avrora.sim.mcu.SPIDevice;
 import avrora.sim.mcu.TWI;
+import avrora.sim.platform.sensors.ADXL345;
+import avrora.sim.platform.sensors.AT45DB;
 import avrora.sim.platform.sensors.BMP085;
 import avrora.sim.platform.sensors.L3G4200D;
 import avrora.sim.radio.AT86RF231Radio;
 import avrora.sim.radio.ATmega128RFA1Radio;
+import avrora.sim.util.LCX138;
 import cck.text.Terminal;
 
 /**
- * The <code>Raven</code> class is an implementation of the <code>Platform</code> interface that represents
- * both a specific microcontroller and the devices connected to it. This implements the Atmel Raven
- * configuration, an ATMega1284p with SPI connection to an AT86RF230 radio, and no other peripherals.
+ * The <code>Inga</code> class is an implementation of the <code>Platform</code>
+ * interface that represents
+ * both a specific microcontroller and the devices connected to it. This
+ * implements the Inga
+ * configuration, an ATMega1284p with SPI connection to an AT86RF230 radio, and
+ * some other peripherals.
  *
- * @author Ben L. Titzer, Daniel Lee, David Kopf
+ * @author Ben L. Titzer
+ * @author Daniel Lee
+ * @author David Kopf
+ * @author S. Willenborg
  */
 public class Inga extends Platform {
 
@@ -119,13 +129,30 @@ public class Inga extends Platform {
         mcu.getPin(43).connectOutput(radio.SLPTR_pin);//PB3
         mcu.getPin(44).connectOutput(radio.CS_pin);   //PB4
 
-        SPI spi = (SPI)((AtmelMicrocontroller)mcu).getDevice("spi");
+        SPI spi = (SPI) ((AtmelMicrocontroller) mcu).getDevice("spi");
+        SPIDevice spi2 = (SPIDevice) ((AtmelMicrocontroller) mcu).getDevice("usart1");
         spi.connect(radio.spiInterface);
         addDevice("radio", radio);
         radio.RF231_interrupt = mcu.getProperties().getInterrupt("TIMER1 CAPT");
         TWI twi = (TWI) ((AtmelMicrocontroller) mcu).getDevice("twi");
         twi.connect(new BMP085());
         twi.connect(new L3G4200D());
+
+        LCX138 decoder = new LCX138();
+        mcu.getPin(32).connectOutput(decoder.A0);
+        mcu.getPin(31).connectOutput(decoder.A1);
+        mcu.getPin(30).connectOutput(decoder.A2);
+        decoder.E1.write(false);
+        decoder.E2.write(false);
+        decoder.E3.write(true);
+
+        AT45DB flash = new AT45DB();
+        flash.connectCS(decoder.O1);
+        spi2.connect(flash);
+
+        ADXL345 accelerometer = new ADXL345();
+        accelerometer.connectCS(decoder.O2);
+        spi2.connect(accelerometer);
     }
 
 }
