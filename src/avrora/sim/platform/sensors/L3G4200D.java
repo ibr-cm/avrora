@@ -65,7 +65,7 @@ public class L3G4200D extends Sensor implements TWIDevice {
     private class CTRLReg4 extends RWRegister {
         final int DPS0 = 4;
         final int DPS1 = 5;
-        final RegisterView _twps = RegisterUtil.bitRangeView(this, DPS0, DPS1);
+        final RegisterView _dps = RegisterUtil.bitRangeView(this, DPS0, DPS1);
 
     }
 
@@ -86,9 +86,9 @@ public class L3G4200D extends Sensor implements TWIDevice {
 
     public int dps_to_raw(double dpsval) {
         int dpsdiv = L3G4200D_DPSDIV_250G;
-        if (ctrl_reg4._twps.getValue() == 1) {
+        if (ctrl_reg4._dps.getValue() == 1) {
             dpsdiv = L3G4200D_DPSDIV_500G;
-        } else if (ctrl_reg4._twps.getValue() == 2) {
+        } else if (ctrl_reg4._dps.getValue() == 2) {
             dpsdiv = L3G4200D_DPSDIV_2000G;
         }
         return (int) (((dpsval + .1) * 4000) / dpsdiv);
