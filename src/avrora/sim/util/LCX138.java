@@ -35,6 +35,7 @@ package avrora.sim.util;
 import avrora.sim.mcu.Microcontroller.Pin.Input;
 import avrora.sim.mcu.Microcontroller.Pin.InputListener;
 import avrora.sim.mcu.Microcontroller.Pin.Output;
+import java.util.LinkedList;
 
 /**
  *
@@ -59,14 +60,27 @@ public class LCX138 {
     public final IPin O6 = new IPin("O6", 6);
     public final IPin O7 = new IPin("O7", 7);
 
-   
     private int state = -1;
-   
+
+    public LCX138() {
+        update();
+    }
+
     private void update() {
         if (!E1.value && !E2.value && E3.value) {
             state = (A0.value ? 1 : 0) | (A1.value ? 2 : 0) | (A2.value ? 4 : 0);
-        } else
+        } else {
             state = -1;
+        }
+        O0.update();
+        O1.update();
+        O2.update();
+        O3.update();
+        O4.update();
+        O5.update();
+        O6.update();
+        O7.update();
+
     }
     public class OPin implements Output {
         final String name;
@@ -86,6 +100,8 @@ public class LCX138 {
     public class IPin implements Input {
         final String name;
         final int index;
+        boolean cur_level = true;
+        final LinkedList<InputListener> listeners = new LinkedList<>();
 
         public IPin(String name, int index) {
             this.name = name;
@@ -94,15 +110,31 @@ public class LCX138 {
 
         @Override
         public boolean read() {
-            return state != index;
+            return cur_level;
+        }
+
+        private void update() {
+             boolean new_level = (state != index);
+             if (new_level != cur_level) {
+                cur_level = new_level;
+                for (InputListener listener : listeners) {
+                    listener.onInputChanged(this, new_level);
+                }
+            }
         }
 
         @Override
         public void registerListener(InputListener listener) {
+            if (!listeners.contains(listener)) {
+                listeners.add(listener);
+            }
         }
 
         @Override
         public void unregisterListener(InputListener listener) {
+            if (listeners.contains(listener)) {
+                listeners.remove(listener);
+            }
         }
 
     }
