@@ -385,8 +385,13 @@ public class USART extends AtmelInternalDevice implements SPIDevice {
             
 
             transmitRegister.write(val);
+            
             // we now have data in UDRE, so the user data register is not ready yet
             UCSRnA_reg.UDRE_flag.flag(false);
+            if (withSPI && UCSRnC_reg.getUsartModeSelect() == USART_MODE_MSPI) {
+                value = val;
+                UCSRnA_reg.RXC_flag.flag(false);
+            }
             if (UCSRnB_reg.readBit(TXENn)) {
                 transmitter.enableTransmit();
             }
