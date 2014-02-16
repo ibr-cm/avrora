@@ -30,18 +30,36 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package avrora.sim.mcu;
+package avrora.sim.platform.sensors;
+
+import avrora.sim.mcu.Microcontroller;
+import avrora.sim.mcu.SPI;
+import avrora.sim.mcu.SPIDevice;
 
 /**
  *
  * @author S. Willenborg
  */
-public interface TWIDevice {
-    public Boolean writeByte(byte data, boolean ack);
+public class AT45DB implements SPIDevice {
 
-    public TWIData readByte(boolean ack);
+    Microcontroller.Pin.Input CS = null;
 
-    public Boolean start(byte address, boolean write, boolean rep, boolean ack);
+    public void connectCS(Microcontroller.Pin.Input cs) {
+        CS = cs;
+    }
 
-    public Boolean stop();
+    @Override
+    public SPI.Frame exchange(SPI.Frame frame) {
+        if (CS != null && CS.read()) {
+            return SPI.newFrame((byte) 0x00);
+        }
+        System.out.printf("flash %02x\n", 0xff & frame.data);
+        return SPI.newFrame((byte) 0x1f);
+    }
+
+    @Override
+    public void connect(SPIDevice d) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
 }

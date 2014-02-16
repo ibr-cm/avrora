@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2004-2005, Regents of the University of California
+ * Copyright (c) 2013-2014, TU Braunschweig
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,11 @@
  */
 package avrora.sim.platform.sensors;
 
+import avrora.sim.RWRegister;
 import avrora.sim.mcu.TWIData;
 import avrora.sim.mcu.TWIDevice;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 
 /**
  *
@@ -45,13 +48,79 @@ public class L3G4200D extends Sensor implements TWIDevice {
     private int writecount = 0;
     private byte reg = 0;
 
+    private class CTRLReg1 extends RWRegister {
+
+    }
+
+    private class CTRLReg2 extends RWRegister {
+
+    }
+
+    private class CTRLReg3 extends RWRegister {
+
+    }
+    final int L3G4200D_DPSDIV_250G = 35;
+    final int L3G4200D_DPSDIV_500G = 70;
+    final int L3G4200D_DPSDIV_2000G = 280;
+    private class CTRLReg4 extends RWRegister {
+        final int DPS0 = 4;
+        final int DPS1 = 5;
+        final RegisterView _dps = RegisterUtil.bitRangeView(this, DPS0, DPS1);
+
+    }
+
+    private class CTRLReg5 extends RWRegister {
+
+    }
+
+    double x = 1;
+    double y = 1.2;
+    double z = 1.1;
+    int temp = 29;
+
+    CTRLReg1 ctrl_reg1 = new CTRLReg1();
+    CTRLReg2 ctrl_reg2 = new CTRLReg2();
+    CTRLReg3 ctrl_reg3 = new CTRLReg3();
+    CTRLReg4 ctrl_reg4 = new CTRLReg4();
+    CTRLReg5 ctrl_reg5 = new CTRLReg5();
+
+    public int dps_to_raw(double dpsval) {
+        int dpsdiv = L3G4200D_DPSDIV_250G;
+        if (ctrl_reg4._dps.getValue() == 1) {
+            dpsdiv = L3G4200D_DPSDIV_500G;
+        } else if (ctrl_reg4._dps.getValue() == 2) {
+            dpsdiv = L3G4200D_DPSDIV_2000G;
+        }
+        return (int) (((dpsval + .1) * 4000) / dpsdiv);
+    }
+
     @Override
     public Boolean writeByte(byte data, boolean ack) {
         if (!active) {
             return null;
         }
+
         if (writecount == 0) {
-            reg = data;
+            reg = (byte) (data & 0x7F);
+        } else {
+            switch (reg & 0xff) {
+                case 0x20:
+                    ctrl_reg1.write(data);
+                    break;
+                case 0x21:
+                    ctrl_reg2.write(data);
+                    break;
+                case 0x22:
+                    ctrl_reg3.write(data);
+                    break;
+                case 0x23:
+                    ctrl_reg4.write(data);
+                    break;
+                case 0x24:
+                    ctrl_reg5.write(data);
+                    break;
+
+            }
         }
         writecount++;
         return ack;
@@ -63,16 +132,50 @@ public class L3G4200D extends Sensor implements TWIDevice {
         if (!active) {
             return null;
         }
-        byte data = 0x00;
-        if (reg == 0x0f) {
-            data = ADDRESS | 1;
+        byte result = 0x00;
+        switch (reg & 0xff) {
+            case 0x0f:
+                result = ADDRESS | 1;
+                break;
+            case 0x20:
+                result = ctrl_reg1.read();
+                break;
+            case 0x21:
+                result = ctrl_reg2.read();
+                break;
+            case 0x22:
+                result = ctrl_reg3.read();
+                break;
+            case 0x23:
+                result = ctrl_reg4.read();
+                break;
+            case 0x24:
+                result = ctrl_reg5.read();
+                break;
+            case 0x26:
+                result = (byte) (25 - temp);
+                break;
+            case 0x28:
+            case 0x29:
+                result = (byte) (dps_to_raw(x) >> (8 * (reg % 2)));
+                break;
+            case 0x2A:
+            case 0x2B:
+                result = (byte) (dps_to_raw(y) >> (8 * (reg % 2)));
+                break;
+            case 0x2C:
+            case 0x2D:
+                result = (byte) (dps_to_raw(z) >> (8 * (reg % 2)));
+                break;
+
         }
-        return new TWIData(data, ack);
+        
+        reg++;
+        return new TWIData(result, ack);
     }
 
     @Override
     public Boolean start(byte address, boolean write, boolean rep, boolean ack) {
-        //System.out.printf("l %x == %x %s\n", address & 0xff, ADDRESS & 0xff, address == ADDRESS);
         active = (address == ADDRESS);
         if (!active) {
             return null;

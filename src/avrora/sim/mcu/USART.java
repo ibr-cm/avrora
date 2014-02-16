@@ -31,12 +31,13 @@
  */
 package avrora.sim.mcu;
 
-import avrora.sim.*;
-import avrora.sim.state.*;
-import avrora.sim.output.SimPrinter;
+import avrora.sim.RWRegister;
+import avrora.sim.Simulator;
+import avrora.sim.state.BooleanView;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
-
 import java.util.LinkedList;
 
 /**
@@ -54,8 +55,9 @@ import java.util.LinkedList;
  *
  * @author Daniel Lee
  * @author Ben L. Titzer
+ * @author S. Wilenborg
  */
-public class USART extends AtmelInternalDevice {
+public class USART extends AtmelInternalDevice implements SPIDevice {
 
     static final int RXCn = 7;
     static final int TXCn = 6;
@@ -98,6 +100,20 @@ public class USART extends AtmelInternalDevice {
     static final int USART_MODE_MSPI = 3;
 
     static final int[] FRAME_SIZE = {5, 6, 7, 8, 8, 8, 8, 9};
+
+    final LinkedList<SPIDevice> devices = new LinkedList<>();
+
+    @Override
+    public SPI.Frame exchange(SPI.Frame frame) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void connect(SPIDevice d) {
+        if (!devices.contains(d)) {
+            devices.add(d);
+        }
+    }
 
     static class USARTProperties {
 
@@ -288,7 +304,14 @@ public class USART extends AtmelInternalDevice {
                 }
                 transmitting = false;
                 UCSRnA_reg.TXC_flag.flag(true);
-                if(withSPI && UCSRnC_reg.getUsartModeSelect() == USART_MODE_MSPI) {
+                if (withSPI && UCSRnC_reg.getUsartModeSelect() == USART_MODE_MSPI) {
+                    
+                    byte result = 0x00;
+                    for (SPIDevice d : devices) {
+                        SPI.Frame f = d.exchange(SPI.newFrame((byte) frame.value));
+                        result |= f.data;
+                    }
+                    UDRn_reg.setValue(result);
                     UCSRnA_reg.RXC_flag.flag(true);
                 }
                 if (!UCSRnA_reg.UDRE_flag.get()) {
@@ -359,16 +382,30 @@ public class USART extends AtmelInternalDevice {
 
         @Override
         public void write(byte val) {
+            
+
             transmitRegister.write(val);
+            
             // we now have data in UDRE, so the user data register is not ready yet
             UCSRnA_reg.UDRE_flag.flag(false);
+            if (withSPI && UCSRnC_reg.getUsartModeSelect() == USART_MODE_MSPI) {
+                value = val;
+                UCSRnA_reg.RXC_flag.flag(false);
+            }
             if (UCSRnB_reg.readBit(TXENn)) {
                 transmitter.enableTransmit();
             }
+
+            
         }
 
         @Override
         public byte read() {
+            if (withSPI && UCSRnC_reg.getUsartModeSelect() == USART_MODE_MSPI) {
+                byte val = value;
+                value = 0x00;
+                return val;
+            }
             //if ( !true) UCSRnA_reg.RXC_flag.flag(false);
             //UCSRnA_reg.writeBit(RXCn, true);
             return receiveRegister.read();
