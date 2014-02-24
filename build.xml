@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+
+<project name="Avrora" default="avrora" basedir=".">
+  <property name="src" location="src"/>
+  <property name="avrora" value="avrora"/>
+  <property name="jintgen" value="jintgen"/>
+  <property name="cck" value="cck"/>
+
+  <property name="build" location="build"/>
+  <property name="dist" location="dist"/>
+  <property name="javadoc" location="javadoc"/>
+  <property name="test" location="test"/>
+  <property name="avrora_main" value="avrora.Main"/>
+  <property name="jintgen_main" value="jintgen.Main"/>
+
+  <available file=".git" type="dir" property="git.present"/>
+
+  <target name="-pre-build" depends="-custom-git-version">
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="-pre-jar" depends="-custom-git-version">
+    <mkdir dir="${dist}"/>
+    <property name="jintgen_jar" value="${dist}/jintgen-${git.version}.jar"/>
+    <property name="avrora_jar" value="${dist}/avrora-${git.version}.jar"/>
+  </target>
+
+  <!-- Custom targets -->
+  <target name="-custom-git-version">
+    <exec executable="sh" outputproperty="git.commits">
+      <arg value="-c" />
+      <arg value="git log --pretty=format:'' | wc -l" />
+    </exec>
+    <echo>git.commits: ${git.commits}</echo>
+    <exec executable="git" outputproperty="git.version">
+       <arg value="describe" />
+       <arg value="--tags" />
+       <arg value="--always"/>
+       <arg value="--long" />
+    </exec>
+    <echo>git.version: ${git.version}</echo>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+  <target name="clean-doc">
+    <delete dir="${javadoc}"/>
+  </target>
+
+  <target name="compile-cck" depends="-pre-build">
+    <javac 
+      srcdir="${src}"
+      destdir="${build}" 
+      debug="on" 
+      includeantruntime="false">
+      <include name="${cck}/**" />
+    </javac>
+  </target>
+
+  <target name="compile-avrora" depends="-pre-build">
+    <javac
+      srcdir="${src}"
+      destdir="${build}"
+      debug="on"
+      includeantruntime="false">
+      <include name="${cck}/**" />
+      <include name="${avrora}/**" />
+    </javac>
+  </target>
+
+  <target name="compile-jintgen" depends="-pre-build">
+    <javac 
+      srcdir="${src}" 
+      destdir="${build}" 
+      debug="on" 
+      includeantruntime="false">
+      <include name="${cck}/**" />
+      <include name="${jintgen}/**" />
+    </javac>
+  </target>
+
+  <target name="run" depends="avrora-jar">
+    <java fork="yes" dir="${build}" classname="${mainclass}" maxmemory="512m">
+      <sysproperty key="user.language" value="en"/>
+      <arg line="${args}"/>
+      <env key="LD_LIBRARY_PATH" value="."/>
+      <classpath>
+        <pathelement path="${build}"/>
+      </classpath>
+    </java>
+  </target>
+
+  <target name="javadoc">
+    <delete dir="${javadoc}" quiet="true"/>
+    <mkdir dir="${javadoc}/"/>
+    <javadoc destdir="${javadoc}">
+      <fileset dir="${src}" includes="**/*.java"/>
+      <classpath>
+        <pathelement location="${avrora_jar}"/>
+      </classpath>
+    </javadoc>
+  </target>
+
+  <target name="avrora-jar" depends="-pre-jar, compile-avrora">
+    <jar destfile="${avrora_jar}" basedir="${build}">
+      <manifest>
+        <attribute name="Main-Class" value="${avrora_main}"/>
+        <attribute name="Built-By" value="${user.name}"/>
+        <attribute name="Implementation-Version" 
+          value="${git.version}"/>   
+        <attribute name="Built-Date" value="${TODAY}"/>                 
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="jintgen-jar" depends="-pre-jar, compile-jintgen">
+    <jar destfile="${jintgen_jar}" basedir="${build}">
+      <manifest>
+        <attribute name="Main-Class" value="${jintgen_main}"/>
+        <attribute name="Built-By" value="${user.name}"/>
+        <attribute name="Implementation-Version" 
+          value="${git.version}"/>   
+        <attribute name="Built-Date" value="${TODAY}"/>                 
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="avrora" depends="avrora-jar" />
+  <target name="jintgen" depends="jintgen-jar" />
+
+  <macrodef name="runtest">
+    <attribute name="testdir" />
+    <sequential>
+      <echo>Executing in ${test}/@{testdir}</echo>
+      <!-- Get all test files -->
+      <fileset dir="${test}/@{testdir}" id="testdir.id">
+        <include name="*.tst" />
+      </fileset>
+      <pathconvert property="testfiles.@{testdir}" refid="testdir.id" pathsep=" " />
+      <!-- Execute test for this file list -->
+      <java 
+        classpath="${build}"
+        classname="${mainclass}"
+        fork="true"
+        dir="${test}/@{testdir}"
+        maxmemory="128m"
+        >
+        <arg value="-action=test" />
+        <arg value="-detail" />
+        <arg line="${testfiles.@{testdir}}" />
+      </java>
+    </sequential>
+  </macrodef>
+
+  <target name="test" depends="compile-avrora">
+    <runtest testdir="interpreter"/>
+    <runtest testdir="probes"/>
+    <runtest testdir="disassembler"/>
+    <runtest testdir="interrupts"/>
+    <runtest testdir="timers"/>
+    <!--
+    <exec executable="./runtests.bash">
+      <env key="CLASSPATH" value="${build}" />
+    </exec>
+    -->
+  </target>
+
+</project>
