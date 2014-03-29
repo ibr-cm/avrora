@@ -2,12 +2,14 @@
 
 <project name="Avrora" default="avrora" basedir=".">
   <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist" location="dist"/>
+  <property name="lib" location="lib"/>
+
   <property name="avrora" value="avrora"/>
   <property name="jintgen" value="jintgen"/>
   <property name="cck" value="cck"/>
 
-  <property name="build" location="build"/>
-  <property name="dist" location="dist"/>
   <property name="javadoc" location="javadoc"/>
   <property name="test" location="test"/>
   <property name="avrora_main" value="avrora.Main"/>
@@ -17,10 +19,16 @@
 
   <target name="-pre-build" depends="-custom-git-version">
     <mkdir dir="${build}"/>
+    <copy file="log4j2.xml" tofile="${build}/log4j2.xml"/>
   </target>
 
   <target name="-pre-jar" depends="-custom-git-version">
     <mkdir dir="${dist}"/>
+    <mkdir dir="${dist}/lib"/>
+    <copy todir="${dist}/lib">
+      <fileset dir="${lib}"/>
+    </copy>
+    <copy file="log4j2.xml" tofile="${dist}/log4j2.xml"/>
     <property name="jintgen_jar" value="${dist}/jintgen-${git.version}.jar"/>
     <property name="avrora_jar" value="${dist}/avrora-${git.version}.jar"/>
   </target>
@@ -68,6 +76,13 @@
       includeantruntime="false">
       <include name="${cck}/**" />
       <include name="${avrora}/**" />
+      <classpath>
+        <pathelement path="."/>
+        <pathelement location="lib/slf4j-api-1.7.6.jar"/>
+        <pathelement location="lib/log4j-core-2.0-rc1.jar"/>
+        <pathelement location="lib/log4j-api-2.0-rc1.jar"/>
+        <pathelement location="lib/log4j-slf4j-impl-2.0-rc1.jar"/>
+      </classpath>
     </javac>
   </target>
 
@@ -83,12 +98,16 @@
   </target>
 
   <target name="run" depends="avrora-jar">
-    <java fork="yes" dir="${build}" classname="${mainclass}" maxmemory="512m">
+    <java fork="yes" dir="${build}" classname="${avrora_main}" maxmemory="512m">
       <sysproperty key="user.language" value="en"/>
       <arg line="${args}"/>
       <env key="LD_LIBRARY_PATH" value="."/>
       <classpath>
         <pathelement path="${build}"/>
+        <pathelement location="lib/slf4j-api-1.7.6.jar"/>
+        <pathelement location="lib/log4j-core-2.0-rc1.jar"/>
+        <pathelement location="lib/log4j-api-2.0-rc1.jar"/>
+        <pathelement location="lib/log4j-slf4j-impl-2.0-rc1.jar"/>
       </classpath>
     </java>
   </target>
@@ -105,9 +124,11 @@
   </target>
 
   <target name="avrora-jar" depends="-pre-jar, compile-avrora">
+    <tstamp/>
     <jar destfile="${avrora_jar}" basedir="${build}">
       <manifest>
         <attribute name="Main-Class" value="${avrora_main}"/>
+        <attribute name="Class-Path" value=". lib/slf4j-api-1.7.6.jar lib/log4j-core-2.0-rc1.jar lib/log4j-api-2.0-rc1.jar lib/log4j-slf4j-impl-2.0-rc1.jar"/>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Implementation-Version" 
           value="${git.version}"/>   
@@ -143,7 +164,7 @@
       <!-- Execute test for this file list -->
       <java 
         classpath="${build}"
-        classname="${mainclass}"
+        classname="${avrora_main}"
         fork="true"
         dir="${test}/@{testdir}"
         maxmemory="128m"
