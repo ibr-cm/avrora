@@ -15,6 +15,9 @@
   <property name="avrora_main" value="avrora.Main"/>
   <property name="jintgen_main" value="jintgen.Main"/>
 
+  <property name="jintgen_jar" value="${dist}/jintgen.jar"/>
+  <property name="avrora_jar" value="${dist}/avrora.jar"/>
+
   <available file=".git" type="dir" property="git.present"/>
 
   <target name="-pre-build" depends="-custom-git-version">
@@ -29,6 +32,7 @@
       <fileset dir="${lib}"/>
     </copy>
     <copy file="log4j2.xml" tofile="${dist}/log4j2.xml"/>
+    <!-- Use these names to get version number file names -->
     <property name="jintgen_jar" value="${dist}/jintgen-${git.version}.jar"/>
     <property name="avrora_jar" value="${dist}/avrora-${git.version}.jar"/>
   </target>
