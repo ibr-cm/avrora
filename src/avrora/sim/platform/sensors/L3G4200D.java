@@ -43,10 +43,37 @@ import avrora.sim.state.RegisterView;
  */
 public class L3G4200D extends Sensor implements TWIDevice {
 
+    private SensorSource source;
     private final byte ADDRESS = (byte) 0xd2;
     private boolean active = false;
     private int writecount = 0;
     private byte reg = 0;
+     
+    /* source channel for x dps */
+    private static final int X = 0;
+    /* source channel for y dps */
+    private static final int Y = 1;
+    /* source channel for z dps */
+    private static final int Z = 2;
+    /* source channel for temperature value */
+    private static final int TEMP = 3;
+    
+    private final Channel[] channels = new Channel[]{
+        new Channel("x", "dps", -250.0, 250.0, 0.0),
+        new Channel("y", "dps", -250.0, 250.0, 0.0),
+        new Channel("z", "dps", -250.0, 250.0, 0.0),
+        new Channel("temp", "C", -40.0, 85.0, 0.0)
+    };
+
+    @Override
+    public Channel[] getChannels() {
+        return channels;
+    }
+
+    @Override
+    public void setSensorSource(SensorSource src) {
+        source = src;
+    }
 
     private class CTRLReg1 extends RWRegister {
 
@@ -73,24 +100,36 @@ public class L3G4200D extends Sensor implements TWIDevice {
 
     }
 
-    double x = 1;
-    double y = 1.2;
-    double z = 1.1;
-    int temp = 29;
-
     CTRLReg1 ctrl_reg1 = new CTRLReg1();
     CTRLReg2 ctrl_reg2 = new CTRLReg2();
     CTRLReg3 ctrl_reg3 = new CTRLReg3();
     CTRLReg4 ctrl_reg4 = new CTRLReg4();
     CTRLReg5 ctrl_reg5 = new CTRLReg5();
 
+    /**
+     * Converts dps input to raw values based on scale settings in register.
+     *
+     * @param dpsval
+     * @return
+     */
     public int dps_to_raw(double dpsval) {
         int dpsdiv = L3G4200D_DPSDIV_250G;
-        if (ctrl_reg4._dps.getValue() == 1) {
-            dpsdiv = L3G4200D_DPSDIV_500G;
-        } else if (ctrl_reg4._dps.getValue() == 2) {
-            dpsdiv = L3G4200D_DPSDIV_2000G;
+        switch (ctrl_reg4._dps.getValue()) {
+            case 0:
+                dpsdiv = L3G4200D_DPSDIV_250G;
+                break;
+            case 1:
+                dpsdiv = L3G4200D_DPSDIV_500G;
+                break;
+            case 2:
+            case 3:
+                dpsdiv = L3G4200D_DPSDIV_2000G;
+                break;
+            default:
+                // should not be executed
+                break;
         }
+
         return (int) (((dpsval + .1) * 4000) / dpsdiv);
     }
 
@@ -153,19 +192,19 @@ public class L3G4200D extends Sensor implements TWIDevice {
                 result = ctrl_reg5.read();
                 break;
             case 0x26:
-                result = (byte) (25 - temp);
+                result = (byte) (25 - source.read(TEMP));
                 break;
             case 0x28:
             case 0x29:
-                result = (byte) (dps_to_raw(x) >> (8 * (reg % 2)));
+                result = (byte) (dps_to_raw(source.read(X)) >> (8 * (reg % 2)));
                 break;
             case 0x2A:
             case 0x2B:
-                result = (byte) (dps_to_raw(y) >> (8 * (reg % 2)));
+                result = (byte) (dps_to_raw(source.read(Y)) >> (8 * (reg % 2)));
                 break;
             case 0x2C:
             case 0x2D:
-                result = (byte) (dps_to_raw(z) >> (8 * (reg % 2)));
+                result = (byte) (dps_to_raw(source.read(Z)) >> (8 * (reg % 2)));
                 break;
 
         }

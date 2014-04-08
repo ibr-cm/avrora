@@ -36,12 +36,15 @@ import avrora.sim.FiniteStateMachine;
 import avrora.sim.mcu.*;
 
 /**
- * The <code>LightSensor</code> class implements a light sensor like that present on the Mica2.
+ * The <code>LightSensor</code> class implements a light sensor.
+ * 
+ * This light sensor is connected to and ADC.
  *
  * @author Ben L. Titzer
  */
 public class LightSensor extends Sensor {
 
+    private SensorSource source;
     protected final AtmelMicrocontroller mcu;
     protected final int channel;
 
@@ -51,7 +54,15 @@ public class LightSensor extends Sensor {
     protected boolean on;
     public ADC adcDevice;
 
+    /**
+     * Creates a light sensor.
+     * 
+     * @param m Microcontroller reference
+     * @param adcChannel Adc channel to connect to
+     * @param onPin Pin name to connect to
+     */
     public LightSensor(AtmelMicrocontroller m, int adcChannel, String onPin) {
+        super();
         mcu = m;
         channel = adcChannel;
         mcu.getPin(onPin).connectOutput(new OnPin());
@@ -60,7 +71,22 @@ public class LightSensor extends Sensor {
         adcDevice.connectADCInput(new ADCInput(), channel);
     }
 
+    final Channel[] channels = new Channel[]{
+        new Channel("light", -1.0, -1.0, -1.0)
+    };
+
+    @Override
+    public Channel[] getChannels() {
+        return channels;
+    }
+
+    @Override
+    public void setSensorSource(SensorSource src) {
+        source = src;
+    }
+
     class OnPin implements Microcontroller.Pin.Output {
+        @Override
         public void write(boolean val) {
             on = val;
             fsm.transition(state());
@@ -68,17 +94,24 @@ public class LightSensor extends Sensor {
     }
 
     private int state() {
-        if ( !on ) return 0;
-        else return 1;
+        if (on) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     class ADCInput implements ADC.ADCInput {
+
+        @Override
         public float getVoltage() {
-            if ( data == null ) return ADC.GND_LEVEL;
-            if ( !on ) return ADC.GND_LEVEL;
-            int read = data.reading();
-            // scale the reading back to a voltage.
-            return adcDevice.getVoltageRef() * ((float)read) / 0x3ff;
+            if (!on) {
+                return ADC.GND_LEVEL;
+            }
+            // fetch data
+            double data = source.read(0);
+            // scale the read back to a voltage.
+            return (float) (adcDevice.getVoltageRef() * (data) / 0x3ff);
         }
     }
 }

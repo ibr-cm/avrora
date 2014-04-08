@@ -37,46 +37,76 @@ import avrora.sim.Simulator;
 import avrora.sim.clock.Clock;
 import avrora.sim.mcu.Microcontroller;
 import cck.util.Util;
-import java.io.*;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StreamTokenizer;
+//import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
- * The <code>ReplaySensorData</code> class implements a sensor data source that replays
+ * The <code>ReplaySensorSource</code> class implements a sensor data source that replays
  * the sensor data from a file.
  *
  * @author Ben L. Titzer
  */
-public class ReplaySensorData implements SensorData {
+public class ReplaySensorSource extends PushSensorSource {
 
     final Clock clock;
-    final File file;
-    final FileReader fr;
+//    final File file;
+//    final FileReader fr;
     final StreamTokenizer st;
     final ChangeReading change;
-    int currentReading;
+//    double[] data;
 
-    public ReplaySensorData(Microcontroller m, String fn) throws IOException {
+    /**
+     * 
+     * @param m Reference to microcontroller
+     * @param fn Filename to read from
+     * @throws IOException  If opening file failed.
+     */
+    public ReplaySensorSource(Microcontroller m, String fn) throws IOException {
         clock = m.getClockDomain().getMainClock();
         Main.checkFileExists(fn);
-        file = new File (fn);
-        fr = new FileReader(file);
-        st = new StreamTokenizer(fr);
+//        file = new File(fn);
+//        fr = new FileReader(file);
+        st = new StreamTokenizer(new FileReader(new File(fn)));
         change = new ChangeReading();
-        getNextReading();
+        parseNext();
         scheduleNextChange();
     }
 
-    private void getNextReading() throws IOException {
+    // format : [stamp] value value value value
+    private void parseNext() throws IOException {
+        List<Double> lineData = new LinkedList<>();
+//        ArrayList al;
         int tt = st.nextToken();
-        if ( tt == StreamTokenizer.TT_EOF ) return;
-        if ( tt != StreamTokenizer.TT_NUMBER )
-            throw Util.failure("sensor data format error: expected number as sensor reading");
-        currentReading = (int)st.nval & 0x3ff;
+        while (tt != StreamTokenizer.TT_EOL && tt != StreamTokenizer.TT_EOF) {
+            if (tt != StreamTokenizer.TT_NUMBER) {
+                throw Util.failure("sensor data format error: expected number as sensor reading");
+            }
+            lineData.add(st.nval);
+            tt = st.nextToken();
+        }
+//        if (data == null) {
+//            data = new double[lineData.size()];
+//        }
+        for (int i = 0; i < data.length; i++) {
+            setSensorData(i, lineData.get(i).doubleValue());
+        }
+//        for (int i = 0; i < data.length; i++) {
+//            data[i] = lineData.get(i).doubleValue();
+//        }
     }
 
     class ChangeReading implements Simulator.Event {
+
+        @Override
         public void fire() {
             try {
-                getNextReading();
+                parseNext();
                 scheduleNextChange();
             } catch (IOException e) {
                 throw Util.unexpected(e);
@@ -86,13 +116,13 @@ public class ReplaySensorData implements SensorData {
 
     private void scheduleNextChange() throws IOException {
         int tt = st.nextToken();
-        if ( tt == StreamTokenizer.TT_EOF ) return;
-        if ( tt != StreamTokenizer.TT_NUMBER )
+        if (tt == StreamTokenizer.TT_EOF) {
+            return;
+        }
+        if (tt != StreamTokenizer.TT_NUMBER) {
             throw Util.failure("sensor data format error: expected number as time value");
-        clock.insertEvent(change, (long)(st.nval * clock.getHZ()));
+        }
+        clock.insertEvent(change, (long) (st.nval * clock.getHZ()));
     }
 
-    public int reading() {
-        return currentReading;
-    }
 }

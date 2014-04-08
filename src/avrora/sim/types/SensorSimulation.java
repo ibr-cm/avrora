@@ -119,14 +119,23 @@ public class SensorSimulation extends Simulation {
         String sensor;
         String fname;
 
+        public SensorDataInput(String file, String sensor) {
+            this.fname = file;
+            this.sensor = sensor;
+        }
+
         void instantiate(Platform p) {
             try {
-                Sensor s = (Sensor)p.getDevice(sensor+"-sensor");
-                if ( s == null )
+                Sensor s = (Sensor) p.getDevice(sensor + "-sensor");
+                if (s == null) {
                     Util.userError("Sensor device does not exist", sensor);
-                if ( ".".equals(fname) ) s.setSensorData(new RandomSensorData(getRandom()));
-                else s.setSensorData(new ReplaySensorData(p.getMicrocontroller(), fname));
-            } catch ( IOException e) {
+                }
+                else if (".".equals(fname)) {
+                    s.setSensorSource(new RandomSensorSource(getRandom()));
+                } else {
+                    s.setSensorSource(new ReplaySensorSource(p.getMicrocontroller(), fname));
+                }
+            } catch (IOException e) {
                 throw Util.unexpected(e);
             }
         }
@@ -384,9 +393,7 @@ public class SensorSimulation extends Simulation {
         int num = StringUtil.evaluateIntegerLiteral(id);
         SensorNode node = (SensorNode)getNode(num);
         if ( node != null ) {
-            SensorDataInput sdi = new SensorDataInput();
-            sdi.fname = file;
-            sdi.sensor = sensor;
+            SensorDataInput sdi = new SensorDataInput(file, sensor);
             node.sensorInput.add(sdi);
             if (! ".".equals(file) )
                 Main.checkFileExists(file);

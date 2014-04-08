@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2004-2005, Regents of the University of California All rights
- * reserved.
+ * Copyright (c) 2004-2005, Regents of the University of California
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,55 +31,35 @@
 package avrora.sim.platform.sensors;
 
 /**
- * The <code>Sensor</code> class represents a sensor device that contains a
- * reference to the <code>SensorSource</code> instance feeding data to the
- * device.
+ * The <code>SensorSource</code> interface represents a source
+ * of sensor data for the simulation.
+ * It could be randomly generated, played back from a file,
+ * or computed dynamically from the simulation.
  *
  * @author Ben L. Titzer
- * @author Enrico Jorns
  */
-public abstract class Sensor {
+public interface SensorSource {
 
     /**
-     * Set the source for this sensor.
+     * The <code>read()</code> method is called by the simulation
+     * when a new read of the sensor is requested or needed.
      *
-     * The source determines how the sensor will get its data.
-     *
-     * @see SensorSource
-     * @see SetSensorSource
-     * @see RandomSensorSource
-     * @see ReplaySensorSource
-     *
-     * @param src Source to use
+     * @param idx source channel to read from
+     * @return Value for this channel
      */
-    public abstract void setSensorSource(SensorSource src);
+    double read(int idx);
+    
+//    int readInt(int idx) {
+//        // XXX we could do some checks here...
+//        return (int) read(idx);
+//    }
 
-    /**
-     * Returns info about input channels of this sensor.
-     *
-     * @return Input channels
-     */
-    public abstract Channel[] getChannels();
-
-    public class Channel {
-
-        public String name;   // name to identify
-        public String unit;   // unit
-        public double ubound; // upper bound of accepted value
-        public double lbound; // lower bound of accepted value
-        public double defval; // default value returned if powered off e.g.
-
-        public Channel(String name, String unit, double lbound, double ubound, double defval) {
-            this.name = name;
-            this.unit = unit;
-            this.lbound = lbound;
-            this.ubound = ubound;
-            this.defval = defval;
-        }
-
-        public Channel(String name, double lbound, double ubound, double defval) {
-            this(name, null, lbound, ubound, defval);
-        }
+//    int readFloat(int idx) {
+//        // XXX we could do some checks here...
+//        return (float) read(idx);
+//    }
+    
+    class SensorSourceException extends RuntimeException {
 
     }
 

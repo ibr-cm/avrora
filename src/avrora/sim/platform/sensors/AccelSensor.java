@@ -43,6 +43,7 @@ import avrora.sim.mcu.*;
  */
 public class AccelSensor extends Sensor {
 
+    private SensorSource source;
     protected final AccelSensorPower asp;
     protected ADC adcDevice;
   
@@ -52,14 +53,27 @@ public class AccelSensor extends Sensor {
         this.asp = asp;
     }
 
+    @Override
+    public Channel[] getChannels() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setSensorSource(SensorSource src) {
+        source = src;
+    }
+
     class ADCInput implements ADC.ADCInput {
+
+        @Override
         public float getVoltage() {
-            if ( data == null ) return ADC.GND_LEVEL;
-            if ( !asp.isOn() ) return ADC.GND_LEVEL;
-            int read = data.reading();
-            // scale the reading back to a voltage.
-            return adcDevice.getVoltageRef() * ((float)read) / 0x3ff;
+            if (!asp.isOn()) {
+                return ADC.GND_LEVEL;
+            }
+            int read = (int) source.read(0);
+            // scale the read back to a voltage.
+            return adcDevice.getVoltageRef() * ((float) read) / 0x3ff;
         }
     }
-    
+
 }

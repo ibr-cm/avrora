@@ -37,6 +37,7 @@ import avrora.sim.mcu.SPI;
 import avrora.sim.mcu.SPIDevice;
 
 /**
+ * AT45DB flash module.
  *
  * @author S. Willenborg
  */

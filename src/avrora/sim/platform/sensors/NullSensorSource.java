@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2004-2005, Regents of the University of California
+ * Copyright (c) 2014 TU Braunschweig
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,46 +32,17 @@
 
 package avrora.sim.platform.sensors;
 
-import avrora.sim.FiniteStateMachine;
-import avrora.sim.mcu.*;
-
 /**
- * The <code>AccelSensorPower</code> handles the Power pin for the acceleration sensor
+ * Sensor source that returns -10.0 for each channel
+ * to indicate invalid data.
  *
- * @author Ben L. Titzer
- * @author Zainul M. Charbiwala
- * @author Daniel Minder
+ * @author Enrico Jorns
  */
-public class AccelSensorPower {
+public class NullSensorSource implements SensorSource {
 
-    protected final FiniteStateMachine fsm;
-
-    protected static final String[] names = {"power down", "on"};
-    protected boolean on;
-
-    public AccelSensorPower(AtmelMicrocontroller m, String onPin) {
-        m.getPin(onPin).connectOutput(new OnPin());
-        fsm = new FiniteStateMachine(m.getClockDomain().getMainClock(), 0, names, 0);
+    @Override
+    public double read(int idx) {
+        return -1.0;
     }
-
-    class OnPin implements Microcontroller.Pin.Output {
-
-        @Override
-        public void write(boolean val) {
-            on = val;
-            fsm.transition(state());
-        }
-    }
-
-    private int state() {
-        if (!on) {
-            return 0;
-        } else {
-            return 1;
-        }
-    }
-
-    public boolean isOn() {
-        return on;
-    }
+    
 }

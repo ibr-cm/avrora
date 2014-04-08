@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2004-2005, Regents of the University of California
+ * Copyright (c) 2014, TU Braunschweig
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,20 +32,27 @@
 
 package avrora.sim.platform.sensors;
 
-import java.util.Random;
-
 /**
- * @author Ben L. Titzer
+ * Sensor source that provides constant sensor data.
+ *
+ * @author Enrico Jorns
  */
-public class RandomSensorData implements SensorData {
-
-    protected final Random random;
-
-    public RandomSensorData(Random r) {
-        random = r;
+public class ConstantSensorSource implements SensorSource {
+    
+    final double[] data;
+    
+    /**
+     * Create new ConstantSensorSource
+     *
+     * @param data Data the sensor should receive
+     */
+    public ConstantSensorSource(double[] data) {
+        this.data = data;
     }
 
-    public int reading() {
-        return random.nextInt() & 0x3ff;
+    @Override
+    public double read(int idx) {
+        return data[idx];
     }
+    
 }

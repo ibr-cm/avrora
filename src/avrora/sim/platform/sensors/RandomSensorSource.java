@@ -32,19 +32,44 @@
 
 package avrora.sim.platform.sensors;
 
+import java.util.Random;
+
 /**
- * The <code>SensorData</code> interface represents a source of sensor data
- * for the simulation. It could be randomly generated, played back from a file,
- * or computed dynamically from the simulation.
+ * Sensor source that generates random data.
  *
  * @author Ben L. Titzer
+ * @author Enrico Jorns
  */
-public interface SensorData {
+public class RandomSensorSource implements SensorSource {
+
+    protected final Random random;
+    protected final double lbound;
+    protected final double ubound;
 
     /**
-     * The <code>reading()</code> method is called by the simulation when a new
-     * reading of the sensor is requested or needed.
-     * @return a raw ADC reading which should be returned to the software
+     * Random source that emits n random values.
+     *
+     * @param r Random instance
+     * @param lbound Lower bound of data range to generate
+     * @param ubound Uppper bound of data range to generate
      */
-    public int reading();
+    public RandomSensorSource(Random r, double lbound, double ubound) {
+        random = r;
+        this.lbound = lbound;
+        this.ubound = ubound;
+    }
+
+    /**
+     * Random source that emits a random value in range [0.0, 1.0]
+     *
+     * @param r Random instance
+     */
+    public RandomSensorSource(Random r) {
+        this(r, 0.0, 1.0);
+    }
+
+    @Override
+    public double read(int idx) {
+        return (ubound - lbound) * random.nextDouble() + lbound;
+    }
 }

@@ -33,57 +33,84 @@ package avrora.sim.platform.sensors;
 
 import avrora.sim.mcu.TWIData;
 import avrora.sim.mcu.TWIDevice;
-import java.math.BigInteger;
+//import java.math.BigInteger;
 
 /**
  *
  * @author S. Willenborg
  */
 public class BMP085 extends Sensor implements TWIDevice {
+    
+    private static final int   TEMP = 0;
+    private static final int   PRESSURE = 1;
+    
+    private static final byte  ADDRESS = (byte) 0xee;
+    private static final short EEPROM_START = 0xaa;
+    private static final short EEPROM_END = 0xbf;
 
-    private final byte ADDRESS = (byte) 0xee;
-    private final short EEPROM_START = 0xaa;
-    private final short EEPROM_END = 0xbf;
+    private static final byte  MODE_TEMP = 0x2e;
+    private static final byte  MODE_PRESSURE_0 = 0x34;
+    private static final byte  MODE_PRESSURE_1 = 0x74;
+    private static final byte  MODE_PRESSURE_2 = (byte) 0xb4;
+    private static final byte  MODE_PRESSURE_3 = (byte) 0xf4;
+    private static final short DATA_START = 0xf6;
+    private static final byte  CONTROL_REGISTER = (byte) 0xf4;
+        
+    private static final short AC1 = 408;
+    private static final short AC2 = -72;
+    private static final short AC3 = -14383;
+    private static final short AC4 = 32741;
+    private static final short AC5 = 32757;
+    private static final short AC6 = 23153;
+    private static final short B1 = 6190;
+    private static final short B2 = 4;
+    private static final short MB = -32768;
+    private static final short MC = -8711;
+    private static final short MD = 2868;
 
-    private final byte MODE_TEMP = 0x2e;
-    private final byte MODE_PRESSURE_0 = 0x34;
-    private final byte MODE_PRESSURE_1 = 0x74;
-    private final byte MODE_PRESSURE_2 = (byte) 0xb4;
-    private final byte MODE_PRESSURE_3 = (byte) 0xf4;
-    private final short DATA_START = 0xf6;
-    private final byte MODE_ADDR = (byte) 0xf4;
-
+    private SensorSource source;
     private boolean active = false;
     private int writecount = 0;
     private byte reg = 0;
 
-    final short AC1 = 408;
-    final short AC2 = -72;
-    final short AC3 = -14383;
-    final short AC4 = 32741;
-    final short AC5 = 32757;
-    final short AC6 = 23153;
-    final short B1 = 6190;
-    final short B2 = 4;
-    final short MB = -32768;
-    final short MC = -8711;
-    final short MD = 2868;
-
     private final short[] koeffz = {AC1, AC2, AC3, AC4, AC5, AC6, B1, B2, MB, MC, MD};
     int measure_data = 0x00;
     int measure_mode = 0x00;
-    double cur_temp = 21.2;
-    int cur_pressure = 100321;
+    
+    private final Channel[] channels = new Channel[] {
+        new Channel("Temperature", "C", -40, 85, 0.0), // resolution: 1/10 C
+        new Channel("Pressure", "Pa", 3000, 11000, 0.0)
+    };
+    
     public BMP085() {
        
     }
 
+    @Override
+    public Channel[] getChannels() {
+        return channels;
+    }
+    
+    @Override
+    public void setSensorSource(SensorSource src) {
+        source = src;
+    }
+
     public final int convertTemperature(double temp) {
+        System.out.printf("convertTemperature(%f)%n", temp);
         int T = (int) (temp * 10);
         int converted = (int) (((Math.sqrt(MD * MD + (((T + 1) << 5) - (2 << 4)) * MD - (MC << 13) + (((T) * (T + 1)) << 8) + 64) - MD + ((T + 1) << 4) - 8) / AC5) * (1 << 14) + AC6);
         return converted;
     }
 
+    /**
+     * Converts pressure data in Pa to data as emitted by the sensor device.
+     * 
+     * @param temp Temperature [C] uses (max 1/10 C) resolution
+     * @param pressure Pressure [Pa]
+     * @param mode operation mode. [0 .. 3]
+     * @return 
+     */
     public final int convertPressure(double temp, int pressure, int mode) {
         int x1 = (convertTemperature(temp) - AC6) * AC5 >> 15;
 
@@ -127,7 +154,8 @@ public class BMP085 extends Sensor implements TWIDevice {
         while (pt != (p + (((((((p >> 8) * (p >> 8) * 1519 * 2) >> 16) + ((-7357 * p) >> 16) + 3791))) >> 4))) {
             p += direction;
         }
-        int b7 = BigInteger.valueOf(p).multiply(BigInteger.valueOf(b4)).divide(BigInteger.valueOf(2)).intValue();
+//        int b7 = BigInteger.valueOf(p).multiply(BigInteger.valueOf(b4)).divide(BigInteger.valueOf(2)).intValue();
+        int b7 = (int) (((long) p)  * b4 / 2);
 
         return (b7 / (50000 >> mode) + b3 + 1) << (8 - mode);
 
@@ -137,19 +165,19 @@ public class BMP085 extends Sensor implements TWIDevice {
         this.measure_mode = measure_mode;
         switch (measure_mode) {
             case MODE_TEMP: // Temperature
-                measure_data = convertTemperature(cur_temp);
+                measure_data = convertTemperature(source.read(TEMP));
                 break;
             case MODE_PRESSURE_0: // Pressure (osrs =0)
-                measure_data = convertPressure(cur_temp, cur_pressure, 0);
+                measure_data = convertPressure(source.read(TEMP), (int) Math.round(source.read(PRESSURE)), 0);
                 break;
             case MODE_PRESSURE_1: // Pressure (osrs =1)
-                measure_data = convertPressure(cur_temp, cur_pressure, 1);
+                measure_data = convertPressure(source.read(TEMP), (int) Math.round(source.read(PRESSURE)), 1);
                 break;
             case MODE_PRESSURE_2: // Pressure (osrs =2)
-                measure_data = convertPressure(cur_temp, cur_pressure, 2);
+                measure_data = convertPressure(source.read(TEMP), (int) Math.round(source.read(PRESSURE)), 2);
                 break;
             case MODE_PRESSURE_3: // Pressure (osrs =3)
-                measure_data = convertPressure(cur_temp, cur_pressure, 3);
+                measure_data = convertPressure(source.read(TEMP), (int) Math.round(source.read(PRESSURE)), 3);
                 break;
         }
     }
@@ -167,12 +195,16 @@ public class BMP085 extends Sensor implements TWIDevice {
             return null;
         }
 
+        // first byte is register address
         if (writecount == 0) {
             reg = data;
+        // second byte is control register data
         } else if (writecount == 1) {
-            if (reg == MODE_ADDR) {
+            if (reg == CONTROL_REGISTER) {
                 refresh_values(data);
             }
+        } else {
+            // not supported!
         }
         writecount++;
         return ack;
