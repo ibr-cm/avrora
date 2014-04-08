@@ -221,6 +221,7 @@ public class Defaults {
             platforms.addClass("seres", Seres.Factory.class);
             platforms.addClass("superbot", Superbot.Factory.class);
             platforms.addClass("telos", Telos.Factory.class);
+            platforms.addClass("inga", Inga.Factory.class);
         }
     }
 
