@@ -34,6 +34,7 @@ package avrora.sim.platform;
 
 import avrora.sim.mcu.Microcontroller;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * The <code>Platform</code> interface represents both a microcontroller instance and the devices connected to
@@ -48,7 +49,7 @@ public abstract class Platform {
 
     protected Platform(Microcontroller m) {
         mcu = m;
-        devices = new HashMap<String, Object>();
+        devices = new HashMap<>();
         mcu.setPlatform(this);
     }
 
@@ -79,5 +80,9 @@ public abstract class Platform {
      */
     public Object getDevice(String name) {
         return devices.get(name);
+    }
+    
+    public Set<String> getDeviceNames() {
+        return devices.keySet();
     }
 }
