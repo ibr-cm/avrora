@@ -27,13 +27,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-package avrora.sim.platform.sensors;
+package avrora.sim.platform.devices;
 
 import avrora.sim.RWRegister;
 import avrora.sim.mcu.Microcontroller;
 import avrora.sim.mcu.Microcontroller.Pin.InputListener;
 import avrora.sim.mcu.SPI;
 import avrora.sim.mcu.SPIDevice;
+import avrora.sim.platform.sensors.Sensor;
+import avrora.sim.platform.sensors.SensorSource;
 import avrora.sim.state.RegisterUtil;
 import avrora.sim.state.RegisterView;
 import org.slf4j.Logger;

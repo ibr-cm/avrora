@@ -30,9 +30,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package avrora.sim.platform.sensors;
+package avrora.sim.platform.devices;
 
 import avrora.sim.mcu.Microcontroller;
+import avrora.sim.platform.sensors.PushSensorSource;
+import avrora.sim.platform.sensors.Sensor;
+import avrora.sim.platform.sensors.SensorSource;
 import java.util.LinkedList;
 import java.util.List;
 

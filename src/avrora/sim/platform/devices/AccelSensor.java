@@ -30,54 +30,34 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package avrora.sim.platform.sensors;
+package avrora.sim.platform.devices;
 
-import avrora.sim.FiniteStateMachine;
 import avrora.sim.mcu.*;
+import avrora.sim.platform.sensors.Sensor;
+import avrora.sim.platform.sensors.SensorSource;
 
 /**
- * The <code>LightSensor</code> class implements a light sensor.
- * 
- * This light sensor is connected to and ADC.
+ * The <code>AccelSensor</code> class implements a accelerometer like that present on the Mica2 MTS300 sensorboard.
  *
  * @author Ben L. Titzer
+ * @author Zainul M. Charbiwala
+ * @author Daniel Minder
  */
-public class LightSensor extends Sensor {
+public class AccelSensor extends Sensor {
 
     private SensorSource source;
-    protected final AtmelMicrocontroller mcu;
-    protected final int channel;
-
-    protected final FiniteStateMachine fsm;
-
-    protected static final String[] names = { "power down", "on" };
-    protected boolean on;
-    public ADC adcDevice;
-
-    /**
-     * Creates a light sensor.
-     * 
-     * @param m Microcontroller reference
-     * @param adcChannel Adc channel to connect to
-     * @param onPin Pin name to connect to
-     */
-    public LightSensor(AtmelMicrocontroller m, int adcChannel, String onPin) {
-        super();
-        mcu = m;
-        channel = adcChannel;
-        mcu.getPin(onPin).connectOutput(new OnPin());
-        fsm = new FiniteStateMachine(mcu.getClockDomain().getMainClock(), 0, names, 0);
-        adcDevice = (ADC)mcu.getDevice("adc");
-        adcDevice.connectADCInput(new ADCInput(), channel);
+    protected final AccelSensorPower asp;
+    protected ADC adcDevice;
+  
+    public AccelSensor(AtmelMicrocontroller m, int adcChannel, AccelSensorPower asp) {
+        adcDevice = (ADC)m.getDevice("adc");
+        adcDevice.connectADCInput(new ADCInput(), adcChannel);
+        this.asp = asp;
     }
-
-    final Channel[] channels = new Channel[]{
-        new Channel("light", -1.0, -1.0, -1.0)
-    };
 
     @Override
     public Channel[] getChannels() {
-        return channels;
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -85,33 +65,17 @@ public class LightSensor extends Sensor {
         source = src;
     }
 
-    class OnPin implements Microcontroller.Pin.Output {
-        @Override
-        public void write(boolean val) {
-            on = val;
-            fsm.transition(state());
-        }
-    }
-
-    private int state() {
-        if (on) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
     class ADCInput implements ADC.ADCInput {
 
         @Override
         public float getVoltage() {
-            if (!on) {
+            if (!asp.isOn()) {
                 return ADC.GND_LEVEL;
             }
-            // fetch data
-            double data = source.read(0);
+            int read = (int) source.read(0);
             // scale the read back to a voltage.
-            return (float) (adcDevice.getVoltageRef() * (data) / 0x3ff);
+            return adcDevice.getVoltageRef() * ((float) read) / 0x3ff;
         }
     }
+
 }

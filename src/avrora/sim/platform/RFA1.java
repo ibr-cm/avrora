@@ -37,7 +37,7 @@ import avrora.sim.Simulator;
 import avrora.sim.Simulation;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.mcu.*;
-import avrora.sim.platform.sensors.LightSensor;
+import avrora.sim.platform.devices.LightSensor;
 import avrora.sim.platform.sensors.SensorBoard;
 //import avrora.sim.platform.sensors.AccelSensor;
 //import avrora.sim.platform.sensors.AccelSensorPower;

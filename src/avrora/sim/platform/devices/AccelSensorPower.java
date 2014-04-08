@@ -30,7 +30,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package avrora.sim.platform.sensors;
+package avrora.sim.platform.devices;
 
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.mcu.*;

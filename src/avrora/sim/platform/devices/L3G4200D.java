@@ -29,11 +29,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package avrora.sim.platform.sensors;
+package avrora.sim.platform.devices;
 
 import avrora.sim.RWRegister;
 import avrora.sim.mcu.TWIData;
 import avrora.sim.mcu.TWIDevice;
+import avrora.sim.platform.sensors.Sensor;
+import avrora.sim.platform.sensors.SensorSource;
 import avrora.sim.state.RegisterUtil;
 import avrora.sim.state.RegisterView;
 
