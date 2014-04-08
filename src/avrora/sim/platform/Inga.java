@@ -45,6 +45,7 @@ import avrora.sim.mcu.TWI;
 import avrora.sim.platform.sensors.ADXL345;
 import avrora.sim.platform.sensors.AT45DB;
 import avrora.sim.platform.sensors.BMP085;
+import avrora.sim.platform.sensors.Button;
 import avrora.sim.platform.sensors.L3G4200D;
 import avrora.sim.radio.AT86RF231Radio;
 import avrora.sim.radio.ATmega128RFA1Radio;
@@ -98,10 +99,8 @@ public class Inga extends Platform {
     }
 
     /**
-     * The <code>addDevices()</code> method is used to add the external (off-chip) devices to the
-     * platform. The Raven 1284p has no external devices except for the SPI connected RF230 radio,
-     * but LED's can be added for simulation debugging.
-     * Warning: running such code on the hardware will drive the selected port outputs!
+     * The <code>addDevices()</code> method is used to add
+     * the external (off-chip) devices to the platform.
      */
     private void addDevices() {
         LED red = new LED(sim, Terminal.COLOR_RED, "Red");
@@ -109,16 +108,14 @@ public class Inga extends Platform {
         LED blue = new LED(sim, Terminal.COLOR_BLUE, "Blue");
 
 
-
-        ledGroup = new LED.LEDGroup(sim, new LED[] { red, green, blue });
+        ledGroup = new LED.LEDGroup(sim, new LED[]{red, green, blue});
         addDevice("leds", ledGroup);
 
         //AtmelMicrocontroller amcu = (AtmelMicrocontroller)mcu;
-        
-            mcu.getPin("PD5").connectOutput(blue);
-            mcu.getPin("PD6").connectOutput(green);
-            mcu.getPin("PD7").connectOutput(red);
-        
+        mcu.getPin("PD5").connectOutput(blue);
+        mcu.getPin("PD6").connectOutput(green);
+        mcu.getPin("PD7").connectOutput(red);
+
         // install the new AT86RF230 radio. Actually an AT86RF231.
         AT86RF231Radio radio = new AT86RF231Radio(mcu, MAIN_HZ * 2);
  //     mcu.getPin("PB7").connectOutput(radio.SCLK_pin);
@@ -135,8 +132,14 @@ public class Inga extends Platform {
         addDevice("radio", radio);
         radio.RF231_interrupt = mcu.getProperties().getInterrupt("TIMER1 CAPT");
         TWI twi = (TWI) ((AtmelMicrocontroller) mcu).getDevice("twi");
-        twi.connect(new BMP085());
-        twi.connect(new L3G4200D());
+
+        BMP085 pressure = new BMP085();
+        twi.connect(pressure);
+        addDevice("bmp085", pressure);
+
+        L3G4200D gyroscope = new L3G4200D();
+        twi.connect(gyroscope);
+        addDevice("l3g4200d", gyroscope);
 
         LCX138 decoder = new LCX138();
         mcu.getPin(32).connectOutput(decoder.A0);
@@ -145,14 +148,21 @@ public class Inga extends Platform {
         decoder.E1.write(false);
         decoder.E2.write(false);
         decoder.E3.write(true);
+        addDevice("lcx138", decoder);
 
         AT45DB flash = new AT45DB();
         flash.connectCS(decoder.O1);
         spi2.connect(flash);
+        addDevice("at45db", flash);
 
         ADXL345 accelerometer = new ADXL345();
         accelerometer.connectCS(decoder.O2);
         spi2.connect(accelerometer);
+        addDevice("adxl345", accelerometer);
+        
+        Button button = new Button();
+        mcu.getPin(42).connectInput(button.output);
+        addDevice("button", button);
     }
 
 }
