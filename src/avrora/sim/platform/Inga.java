@@ -155,7 +155,7 @@ public class Inga extends Platform {
         spi2.connect(flash);
         addDevice("at45db", flash);
 
-        ADXL345 accelerometer = new ADXL345();
+        ADXL345 accelerometer = new ADXL345(sim);
         accelerometer.connectCS(decoder.O2);
         spi2.connect(accelerometer);
         addDevice("adxl345", accelerometer);
