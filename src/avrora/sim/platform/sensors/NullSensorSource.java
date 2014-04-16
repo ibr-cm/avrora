@@ -33,8 +33,7 @@
 package avrora.sim.platform.sensors;
 
 /**
- * Sensor source that returns -10.0 for each channel
- * to indicate invalid data.
+ * Sensor source that returns 0.0 for each channel.
  *
  * @author Enrico Jorns
  */
@@ -42,7 +41,7 @@ public class NullSensorSource implements SensorSource {
 
     @Override
     public double read(int idx) {
-        return -1.0;
+        return 0.0;
     }
     
 }
