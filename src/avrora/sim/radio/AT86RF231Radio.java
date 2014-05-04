@@ -1050,6 +1050,7 @@ public class AT86RF231Radio implements Radio {
                 if ((rf231Status == STATE_BUSY_RX_AACK) && sendingAck) {
                     printer.println("****** Auto ack was sent and we change back to STATE_RX_AACK_ON now");
                     // if ack was just send, just stop transmitter, no interrupts etc.
+                    sendingAck = false;
                     transmitter.shutdown();
                     receiver.startup();
                     rf231Status = STATE_RX_AACK_ON;
