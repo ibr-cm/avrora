@@ -1054,6 +1054,7 @@ public class AT86RF231Radio implements Radio {
                     transmitter.shutdown();
                     receiver.startup();
                     rf231Status = STATE_RX_AACK_ON;
+                    registers[TRX_STATUS] = rf231Status;
                 } else {
                   //Set the TRAC status bits in the TRX_STATE register
                   //0 success 1 pending 2 waitforack 3 accessfail 5 noack 7 invalid
