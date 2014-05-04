@@ -34,6 +34,7 @@ import java.util.Random;
 
 import avrora.sim.AtmelInterpreter;
 import avrora.sim.FiniteStateMachine;
+import avrora.sim.RWRegister;
 import avrora.sim.Simulator;
 import avrora.sim.clock.Synchronizer;
 import avrora.sim.energy.Energy;
@@ -44,6 +45,8 @@ import avrora.sim.output.SimPrinter;
 import avrora.sim.state.BooleanRegister;
 import avrora.sim.state.BooleanView;
 import avrora.sim.state.ByteFIFO;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
 import java.util.LinkedList;
@@ -65,7 +68,7 @@ public class AT86RF231Radio implements Radio {
     private final static boolean DEBUGQ  = true;   //"should not happen" debugs
 
     //-- Radio states, confusingly contained in the TRX_STATUS register --------
-    public  byte rf231Status = 0;
+//    public byte rf231Status = 0;
     public static final byte STATE_BUSY_RX      = 0x01;
     public static final byte STATE_BUSY_TX      = 0x02;
     public static final byte STATE_RX_ON        = 0x06;
@@ -131,6 +134,22 @@ public class AT86RF231Radio implements Radio {
     public static final int CSMA_SEED_0  = 0x2D;
     public static final int CSMA_SEED_1  = 0x2E;
     public static final int CSMA_BE      = 0x2F;//rf231
+    
+    //-- Register implementation
+    private class TRX_STATUS_Reg extends RWRegister {
+
+        static final int TRX_STATUS_L   = 0;
+        static final int TRX_STATUS_H   = 4;
+        static final int CCA_STATUS     = 6;
+        static final int CCA_DONE       = 7;
+
+        final RegisterView _trx_status = RegisterUtil.bitRangeView(this, TRX_STATUS_L, TRX_STATUS_H);
+        final RegisterView _cca_status = RegisterUtil.bitView(this, CCA_STATUS);
+        final RegisterView _cca_done = RegisterUtil.bitView(this, CCA_DONE);
+    }
+
+    //-- Registers
+    final TRX_STATUS_Reg TRX_STATUS_reg = new TRX_STATUS_Reg();
     //-- Other constants --------------------------------------------------
     private static final int NUM_REGISTERS = 0x3F;
     private static final int FIFO_SIZE     = 128;
@@ -229,7 +248,8 @@ public class AT86RF231Radio implements Radio {
            resetRegister(cntr);
         }
         lastCRCok = false;
-        rf231Status = STATE_TRX_OFF;
+        TRX_STATUS_reg._trx_status.setValue(STATE_TRX_OFF);
+        printer.println("RF231: STATE_TRX_OFF");
         txactive = rxactive = true;
         transmitter.shutdown();
         receiver.shutdown();
@@ -254,7 +274,7 @@ public class AT86RF231Radio implements Radio {
                 break;
             }
 */
-            if (rf231Status == STATE_BUSY_TX_ARET) {
+            if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_TX_ARET) {
                 if (ccaBusy) {
                     if (csmaRetries > 0) {
                         if (DEBUGC && printer!=null) printer.println("RF231: csma busy, retry count " + csmaRetries);
@@ -277,8 +297,8 @@ public class AT86RF231Radio implements Radio {
                         registers[TRX_STATE] = (byte) ((registers[TRX_STATE] & 0X1F) | 0x20);
 
                         //rf231Status = STATE_TX_ARET_ON;
-                        rf231Status = STATE_PLL_ON;//??
-                        registers[TRX_STATUS] = rf231Status;
+                        TRX_STATUS_reg._trx_status.setValue(STATE_PLL_ON);//XXX ??
+                        printer.println("RF231: STATE_PLL_ON");
                         if (rxactive) printer.println("rxactive after csma failure");
                         //receiver.shutdown();//??
                         //possibly sending an autoack?
@@ -297,13 +317,12 @@ public class AT86RF231Radio implements Radio {
                 return;
             }
           //  registers[TRX_STATUS] = (byte) registers[TRX_STATUS] & 0x3f;
-            if (ccaBusy) {
-                registers[TRX_STATUS] = (byte) (0x80 | (registers[TRX_STATUS] & 0x3f));
-            } else {
-                registers[TRX_STATUS] = (byte) (0xC0 | (registers[TRX_STATUS] & 0x3f));
+            TRX_STATUS_reg._cca_done.setValue(1);
+            if (!ccaBusy) {
+                TRX_STATUS_reg._cca_status.setValue(1);
             }
           //  printer.println("after cca status is " + rf231Status);
-            if (rf231Status == STATE_BUSY_RX_AACK) {
+            if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) {
             //receiving a packet during the cca. How to handle this?
                if (DEBUGC && printer !=null)printer.println("RF231: BUSY_RX_AACK after CCA");
               //  rf231Status = STATE_RX_AACK_ON;
@@ -323,7 +342,21 @@ public class AT86RF231Radio implements Radio {
      * @return an integer value representing the result of reading the register
      */
     public byte readRegister(int addr) {
-        byte val = registers[addr];
+        
+        int val;
+        switch (addr) {
+            case TRX_STATUS:
+                val = TRX_STATUS_reg.getValue();
+                break;
+//            case IRQ_STATUS:
+//                break;
+//            case PHY_RSSI:
+//                break;
+            // fallback for byte-array registers
+            default:
+                val = registers[addr];
+                break;
+        }
         if (DEBUGV && printer!=null) printer.println("RF231 " + regName(addr) + " => " + StringUtil.to0xHex(val, 2));
         switch (addr) {
             case IRQ_STATUS:
@@ -335,7 +368,7 @@ public class AT86RF231Radio implements Radio {
                 break;
             }
 
-        return val;
+        return (byte) (val & 0xFF);
     }
 
     /**
@@ -362,7 +395,7 @@ public class AT86RF231Radio implements Radio {
             case PHY_CC_CCA:
                 //upper bit is cca request, is cleared automatically
                  if ((val & 0x80) != 0) {
-                    if (rf231Status == STATE_RX_AACK_ON) {  //or BUSY?
+                    if (TRX_STATUS_reg._trx_status.getValue() == STATE_RX_AACK_ON) {  //or BUSY?
                         byte mode = (byte) ((val & 0x60) >> 5);
                         if ((registers[PHY_RSSI] & 0x1f) != 0) {
                             if (DEBUGC & printer!=null) printer.println("RF231: CCA_ED_REQUEST, mode = " + mode + " PHYRSSI = " +(registers[PHY_RSSI] & 0x1f) + " CCATHRES " + (registers[CCA_THRES] & 0x0f));
@@ -377,16 +410,18 @@ public class AT86RF231Radio implements Radio {
                             break;
                         }
                         //clear status and done bit
-                        registers[TRX_STATUS] &= 0x3f;
-                        registers[TRX_STATUS] |= 0x80;
-                        if (!tbusy) registers[TRX_STATUS] |= 0x40;
+                        TRX_STATUS_reg._cca_done.setValue(1);
+                        TRX_STATUS_reg._cca_status.setValue(0);
+                        
+                        if (!tbusy) TRX_STATUS_reg._cca_status.setValue(1);
                         postInterrupt(INT_CCA_ED_DONE);
                         break;
                     }
                     if (DEBUGC & printer!=null) printer.println("RF231: CCA_REQUEST, mode = " + " PHYRSSI = " +registers[PHY_RSSI] + " CCATHRESH " + (registers[CCA_THRES] & 0x0f));
                     registers[addr] = (byte) (val & 0x7f);
                     //clear status and done bit
-                    registers[TRX_STATUS] = (byte) (registers[TRX_STATUS] & 0x3F);
+                    TRX_STATUS_reg._cca_done.setValue(0);
+                    TRX_STATUS_reg._cca_status.setValue(0);
 
                     //wait 140 usec (8.75 symbol periods)
                     receiver.clock.insertEvent(ccaDelayEvent, 875*receiver.cyclesPerByte/200);
@@ -415,7 +450,7 @@ public class AT86RF231Radio implements Radio {
                 if (DEBUG && printer!=null) printer.println("RF231: TX_START");
                 // set TRAC_STATUS bits to INVALID?
                 // registers[TRX_STATE] = (byte) (CMD_TX_START | 0xE0);
-                rf231Status = STATE_BUSY_TX;
+                TRX_STATUS_reg._trx_status.setValue(STATE_BUSY_TX);
                 sendingAck = false;
                 if (rxactive) receiver.shutdown();
                 if (!txactive) transmitter.startup();
@@ -424,43 +459,49 @@ public class AT86RF231Radio implements Radio {
                 if (DEBUG && printer!=null) printer.println("RF231: FORCE_TRX_OFF");
                 if (txactive) transmitter.shutdown();
                 if (rxactive) receiver.shutdown();
-                rf231Status = STATE_TRX_OFF;
+                TRX_STATUS_reg._trx_status.setValue(STATE_TRX_OFF);
                 break;
             case CMD_FORCE_PLL_ON:
                 if (DEBUG && printer!=null) printer.println("RF231: FORCE_PLL_ON");
-                rf231Status = STATE_PLL_ON;
+                TRX_STATUS_reg._trx_status.setValue(STATE_PLL_ON);
                 break;
             case CMD_RX_ON:
                 if (DEBUG && printer!=null) printer.println("RF231: RX_ON");
-                rf231Status = STATE_RX_ON;
+                TRX_STATUS_reg._trx_status.setValue(STATE_RX_ON);
                 if (txactive) transmitter.shutdown();
-                if (!rxactive) receiver.startup();
+                if (!rxactive) {
+                    printer.println("RF231: receiver.startup()@3");
+                    receiver.startup();
+                }
                 break;
             case CMD_TRX_OFF:
                 if (DEBUG && printer!=null) printer.println("RF231: TRX_OFF");
                 if (txactive) transmitter.shutdown();
                 if (rxactive) receiver.shutdown();
-                rf231Status = STATE_TRX_OFF;
+                TRX_STATUS_reg._trx_status.setValue(STATE_TRX_OFF);
                 break;
             case CMD_TX_ON:
                 if (DEBUG && printer!=null) printer.println("RF231: PLL_ON");
-                rf231Status = STATE_PLL_ON;
+                TRX_STATUS_reg._trx_status.setValue(STATE_PLL_ON);
                 break;
             case CMD_RX_AACK_ON:
                 if (DEBUG && printer!=null) printer.println("RF231: RX_AACK_ON");
            //     if (rf231Status == etc.
-                rf231Status = STATE_RX_AACK_ON;
+                TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
                 // set TRAC_STATUS bits to INVALID
                 registers[TRX_STATE] = (byte) (CMD_TX_START | 0xE0);
                 // reset autoack flag
                 if (waitingAck) System.out.println("spi sets waitingAck false");
                 waitingAck = false;
                 if (txactive) transmitter.shutdown();
-                if (!rxactive) receiver.startup();
+                if (!rxactive) {
+                    printer.println("RF231: receiver.startup()@4");
+                    receiver.startup();
+                }
                 break;
             case CMD_TX_ARET_ON:
                 if (DEBUG && printer!=null) printer.println("RF231: TX_ARET_ON");
-                rf231Status = STATE_BUSY_TX_ARET;
+                TRX_STATUS_reg._trx_status.setValue(STATE_BUSY_TX_ARET);
                 sendingAck = false;
                 // set TRAC_STATUS bits to INVALID
                 // reset frame retry and csma retry count
@@ -491,7 +532,6 @@ public class AT86RF231Radio implements Radio {
                 break;
         }
 
-        registers[TRX_STATUS] = (rf231Status);
     }
     /**
      * The <code>resetRegister()</code> method resets the specified register's value
@@ -811,8 +851,7 @@ public class AT86RF231Radio implements Radio {
     //32 usec after RESET, but board capacitance can delay the oscillator startup to as much as 1000 usec.
     protected class wakeupDelay implements Simulator.Event {
         public void fire() {
-            rf231Status = STATE_TRX_OFF;
-            registers[TRX_STATUS] = rf231Status;
+            TRX_STATUS_reg._trx_status.setValue(STATE_TRX_OFF);
             if (DEBUG && printer !=null) printer.println("RF231: WAKE interrupt");
             //TODO: Is this a wake interrupt?
             postInterrupt(INT_PLL_LOCK);
@@ -822,8 +861,8 @@ public class AT86RF231Radio implements Radio {
 
     private void pinChange_SLPTR(boolean level) {
         if (level) {  //pin was raised
-            if (DEBUG && printer!=null) printer.println("RF231 SLPTR pin raised");
-            switch (rf231Status) {
+            if (DEBUG && printer!=null) printer.println("RF231 SLP_TR pin raised");
+            switch (TRX_STATUS_reg._trx_status.getValue()) {
                 //off -> sleep
                 case STATE_TRX_OFF:
                     if (rxactive) receiver.shutdown();
@@ -831,22 +870,22 @@ public class AT86RF231Radio implements Radio {
                     //Frame buffer contents is lost on sleep
                     trxFIFO.clear();
                     stateMachine.transition(0);//change to off state
-                    rf231Status = STATE_SLEEP;
+                    TRX_STATUS_reg._trx_status.setValue(STATE_SLEEP);
                     break;
                 case STATE_PLL_ON:
-                    rf231Status = STATE_BUSY_TX;
+                    TRX_STATUS_reg._trx_status.setValue(STATE_BUSY_TX);
                     break;
                 case STATE_BUSY_TX_ARET:
                 //    rf231Status = STATE_BUSY_TX_ARET;
                     break;
                 default:
-                System.out.println("RF231: should not be in this state " + rf231Status);
+                System.out.println("RF231: should not be in this state " + TRX_STATUS_reg._trx_status.getValue());
                     //dont know what to do here
                     break;
             }
         } else {    //pin was lowered
-            if (DEBUG && printer!=null) printer.println("RF231 SLPTR pin lowered");
-            switch (rf231Status) {
+            if (DEBUG && printer!=null) printer.println("RF231 SLP_TR pin lowered");
+            switch (TRX_STATUS_reg._trx_status.getValue()) {
                 //Go to idle if sleeping
                 case STATE_SLEEP:
                     if (rxactive) receiver.shutdown();
@@ -861,12 +900,11 @@ public class AT86RF231Radio implements Radio {
                     break;
 
                 default:
-                    if (DEBUGQ && printer!=null) printer.println("RF231: SLP pin lowered but not sleeping, state = " + rf231Status);
+                    if (DEBUGQ && printer!=null) printer.println("RF231: SLP pin lowered but not sleeping, state = " + TRX_STATUS_reg._trx_status.getValue());
                     //dont know what to do here
                     break;
             }
         }
-        registers[TRX_STATUS] = (rf231Status);
     }
 
     private void pinChange_RSTN(boolean level) {
@@ -949,8 +987,7 @@ public class AT86RF231Radio implements Radio {
                         } else {
                            //Set TRAC_STATUS to no ack and return to TX_ARET_ON
                             registers[TRX_STATE] = (byte) (0xA0 | (registers[TRX_STATE] & 0x1F));
-                            rf231Status = STATE_TX_ARET_ON;
-                            registers[TRX_STATUS] = (rf231Status);
+                            TRX_STATUS_reg._trx_status.setValue(STATE_TX_ARET_ON);
                             state = TX_WAIT;//???
 
                             if (!rxactive) printer.println("rx1 not active before shutdown");
@@ -1047,18 +1084,17 @@ public class AT86RF231Radio implements Radio {
             if (DEBUGTX && printer!=null) printer.println("RF231 " + StringUtil.to0xHex(val, 2) + " --------> ");
             // common handling of end of transmission
             if (state == TX_END) {
-                if ((rf231Status == STATE_BUSY_RX_AACK) && sendingAck) {
+                if ((TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) && sendingAck) {
                     printer.println("****** Auto ack was sent and we change back to STATE_RX_AACK_ON now");
                     // if ack was just send, just stop transmitter, no interrupts etc.
                     sendingAck = false;
                     transmitter.shutdown();
                     receiver.startup();
-                    rf231Status = STATE_RX_AACK_ON;
-                    registers[TRX_STATUS] = rf231Status;
+                    TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
                 } else {
                   //Set the TRAC status bits in the TRX_STATE register
                   //0 success 1 pending 2 waitforack 3 accessfail 5 noack 7 invalid
-                  if ((rf231Status == STATE_BUSY_TX_ARET) && waitForAck) {
+                  if ((TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_TX_ARET) && waitForAck) {
                       //Show waiting for ack, and switch to rx mode
                       waitingAck = true;
                       handledAck = false;
@@ -1073,8 +1109,7 @@ public class AT86RF231Radio implements Radio {
                       state = TX_WAIT;
                       return val;
                   } else {
-                      rf231Status = STATE_PLL_ON;
-                      registers[TRX_STATUS] = rf231Status;
+                      TRX_STATUS_reg._trx_status.setValue(STATE_TX_ARET_ON);
                       registers[TRX_STATE] = (byte) (registers[TRX_STATE] & 0x1F);
                       transmitter.shutdown();
                   }
@@ -1188,22 +1223,21 @@ public class AT86RF231Radio implements Radio {
                     case RECV_SFD_MATCHED_1: // packet has just started
                         if (DEBUGRX && printer != null) printer.println("RFA1: lock lost");
                         state = RECV_SFD_SCAN;
-                        if (rf231Status == STATE_BUSY_RX_AACK) {
-                            rf231Status = STATE_RX_AACK_ON;
-                        } else if (rf231Status == STATE_BUSY_RX) {
-                            rf231Status = STATE_RX_ON;
-                        } else if (rf231Status == STATE_BUSY_TX_ARET) {
+                        if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) {
+                            TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX) {
+                            TRX_STATUS_reg._trx_status.setValue(STATE_RX_ON);
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_TX_ARET) {
                             //that's one ack were not going to get
-                        } else if (rf231Status == STATE_RX_AACK_ON) {
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_RX_AACK_ON) {
                             //we are getting jammed
-                        } else if (rf231Status == STATE_RX_ON) {
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_RX_ON) {
                             //we are getting jammed
-                        } else if (rf231Status == STATE_PLL_ON) {
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_PLL_ON) {
                             //whats up with that
                         } else {
-                            if (DEBUGQ && printer!=null) printer.println("RF231: Bad state when lock lost " + rf231Status);
+                            if (DEBUGQ && printer!=null) printer.println("RF231: Bad state when lock lost " + TRX_STATUS_reg._trx_status.getValue());
                         }
-                        registers[TRX_STATUS] = (byte) (rf231Status | (registers[TRX_STATUS] & 0xE0));
 
         /*
                         if (DEBUGRX && printer!=null) printer.println("RF231 packet started");
@@ -1244,8 +1278,8 @@ public class AT86RF231Radio implements Radio {
                         state = RECV_SFD_MATCHED_2;
                         //If waiting on ack in BUSY_TX_ARET don't make any status changes
                         if (waitingAck) break;
-                        if (rf231Status == STATE_TX_ARET_ON) printer.println("busy txaret but not waiting for ack");
-                        if (rf231Status == STATE_BUSY_TX_ARET) {
+                        if (TRX_STATUS_reg._trx_status.getValue() == STATE_TX_ARET_ON) printer.println("busy txaret but not waiting for ack");
+                        if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_TX_ARET) {
                       //       printer.println("busy txaret but not waiting for ack");
                             //ack timeout occurred. Probably this is not our ack anyway
                             if (rxactive) receiver.shutdown();
@@ -1253,27 +1287,36 @@ public class AT86RF231Radio implements Radio {
                         }
                         //rx start invalidates CRC and ED register
                         registers[PHY_RSSI] &= 0x7f; //Clear RX_CRC_VALID
-                         registers[PHY_ED_LEVEL] = (byte) 0xff;
-                        if (rf231Status == STATE_RX_AACK_ON) {
-                            rf231Status = STATE_BUSY_RX_AACK;
-                        } else if (rf231Status == STATE_RX_ON) {
-                            rf231Status = STATE_BUSY_RX;
-                        } else if (rf231Status == STATE_BUSY_RX_AACK) {
-                            printer.println("already in BUSY_RX_AACK on, probably a missed ack");
-                        } else if (rf231Status == STATE_BUSY_RX) {
-                            printer.println("already in BUSY_RX, should not be");
-                        } else {
-                            printer.println("not in a receive state! " + rf231Status + " " + registers[TRX_STATUS]);
-                            if (rf231Status == STATE_SLEEP) {
-                                printer.println("RF231: Sleep while receiving");
-                                //we were turned off while receiving
+                        registers[PHY_ED_LEVEL] = (byte) 0xff;
+
+                        switch (TRX_STATUS_reg._trx_status.getValue()) {
+                            case STATE_RX_AACK_ON:
+                                TRX_STATUS_reg._trx_status.setValue(STATE_BUSY_RX_AACK);
+                                printer.println("RF231: STATE_BUSY_RX_AACK");
+                                break;
+                            case STATE_RX_ON:
+                                TRX_STATUS_reg._trx_status.setValue(STATE_BUSY_RX);
+                                printer.println("RF231: STATE_BUSY_RX");
+                                break;
+                            case STATE_BUSY_RX_AACK:
+                                printer.println("already in BUSY_RX_AACK on, probably a missed ack");
+                                break;
+                            case STATE_BUSY_RX:
+                                printer.println("already in BUSY_RX, should not be");
+                                break;
+                            default:
+                                printer.println("not in a receive state! " + TRX_STATUS_reg._trx_status.getValue() + " " + TRX_STATUS_reg.getValue());
+                                if (TRX_STATUS_reg._trx_status.getValue() == STATE_SLEEP) {
+                                    printer.println("RF231: Sleep while receiving");
+                                    //we were turned off while receiving
+                                    return 0;
+                                }
+                                //hmmm whats going on
+                                printer.println("rxactive = " + rxactive + "   txactive = " + txactive);
                                 return 0;
-                            }
-                            //hmmm whats going on
-                            printer.println("rxactive = " + rxactive + "   txactive = " + txactive);
-                            return 0;
+
                         }
-                        registers[TRX_STATUS] = (byte) (rf231Status | (registers[TRX_STATUS] & 0xE0));
+
                         if (DEBUGRX && printer != null) printer.println("RF231: RX_START interrupt");
                         postInterrupt(INT_RX_START);
                         break;
@@ -1305,9 +1348,7 @@ public class AT86RF231Radio implements Radio {
                             if (DEBUGA && printer!=null) printer.println("RF231: Expecting ack, got something else");
                             handledAck = true;
                             //Status goes from BUSY_TX_ARET to TX_ARET_ON
-                            rf231Status = STATE_TX_ARET_ON;
-                            //TODO:should upper bits change?
-                            registers[TRX_STATUS] = (byte) (rf231Status | (registers[TRX_STATUS] & 0xE0));
+                            TRX_STATUS_reg._trx_status.setValue(STATE_TX_ARET_ON);
                             //Set TRAC_STATUS bits to failure
                             registers[TRX_STATE] = (byte) (0xA0 | (registers[TRX_STATE] & 0x1F));
                             state = RECV_SFD_SCAN;
@@ -1343,8 +1384,7 @@ public class AT86RF231Radio implements Radio {
                         if (counter == 5) {
                             if (DEBUGA && printer!=null) printer.println("RF231: Got ack");
                             handledAck = true;
-                            rf231Status = STATE_TX_ARET_ON;
-                            registers[TRX_STATUS] = (byte) (rf231Status | (registers[TRX_STATUS] & 0xE0));
+                            TRX_STATUS_reg._trx_status.setValue(STATE_TX_ARET_ON);
                             registers[TRX_STATE] = (byte) (registers[TRX_STATE] & 0x1F);
                             if (!rxactive) printer.println("rf231 rx3 not active before shutdown");
                             if (txactive) printer.println("rf231 tx active before startup");
@@ -1363,7 +1403,7 @@ public class AT86RF231Radio implements Radio {
                     if (counter <= 13) {
                         boolean satisfied = matchAddress(b, counter);
                         // address match enabled only in RA_AACK mode TODO: should be BUSY_RX_AACK
-                        if (rf231Status == STATE_RX_AACK_ON) {
+                        if (TRX_STATUS_reg._trx_status.getValue() == STATE_RX_AACK_ON) {
                             // is AACK_I_AM_COORD set?
                             if ((registers[CSMA_SEED_1] & 0x04) == 0) {
                                 if (!satisfied) {
@@ -1429,14 +1469,14 @@ public class AT86RF231Radio implements Radio {
                     trxFIFO.add(b);
                     postInterrupt(INT_TRX_END);
 
-                    if (rf231Status == STATE_BUSY_TX_ARET) {
-                            printer.println(" STATE_BUSY_TX_ARET here! " + rf231Status + " " + registers[TRX_STATUS]);
-                    } else if (rf231Status == STATE_TX_ARET_ON) {
-                            System.out.println("TX_ARET state in receiver here");
+                    if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_TX_ARET) {
+                            printer.println(" STATE_BUSY_TX_ARET here! " + TRX_STATUS_reg._trx_status.getValue() + " " + TRX_STATUS_reg.getValue());
+                    } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_TX_ARET_ON) {
+                            printer.println("TX_ARET state in receiver here");
                     }
 
                     if (lastCRCok
-                            && (rf231Status == STATE_BUSY_RX_AACK)
+                            && (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK)
                             && (trxFIFO.getRelativeByte(1) & 0x20) == 0x20) {
                         // send ack if ACK requested bit set in FCF
                         if ((registers[CSMA_SEED_1] & (1 << AACK_DIS_ACK)) == 0) {
@@ -1447,18 +1487,17 @@ public class AT86RF231Radio implements Radio {
                     } else {
                         if (DEBUGA && printer!=null) {
                             if (!lastCRCok) printer.println("RF231: No ack, CRC failed");
-                            if (rf231Status != STATE_BUSY_RX_AACK) printer.println("RF231: status no longer rxaack: "+ rf231Status);
+                            if (TRX_STATUS_reg._trx_status.getValue() != STATE_BUSY_RX_AACK) printer.println("RF231: status no longer rxaack: "+ TRX_STATUS_reg._trx_status.getValue());
                         }
-                        if (rf231Status == STATE_BUSY_RX_AACK) {
-                            rf231Status = STATE_RX_AACK_ON;
-                        } else if (rf231Status == STATE_BUSY_RX) {
+                        if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) {
+                            TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
+                        } else if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX) {
                               //received frame during cca?
-                               rf231Status = STATE_RX_ON;
+                            TRX_STATUS_reg._trx_status.setValue(STATE_RX_ON);
                         } else {
                             if (DEBUGQ && printer!=null) printer.println("RF231: not busy at end of reception");
-                            rf231Status = STATE_RX_AACK_ON;
+                            TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
                         }
-                         registers[TRX_STATUS] = (byte) (rf231Status | (registers[TRX_STATUS] & 0xE0));
                     }
                     break;
                 case RECV_OVERFLOW:
@@ -1515,7 +1554,7 @@ public class AT86RF231Radio implements Radio {
                                     return false;
                             } else
                             if (((trxFIFO.getRelativeByte(1) & 0x07) == 1) || ((trxFIFO.getRelativeByte(1) & 0x07) == 3)) {//data or mac command
-                                if (rf231Status == STATE_BUSY_RX_AACK) {
+                                if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) {
                                     // is AACK_I_AM_COORD set?
                                     if ((registers[CSMA_SEED_1] & 0x04) == 0) return false;
                                 }
