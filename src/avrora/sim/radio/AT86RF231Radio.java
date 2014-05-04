@@ -1047,28 +1047,39 @@ public class AT86RF231Radio implements Radio {
             if (DEBUGTX && printer!=null) printer.println("RF231 " + StringUtil.to0xHex(val, 2) + " --------> ");
             // common handling of end of transmission
             if (state == TX_END) {
-                //Set the TRAC status bits in the TRX_STATE register
-                //0 success 1 pending 2 waitforack 3 accessfail 5 noack 7 invalid
-                if (waitForAck && (rf231Status == STATE_BUSY_TX_ARET)) {
-                    //Show waiting for ack, and switch to rx mode
-                    waitingAck = true;
-                    handledAck = false;
-                    registers[TRX_STATE] = (byte) (0x40 | (registers[TRX_STATE] & 0x1F));
-                    //wait 54 symbol periods (864 usec, 27 bytes) to receive the ack
-                    clock.insertEvent(ackTimeOutEvent, 27*cyclesPerByte);
-                    if (!txactive) printer.println("tx not active at txend");
+                if ((rf231Status == STATE_BUSY_RX_AACK) && sendingAck) {
+                    printer.println("****** Auto ack was sent and we change back to STATE_RX_AACK_ON now");
+                    // if ack was just send, just stop transmitter, no interrupts etc.
                     transmitter.shutdown();
-                    if (rxactive) printer.println("rx active at txend");
                     receiver.startup();
-                    state = TX_WAIT;
-                    return val;
+                    rf231Status = STATE_RX_AACK_ON;
                 } else {
-                    rf231Status = STATE_PLL_ON;
-                    registers[TRX_STATUS] = (rf231Status);
-                    registers[TRX_STATE] = (byte) (registers[TRX_STATE] & 0x1F);
-                    transmitter.shutdown();
+                  //Set the TRAC status bits in the TRX_STATE register
+                  //0 success 1 pending 2 waitforack 3 accessfail 5 noack 7 invalid
+                  if ((rf231Status == STATE_BUSY_TX_ARET) && waitForAck) {
+                      //Show waiting for ack, and switch to rx mode
+                      waitingAck = true;
+                      handledAck = false;
+                      registers[TRX_STATE] = (byte) (0x40 | (registers[TRX_STATE] & 0x1F));
+                      //wait 54 symbol periods (864 usec, 27 bytes) to receive the ack
+                      clock.insertEvent(ackTimeOutEvent, 27*cyclesPerByte);
+                      if (!txactive) printer.println("tx not active at txend");
+                      transmitter.shutdown();
+                      if (rxactive) printer.println("rx active at txend");
+                      printer.println("RF231: receiver.startup()@2");
+                      receiver.startup();
+                      state = TX_WAIT;
+                      return val;
+                  } else {
+                      rf231Status = STATE_PLL_ON;
+                      registers[TRX_STATUS] = rf231Status;
+                      registers[TRX_STATE] = (byte) (registers[TRX_STATE] & 0x1F);
+                      transmitter.shutdown();
+                  }
+                  // XXX not for sendingAck
+                  if (sendingAck) printer.println("ooops, INT_TRX_END issued after sending Ack");
+                  postInterrupt(INT_TRX_END);
                 }
-                postInterrupt(INT_TRX_END);
                 // transmitter stays in this state until it is really switched off
                 state = TX_WAIT;
             }
