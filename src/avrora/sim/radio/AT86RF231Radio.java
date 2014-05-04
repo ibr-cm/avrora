@@ -1433,13 +1433,15 @@ public class AT86RF231Radio implements Radio {
                     } else if (rf231Status == STATE_TX_ARET_ON) {
                             System.out.println("TX_ARET state in receiver here");
                     }
-                    if (lastCRCok && (rf231Status == STATE_BUSY_RX_AACK) && (trxFIFO.getRelativeByte(1) & 0x20) == 0x20) {
-                        //send ack if we are not receiving ack frame
-                        if ((registers[CSMA_SEED_1] & 0x10) == 0) {
-                            if ((trxFIFO.getRelativeByte(1) & 0x07) != 2) {
-                                sendingAck = true;
-                                handledAck = false;
-                            }
+
+                    if (lastCRCok
+                            && (rf231Status == STATE_BUSY_RX_AACK)
+                            && (trxFIFO.getRelativeByte(1) & 0x20) == 0x20) {
+                        // send ack if ACK requested bit set in FCF
+                        if ((registers[CSMA_SEED_1] & (1 << AACK_DIS_ACK)) == 0) {
+                            // and if not explicitly disabled in AACK_DIS_ACK
+                            sendingAck = true;
+                            handledAck = false;
                         }
                     } else {
                         if (DEBUGA && printer!=null) {
