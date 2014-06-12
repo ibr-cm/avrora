@@ -136,6 +136,7 @@ public class AT86RF231Radio implements Radio {
     public static final int CSMA_BE      = 0x2F;//rf231
     
     //-- Register implementation
+    /* 0x01 */
     private class TRX_STATUS_Reg extends RWRegister {
 
         static final int TRX_STATUS_L   = 0;
@@ -148,8 +149,412 @@ public class AT86RF231Radio implements Radio {
         final RegisterView _cca_done = RegisterUtil.bitView(this, CCA_DONE);
     }
 
+    /* 0x02 */
+    private class TRX_STATE_Reg extends RWRegister {
+
+        static final int TRX_CMD_L      = 0;
+        static final int TRX_CMD_H      = 4;
+        static final int TRAC_STATUS_L  = 5;
+        static final int TRAC_STATUS_H  = 7;
+
+        final RegisterView _trx_cmd = RegisterUtil.bitRangeView(this, TRX_CMD_L, TRX_CMD_H);
+        final RegisterView _trac_status = RegisterUtil.bitRangeView(this, TRAC_STATUS_L, TRAC_STATUS_H);
+    }
+    
+    /* 0x03 */
+    private class TRX_CTRL_0_Reg extends RWRegister {
+        
+        static final int CLKM_CTRL_L    = 0;
+        static final int CLKM_CTRL_H    = 2;
+        static final int CLKM_SHA_SEL   = 3;
+        static final int PAD_IO_CLKM_L  = 4;
+        static final int PAD_IO_CLKM_H  = 5;
+        static final int PAD_IO_L       = 6;
+        static final int PAD_IO_H       = 7;
+
+        final RegisterView _clkm_ctrl = RegisterUtil.bitRangeView(this, CLKM_CTRL_L, CLKM_CTRL_H);
+        final RegisterView _clkm_sha_sel = RegisterUtil.bitView(this, CLKM_SHA_SEL);
+        final RegisterView _pad_io_clkm = RegisterUtil.bitRangeView(this, PAD_IO_CLKM_L, PAD_IO_CLKM_H);
+        final RegisterView _pad_io = RegisterUtil.bitRangeView(this, PAD_IO_L, PAD_IO_H);
+    }
+    
+    /* 0x04 */
+    private class TRX_CTRL_1_Reg extends RWRegister {
+        
+        static final int IRQ_POLARITY   = 0;
+        static final int IRQ_MASK_MODE  = 1;
+        static final int SPI_CMD_MODE_L = 2;
+        static final int SPI_CMD_MODE_H = 3;
+        static final int RX_BL_CTRL     = 4;
+        static final int TX_AUTO_CRC_ON = 5;
+        static final int IRQ_2_EXT_EN   = 6;
+        static final int PA_EXT_EN      = 7;
+
+        final RegisterView _irq_polarity = RegisterUtil.bitView(this, IRQ_POLARITY);
+        final RegisterView _irq_mask_mode = RegisterUtil.bitView(this, IRQ_MASK_MODE);
+        final RegisterView _spi_cmd_mode = RegisterUtil.bitRangeView(this, SPI_CMD_MODE_L, SPI_CMD_MODE_H);
+        final RegisterView _rx_bl_ctrl = RegisterUtil.bitView(this, RX_BL_CTRL);
+        final RegisterView _tx_auto_crc_on = RegisterUtil.bitView(this, TX_AUTO_CRC_ON);
+        final RegisterView _irq_2_ext_en = RegisterUtil.bitView(this, IRQ_2_EXT_EN);
+        final RegisterView _pa_ext_en = RegisterUtil.bitView(this, PA_EXT_EN);
+    }
+
+    /* 0x05 */
+    private class PHY_TX_PWR_Reg extends RWRegister {
+        static final int TX_PWR_L    = 0;
+        static final int TX_PWR_H    = 3;
+        static final int PA_LT_L     = 4;
+        static final int PA_LT_H     = 5;
+        static final int PA_BUF_LT_L = 6;
+        static final int PA_BUF_LT_H = 7;
+
+        final RegisterView _tx_pwr = RegisterUtil.bitRangeView(this, TX_PWR_L, TX_PWR_H);
+        final RegisterView _pa_lt = RegisterUtil.bitRangeView(this, PA_LT_L, PA_LT_H);
+        final RegisterView _pa_buf_lt = RegisterUtil.bitRangeView(this, PA_BUF_LT_L, PA_BUF_LT_H);
+    }
+
+    /* 0x06 */
+    private class PHY_RSSI_Reg extends RWRegister {
+        static final int RSSI_L       = 0;
+        static final int RSSI_H       = 4;
+        static final int RND_VALUE_L  = 5;
+        static final int RND_VALUE_H  = 6;
+        static final int RX_CRC_VALID = 7;
+
+        final RegisterView _rssi = RegisterUtil.bitRangeView(this, RSSI_L, RSSI_H);
+        final RegisterView _rnd_value = RegisterUtil.bitRangeView(this, RND_VALUE_L, RND_VALUE_H);
+        final RegisterView _rx_crc_valid = RegisterUtil.bitView(this, RX_CRC_VALID);
+    }
+
+    /* 0x07 */
+    private class PHY_ED_LEVEL_Reg extends RWRegister {
+    }
+
+    /* 0x08 */
+    private class PHY_CC_CCA_Reg extends RWRegister {
+        static final int CHANNEL_L   = 0;
+        static final int CHANNEL_H   = 4;
+        static final int CCA_MODE_L  = 5;
+        static final int CCA_MODE_H  = 6;
+        static final int CCA_REQUEST = 7;
+
+        final RegisterView _channel = RegisterUtil.bitRangeView(this, CHANNEL_L, CHANNEL_H);
+        final RegisterView _cca_mode = RegisterUtil.bitRangeView(this, CCA_MODE_L, CCA_MODE_H);
+        final RegisterView _cca_request = RegisterUtil.bitView(this, CCA_REQUEST);
+    }
+
+    /* 0x09 */
+    private class CCA_THRES_Reg extends RWRegister {
+        static final int CCA_ED_THRES_L = 0;
+        static final int CCA_ED_THRES_H = 3;
+
+        final RegisterView _cca_ed_thres = RegisterUtil.bitRangeView(this, CCA_ED_THRES_L, CCA_ED_THRES_H);
+    }
+
+    /* 0x0A */
+    private class RX_CTRL_Reg extends RWRegister {
+        static final int PDT_THRES_L = 0;
+        static final int PDT_THRES_H = 3;
+
+        final RegisterView _pdt_thres = RegisterUtil.bitRangeView(this, PDT_THRES_L, PDT_THRES_H);
+    }
+
+    /* 0x0B */
+    private class SFD_VALUE_Reg extends RWRegister {
+    }
+
+    /* 0x0C */
+    private class TRX_CTRL_2_Reg extends RWRegister {
+        static final int OQPSK_DATA_RATE_L  = 0;
+        static final int OQPSK_DATA_RATE_H  = 1;
+        static final int RX_SAFE_MODE       = 7;
+
+        final RegisterView _oqpsk_data_rate = RegisterUtil.bitRangeView(this, OQPSK_DATA_RATE_L, OQPSK_DATA_RATE_H);
+        final RegisterView _rx_safe_mode = RegisterUtil.bitView(this, RX_SAFE_MODE);
+    }
+
+    /* 0x0D */
+    private class ANT_DIV_Reg extends RWRegister {
+    }
+
+    /* 0x0E */
+    private class IRQ_MASK_Reg extends RWRegister {
+        static final int MASK_PLL_LOCK    = 0;
+        static final int MASK_PLL_UNLOCK  = 1;
+        static final int MASK_RX_START    = 2;
+        static final int MASK_TRX_END     = 3;
+        static final int MASK_CCA_ED_DONE = 4;
+        static final int MASK_AMI         = 5;
+        static final int MASK_TRX_UR      = 6;
+        static final int MASK_BAT_LOW     = 7;
+
+        final RegisterView _mask_pll_lock = RegisterUtil.bitView(this, MASK_PLL_LOCK);
+        final RegisterView _mask_pll_unlock = RegisterUtil.bitView(this, MASK_PLL_UNLOCK);
+        final RegisterView _mask_rx_start = RegisterUtil.bitView(this, MASK_RX_START);
+        final RegisterView _mask_trx_end = RegisterUtil.bitView(this, MASK_TRX_END);
+        final RegisterView _mask_cca_ed_done = RegisterUtil.bitView(this, MASK_CCA_ED_DONE);
+        final RegisterView _mask_ami = RegisterUtil.bitView(this, MASK_AMI);
+        final RegisterView _mask_trx_ur = RegisterUtil.bitView(this, MASK_TRX_UR);
+        final RegisterView _mask_bat_low = RegisterUtil.bitView(this, MASK_BAT_LOW);
+    }
+
+    /* 0x0F */
+    private class IRQ_STATUS_Reg extends RWRegister {
+        static final int PLL_LOCK     = 0;
+        static final int PLL_UNLOCK   = 1;
+        static final int RX_START     = 2;
+        static final int TRX_END      = 3;
+        static final int CCA_ED_DONE  = 4;
+        static final int AMI          = 5;
+        static final int TRX_UR       = 6;
+        static final int BAT_LOW      = 7;
+
+        final RegisterView _pll_lock = RegisterUtil.bitView(this, PLL_LOCK);
+        final RegisterView _pll_unlock = RegisterUtil.bitView(this, PLL_UNLOCK);
+        final RegisterView _rx_start = RegisterUtil.bitView(this, RX_START);
+        final RegisterView _trx_end = RegisterUtil.bitView(this, TRX_END);
+        final RegisterView _cca_ed_done = RegisterUtil.bitView(this, CCA_ED_DONE);
+        final RegisterView _ami = RegisterUtil.bitView(this, AMI);
+        final RegisterView _trx_ur = RegisterUtil.bitView(this, TRX_UR);
+        final RegisterView _bat_low = RegisterUtil.bitView(this, BAT_LOW);
+    }
+
+    /* 0x10 */
+    private class VREG_CTRL_Reg extends RWRegister {
+        static final int DVDD_OK    = 2;
+        static final int DVREG_EXT  = 3;
+        static final int AVDD_OK    = 6;
+        static final int AVREG_EXT  = 7;
+
+        final RegisterView _dvdd_ok = RegisterUtil.bitView(this, DVDD_OK);
+        final RegisterView _dvreg_ext = RegisterUtil.bitView(this, DVREG_EXT);
+        final RegisterView _avdd_ok = RegisterUtil.bitView(this, AVDD_OK);
+        final RegisterView _avreg_ext = RegisterUtil.bitView(this, AVREG_EXT);
+    }
+
+    /* 0x11 */
+    private class BATMON_Reg extends RWRegister {
+        static final int BATMON_VTH_L = 0;
+        static final int BATMON_VTH_H = 3;
+        static final int BATMON_HR    = 4;
+        static final int BATMON_OK    = 5;
+
+        final RegisterView _batmon = RegisterUtil.bitRangeView(this, BATMON_VTH_L, BATMON_VTH_H);
+        final RegisterView _batmon_hr = RegisterUtil.bitView(this, BATMON_HR);
+        final RegisterView _batmon_ok = RegisterUtil.bitView(this, BATMON_OK);
+    }
+
+    /* 0x12 */
+    private class XOSC_CTRL_Reg extends RWRegister {
+        static final int XTAL_TRIM_L = 0;
+        static final int XTAL_TRIM_H = 3;
+        static final int XTAL_MODE_L = 4;
+        static final int XTAL_MODE_H = 7;
+
+        final RegisterView _xtal_trim = RegisterUtil.bitRangeView(this, XTAL_TRIM_L, XTAL_TRIM_H);
+        final RegisterView _xtal_mode = RegisterUtil.bitRangeView(this, XTAL_MODE_L, XTAL_MODE_H);
+    }
+
+    /* 0x13 */
+    /* 0x14 */
+
+    /* 0x15 */
+    private class RX_SYN_Reg extends RWRegister {
+        static final int RX_PDT_LEVEL_L = 0;
+        static final int RX_PDT_LEVEL_H = 3;
+        static final int RX_PDT_DIS     = 7;
+
+        final RegisterView _rx_pdt_level = RegisterUtil.bitRangeView(this, RX_PDT_LEVEL_L, RX_PDT_LEVEL_H);
+        final RegisterView _rx_pdt_dis = RegisterUtil.bitView(this, RX_PDT_DIS);
+    }
+
+    /* 0x16 */
+
+    /* 0x17 */
+    private class XAH_CTRL_1_Reg extends RWRegister {
+        static final int AACK_PROM_MODE   = 1;
+        static final int AACK_ACK_TIME    = 2;
+        static final int AACK_UPLD_RES_FT = 4;
+        static final int AACK_FLTR_RES_FT = 5;
+
+        final RegisterView _aack_prom_mode = RegisterUtil.bitView(this, AACK_PROM_MODE);
+        final RegisterView _aack_ack_time = RegisterUtil.bitView(this, AACK_ACK_TIME);
+        final RegisterView _aack_upld_res_ft = RegisterUtil.bitView(this, AACK_UPLD_RES_FT);
+        final RegisterView _aack_fltr_res_ft = RegisterUtil.bitView(this, AACK_FLTR_RES_FT);
+    }
+
+    /* 0x18 */
+    private class FTN_CTRL_Reg extends RWRegister {
+    }
+
+    /* 0x19 */
+
+    /* 0x1A */
+    private class PLL_CF_Reg extends RWRegister {
+    }
+
+    /* 0x1B */
+    private class PLL_DCU_Reg extends RWRegister {
+    }
+
+    /* 0x1C */
+    private class PART_NUM_Reg extends RWRegister {
+    }
+
+    /* 0x1D */
+    private class VERSION_NUM_Reg extends RWRegister {
+    }
+
+    /* 0x1E */
+    private class MAN_ID_0_Reg extends RWRegister {
+    }
+
+    /* 0x1F */
+    private class MAN_ID_1_Reg extends RWRegister {
+    }
+
+    /* 0x20 */
+    private class SHORT_ADDR_0_Reg extends RWRegister {
+    }
+
+    /* 0x21 */
+    private class SHORT_ADDR_1_Reg extends RWRegister {
+    }
+
+    /* 0x22 */
+    private class PAN_ID_0_Reg extends RWRegister {
+    }
+
+    /* 0x23 */
+    private class PAN_ID_1_Reg extends RWRegister {
+    }
+
+    /* 0x24 */
+    private class IEEE_ADDR_0_Reg extends RWRegister {
+    }
+
+    /* 0x25 */
+    private class IEEE_ADDR_1_Reg extends RWRegister {
+    }
+
+    /* 0x26 */
+    private class IEEE_ADDR_2_Reg extends RWRegister {
+    }
+
+    /* 0x27 */
+    private class IEEE_ADDR_3_Reg extends RWRegister {
+    }
+
+    /* 0x28 */
+    private class IEEE_ADDR_4_Reg extends RWRegister {
+    }
+
+    /* 0x29 */
+    private class IEEE_ADDR_5_Reg extends RWRegister {
+    }
+
+    /* 0x2A */
+    private class IEEE_ADDR_6_Reg extends RWRegister {
+    }
+
+    /* 0x2B */
+    private class IEEE_ADDR_7_Reg extends RWRegister {
+    }
+
+    /* 0x2C */
+    private class XAH_CTRL_0_Reg extends RWRegister {
+        static final int SLOTTED_OPERATION    = 0;
+        static final int MAX_CSMA_RETRIES_L   = 1;
+        static final int MAX_CSMA_RETRIES_H   = 3;
+        static final int MAX_FRAME_RETRIES_L  = 4;
+        static final int MAX_FRAME_RETRIES_H  = 7;
+        
+        final RegisterView _slotted_operation = RegisterUtil.bitView(this, SLOTTED_OPERATION);
+        final RegisterView _max_csma_retries = RegisterUtil.bitRangeView(this, MAX_CSMA_RETRIES_L, MAX_CSMA_RETRIES_H);
+        final RegisterView _max_frame_retries = RegisterUtil.bitRangeView(this, MAX_FRAME_RETRIES_L, MAX_FRAME_RETRIES_H);
+    }
+
+    /* 0x2F */
+    private class CSMA_SEED_0_Reg extends RWRegister {
+    }
+
+    /* 0x2E */
+    private class CSMA_SEED_1_Reg extends RWRegister {
+        static final int CSMA_SEED_1_L    = 0;
+        static final int CSMA_SEED_1_H    = 2;
+        static final int AACK_I_AM_COORD  = 3;
+        static final int AACK_DIS_ACK     = 4;
+        static final int AACK_SET_PD      = 5;
+        static final int AACK_FVN_MODE_L  = 6;
+        static final int AACK_FVN_MODE_H  = 7;
+        
+        final RegisterView _csma_seed_1 = RegisterUtil.bitRangeView(this, CSMA_SEED_1_L, CSMA_SEED_1_H);
+        final RegisterView _aack_i_am_coord = RegisterUtil.bitView(this, AACK_I_AM_COORD);
+        final RegisterView _aack_dis_ack = RegisterUtil.bitView(this, AACK_DIS_ACK);
+        final RegisterView _aack_set_pd = RegisterUtil.bitView(this, AACK_SET_PD);
+        final RegisterView _aack_fvn_mode = RegisterUtil.bitRangeView(this, AACK_FVN_MODE_L, AACK_FVN_MODE_H);
+    }
+
+    /* 0x2F */
+    private class CSMA_BE_Reg extends RWRegister {
+        static final int MIN_BE_L = 0;
+        static final int MIN_BE_H = 3;
+        static final int MAX_BE_L = 4;
+        static final int MAX_BE_H = 7;
+        
+        final RegisterView _min_be = RegisterUtil.bitRangeView(this, MIN_BE_L, MIN_BE_H);
+        final RegisterView _max_be = RegisterUtil.bitRangeView(this, MAX_BE_L, MAX_BE_H);
+    }
+
+
+    // XXX [...]
+
     //-- Registers
     final TRX_STATUS_Reg TRX_STATUS_reg = new TRX_STATUS_Reg();
+    final TRX_STATE_Reg TRX_STATE_reg = new TRX_STATE_Reg();
+    final TRX_CTRL_0_Reg TRX_CTRL_0_reg = new TRX_CTRL_0_Reg();
+    final TRX_CTRL_1_Reg TRX_CTRL_1_reg = new TRX_CTRL_1_Reg();
+    final PHY_TX_PWR_Reg PHY_TX_PWR_reg = new PHY_TX_PWR_Reg();
+    final PHY_RSSI_Reg PHY_RSSI_reg = new PHY_RSSI_Reg();
+    final PHY_ED_LEVEL_Reg PHY_ED_LEVEL_reg = new PHY_ED_LEVEL_Reg();
+    final PHY_CC_CCA_Reg PHY_CC_CCA_reg = new PHY_CC_CCA_Reg();
+    final CCA_THRES_Reg CCA_THRES_reg = new CCA_THRES_Reg();
+    final RX_CTRL_Reg RX_CTRL_reg = new RX_CTRL_Reg();
+    final SFD_VALUE_Reg SFD_VALUE_reg = new SFD_VALUE_Reg();
+    final TRX_CTRL_2_Reg TRX_CTRL_2_reg = new TRX_CTRL_2_Reg();
+    final ANT_DIV_Reg ANT_DIV_reg = new ANT_DIV_Reg();
+    final IRQ_MASK_Reg IRQ_MASK_reg = new IRQ_MASK_Reg();
+    final IRQ_STATUS_Reg IRQ_STATUS_reg = new IRQ_STATUS_Reg();
+    final VREG_CTRL_Reg VREG_CTRL_reg = new VREG_CTRL_Reg();
+    final BATMON_Reg BATMON_reg = new BATMON_Reg();
+    final XOSC_CTRL_Reg XOSC_CTRL_reg = new XOSC_CTRL_Reg();
+    final RX_SYN_Reg RX_SYN_reg = new RX_SYN_Reg();
+    final XAH_CTRL_1_Reg XAH_CTRL_1_reg = new XAH_CTRL_1_Reg();
+    final FTN_CTRL_Reg FTN_CTRL_reg = new FTN_CTRL_Reg();
+    final PLL_CF_Reg PLL_CF_reg = new PLL_CF_Reg();
+    final PLL_DCU_Reg PLL_DCU_reg = new PLL_DCU_Reg();
+    final PART_NUM_Reg PART_NUM_reg = new PART_NUM_Reg();
+    final VERSION_NUM_Reg VERSION_NUM_reg = new VERSION_NUM_Reg();
+    final MAN_ID_0_Reg MAN_ID_0_reg = new MAN_ID_0_Reg();
+    final MAN_ID_1_Reg MAN_ID_1_reg = new MAN_ID_1_Reg();
+    final SHORT_ADDR_0_Reg SHORT_ADDR_0_reg = new SHORT_ADDR_0_Reg();
+    final SHORT_ADDR_1_Reg SHORT_ADDR_1_reg = new SHORT_ADDR_1_Reg();
+    final PAN_ID_0_Reg PAN_ID_0_reg = new PAN_ID_0_Reg();
+    final PAN_ID_1_Reg PAN_ID_1_reg = new PAN_ID_1_Reg();
+    final IEEE_ADDR_0_Reg IEEE_ADDR_0_reg = new IEEE_ADDR_0_Reg();
+    final IEEE_ADDR_1_Reg IEEE_ADDR_1_reg = new IEEE_ADDR_1_Reg();
+    final IEEE_ADDR_2_Reg IEEE_ADDR_2_reg = new IEEE_ADDR_2_Reg();
+    final IEEE_ADDR_3_Reg IEEE_ADDR_3_reg = new IEEE_ADDR_3_Reg();
+    final IEEE_ADDR_4_Reg IEEE_ADDR_4_reg = new IEEE_ADDR_4_Reg();
+    final IEEE_ADDR_5_Reg IEEE_ADDR_5_reg = new IEEE_ADDR_5_Reg();
+    final IEEE_ADDR_6_Reg IEEE_ADDR_6_reg = new IEEE_ADDR_6_Reg();
+    final IEEE_ADDR_7_Reg IEEE_ADDR_7_reg = new IEEE_ADDR_7_Reg();
+    final XAH_CTRL_0_Reg XAH_CTRL_0_reg = new XAH_CTRL_0_Reg();
+    final CSMA_SEED_0_Reg CSMA_SEED_0_reg = new CSMA_SEED_0_Reg();
+    final CSMA_SEED_1_Reg CSMA_SEED_1_reg = new CSMA_SEED_1_Reg();
+    final CSMA_BE_Reg CSMA_BA_reg = new CSMA_BE_Reg();
+    
+    
     //-- Other constants --------------------------------------------------
     private static final int NUM_REGISTERS = 0x3F;
     private static final int FIFO_SIZE     = 128;
