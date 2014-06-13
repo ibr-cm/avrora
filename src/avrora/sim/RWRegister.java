@@ -78,6 +78,16 @@ public class RWRegister extends AbstractRegisterView implements ActiveRegister, 
         return Arithmetic.getBit(read(), num);
     }
 
+    /**
+     * The <code>writeBit()</code> method writes a single bit to the IO register.
+     *
+     * @param val the number of the bit to write
+     * @param num the value of the bit as boolean
+     */
+    public void writeBit(int num, boolean val) {
+        value = Arithmetic.setBit(value, num, val);
+    }
+
     public int getWidth() {
         return 8;
     }
