@@ -56,19 +56,43 @@ import java.util.LinkedList;
  * The <code>AT86RF231Radio</code> implements a simulation of the Atmel
  * AT86RF231 radio, and can also be used for the AT86RF230.
  * Verbose printers for this class include "radio.rf231"
+ * 
+ * Note that the implementation does not cover all features and every detailed
+ * behavior of the hardware radio!
+ * 
+ * Currently missing or partly implemented features:
+ * - CCA modes
+ * - Slotted Operation
+ * - AES encryption
+ * - Sensitivity modes
+ * - Frame Buffer protection
+ * - Promiscuous mode
+ * - ...
  *
  * @author David A. Kopf
  * @author Enrico Jorns
  */
 public class AT86RF231Radio implements Radio {
-    private final static boolean DEBUG   = false;  //state changes, interrupts
-    private final static boolean DEBUGV  = false;  //pin changes
-    private final static boolean DEBUGRX = false;  //receiver
-    private final static boolean DEBUGTX = false;  //transmitter
-    private final static boolean DEBUGA  = false;  //ACKs
-    private final static boolean DEBUGC  = false;  //CCA, CSMA
-    private final static boolean DEBUGE  = false;  //"should not happen" debugs
+    /// Enables basic debugging (state changes, interrupts, control pins)
+    private final static boolean DEBUG   = false;
+    /// Enables error debugging
+    private final static boolean DEBUGE  = true;
+    /// Enables verbose debugging
+    private final static boolean DEBUGV  = false;
+    /// Enables Receiver debugging
+    private final static boolean DEBUGRX = false;
+    /// Enables Frame Filter debugging
+    private final static boolean DEBUGF = false;
+    /// Enables Transmitter debugging
+    private final static boolean DEBUGTX = false;
+    /// Enables Acknowledgement generation/reception debugging
+    private final static boolean DEBUGA  = false;
+    /// Enables CCA/CSMA debugging
+    private final static boolean DEBUGC  = false;
     
+    /* In MSPSim the default SFD value is erroneously assumed to be '0x7A' instead of '0xA7'
+    With this constant set to true the default reset value for the SFD register is '0x7A',
+    otherwise it will be reset to the correct value '0xA7' */ 
     private static final boolean MSPSIM_SFD_COMPAT = true;
 
     //-- Radio states, confusingly contained in the TRX_STATUS register --------
@@ -87,7 +111,7 @@ public class AT86RF231Radio implements Radio {
     public static final byte STATE_RX_AACK_ON_NOCLK   = 0x1D;
     public static final byte STATE_BUSY_RX_AACK_NOCLK = 0x1E;
     public static final byte STATE_TRANSITION         = 0x1F;
-    //-- Radio commands--------------------------------------------------------
+    //-- Radio commands---------------------------------------------------------
     public static final byte CMD_NOP            = 0x00;
     public static final byte CMD_TX_START       = 0x02;
     public static final byte CMD_FORCE_TRX_OFF  = 0x03;
@@ -98,10 +122,10 @@ public class AT86RF231Radio implements Radio {
     public static final byte CMD_PLL_ON         = 0x09; // alias
     public static final byte CMD_RX_AACK_ON     = 0x16;
     public static final byte CMD_TX_ARET_ON     = 0x19;
-    //-- Register addresses ---------------------------------------------------
+    //-- Register addresses ----------------------------------------------------
     // The rf230 does not use all registers but initializes them anyway.
-    public static final int TRX_STATUS   = 0x01;   //CCA_DONE, CCA_STATUS, TST_STATUS, TRX_STATUS[4:0]
-    public static final int TRX_STATE    = 0x02;   //TRAC_STATUS[2:0],TRX_CMD[4:0]
+    public static final int TRX_STATUS   = 0x01;
+    public static final int TRX_STATE    = 0x02;
     public static final int TRX_CTRL_0   = 0x03;
     public static final int TRX_CTRL_1   = 0x04;//rf231
     public static final int PHY_TX_PWR   = 0x05;
@@ -142,10 +166,18 @@ public class AT86RF231Radio implements Radio {
     public static final int CSMA_SEED_0  = 0x2D;
     public static final int CSMA_SEED_1  = 0x2E;
     public static final int CSMA_BE      = 0x2F;//rf231
+
+    //-- TRAC_STATUS Transaction Status (refer to Table 7-16) ------------------
+    private static final int TRAC_STATUS_SUCCESS = 0;
+    private static final int TRAC_STATUS_SUCESS_DATA_PENDING = 1;
+    private static final int TRAC_STATUS_SUCCESS_WAIT_FOR_ACK = 2;
+    private static final int TRAC_STATUS_CHANNEL_ACCESS_FAILURE = 3;
+    private static final int TRAC_STATUS_NO_ACK = 5;
+    private static final int TRAC_STATUS_INVALID = 7;
     
-    //-- Register implementation
+    //-- Register implementations ----------------------------------------------
     /* 0x01 */
-    private class TRX_STATUS_Reg extends RWRegister {
+    protected class TRX_STATUS_Reg extends RWRegister {
 
         static final int TRX_STATUS_L   = 0;
         static final int TRX_STATUS_H   = 4;
@@ -158,7 +190,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x02 */
-    private class TRX_STATE_Reg extends RWRegister {
+    protected class TRX_STATE_Reg extends RWRegister {
 
         static final int TRX_CMD_L      = 0;
         static final int TRX_CMD_H      = 4;
@@ -168,17 +200,9 @@ public class AT86RF231Radio implements Radio {
         final RegisterView _trx_cmd = RegisterUtil.bitRangeView(this, TRX_CMD_L, TRX_CMD_H);
         final RegisterView _trac_status = RegisterUtil.bitRangeView(this, TRAC_STATUS_L, TRAC_STATUS_H);
     }
-
-    /* TRAC_STATUS Transaction Status (refer to Table 7-16) */
-    private static final int TRAC_STATUS_SUCCESS = 0;
-    private static final int TRAC_STATUS_SUCESS_DATA_PENDING = 1;
-    private static final int TRAC_STATUS_SUCCESS_WAIT_FOR_ACK = 2;
-    private static final int TRAC_STATUS_CHANNEL_ACCESS_FAILURE = 3;
-    private static final int TRAC_STATUS_NO_ACK = 5;
-    private static final int TRAC_STATUS_INVALID = 7;
     
     /* 0x03 */
-    private class TRX_CTRL_0_Reg extends RWRegister {
+    protected class TRX_CTRL_0_Reg extends RWRegister {
         
         static final int CLKM_CTRL_L    = 0;
         static final int CLKM_CTRL_H    = 2;
@@ -195,7 +219,7 @@ public class AT86RF231Radio implements Radio {
     }
     
     /* 0x04 */
-    private class TRX_CTRL_1_Reg extends RWRegister {
+    protected class TRX_CTRL_1_Reg extends RWRegister {
         
         static final int IRQ_POLARITY   = 0;
         static final int IRQ_MASK_MODE  = 1;
@@ -216,7 +240,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x05 */
-    private class PHY_TX_PWR_Reg extends RWRegister {
+    protected class PHY_TX_PWR_Reg extends RWRegister {
         static final int TX_PWR_L    = 0;
         static final int TX_PWR_H    = 3;
         static final int PA_LT_L     = 4;
@@ -230,7 +254,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x06 */
-    private class PHY_RSSI_Reg extends RWRegister {
+    protected class PHY_RSSI_Reg extends RWRegister {
         static final int RSSI_L       = 0;
         static final int RSSI_H       = 4;
         static final int RND_VALUE_L  = 5;
@@ -243,11 +267,11 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x07 */
-    private class PHY_ED_LEVEL_Reg extends RWRegister {
+    protected class PHY_ED_LEVEL_Reg extends RWRegister {
     }
 
     /* 0x08 */
-    private class PHY_CC_CCA_Reg extends RWRegister {
+    protected class PHY_CC_CCA_Reg extends RWRegister {
         static final int CHANNEL_L   = 0;
         static final int CHANNEL_H   = 4;
         static final int CCA_MODE_L  = 5;
@@ -260,7 +284,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x09 */
-    private class CCA_THRES_Reg extends RWRegister {
+    protected class CCA_THRES_Reg extends RWRegister {
         static final int CCA_ED_THRES_L = 0;
         static final int CCA_ED_THRES_H = 3;
 
@@ -268,7 +292,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x0A */
-    private class RX_CTRL_Reg extends RWRegister {
+    protected class RX_CTRL_Reg extends RWRegister {
         static final int PDT_THRES_L = 0;
         static final int PDT_THRES_H = 3;
 
@@ -276,11 +300,11 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x0B */
-    private class SFD_VALUE_Reg extends RWRegister {
+    protected class SFD_VALUE_Reg extends RWRegister {
     }
 
     /* 0x0C */
-    private class TRX_CTRL_2_Reg extends RWRegister {
+    protected class TRX_CTRL_2_Reg extends RWRegister {
         static final int OQPSK_DATA_RATE_L  = 0;
         static final int OQPSK_DATA_RATE_H  = 1;
         static final int RX_SAFE_MODE       = 7;
@@ -290,11 +314,11 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x0D */
-    private class ANT_DIV_Reg extends RWRegister {
+    protected class ANT_DIV_Reg extends RWRegister {
     }
 
     /* 0x0E */
-    private class IRQ_MASK_Reg extends RWRegister {
+    protected class IRQ_MASK_Reg extends RWRegister {
         static final int MASK_PLL_LOCK    = 0;
         static final int MASK_PLL_UNLOCK  = 1;
         static final int MASK_RX_START    = 2;
@@ -315,7 +339,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x0F */
-    private class IRQ_STATUS_Reg extends RWRegister {
+    protected class IRQ_STATUS_Reg extends RWRegister {
         static final int PLL_LOCK     = 0;
         static final int PLL_UNLOCK   = 1;
         static final int RX_START     = 2;
@@ -336,7 +360,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x10 */
-    private class VREG_CTRL_Reg extends RWRegister {
+    protected class VREG_CTRL_Reg extends RWRegister {
         static final int DVDD_OK    = 2;
         static final int DVREG_EXT  = 3;
         static final int AVDD_OK    = 6;
@@ -349,7 +373,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x11 */
-    private class BATMON_Reg extends RWRegister {
+    protected class BATMON_Reg extends RWRegister {
         static final int BATMON_VTH_L = 0;
         static final int BATMON_VTH_H = 3;
         static final int BATMON_HR    = 4;
@@ -361,7 +385,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x12 */
-    private class XOSC_CTRL_Reg extends RWRegister {
+    protected class XOSC_CTRL_Reg extends RWRegister {
         static final int XTAL_TRIM_L = 0;
         static final int XTAL_TRIM_H = 3;
         static final int XTAL_MODE_L = 4;
@@ -375,7 +399,7 @@ public class AT86RF231Radio implements Radio {
     /* 0x14 */
 
     /* 0x15 */
-    private class RX_SYN_Reg extends RWRegister {
+    protected class RX_SYN_Reg extends RWRegister {
         static final int RX_PDT_LEVEL_L = 0;
         static final int RX_PDT_LEVEL_H = 3;
         static final int RX_PDT_DIS     = 7;
@@ -387,7 +411,7 @@ public class AT86RF231Radio implements Radio {
     /* 0x16 */
 
     /* 0x17 */
-    private class XAH_CTRL_1_Reg extends RWRegister {
+    protected class XAH_CTRL_1_Reg extends RWRegister {
         static final int AACK_PROM_MODE   = 1;
         static final int AACK_ACK_TIME    = 2;
         static final int AACK_UPLD_RES_FT = 4;
@@ -400,85 +424,85 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x18 */
-    private class FTN_CTRL_Reg extends RWRegister {
+    protected class FTN_CTRL_Reg extends RWRegister {
     }
 
     /* 0x19 */
 
     /* 0x1A */
-    private class PLL_CF_Reg extends RWRegister {
+    protected class PLL_CF_Reg extends RWRegister {
     }
 
     /* 0x1B */
-    private class PLL_DCU_Reg extends RWRegister {
+    protected class PLL_DCU_Reg extends RWRegister {
     }
 
     /* 0x1C */
-    private class PART_NUM_Reg extends RWRegister {
+    protected class PART_NUM_Reg extends RWRegister {
     }
 
     /* 0x1D */
-    private class VERSION_NUM_Reg extends RWRegister {
+    protected class VERSION_NUM_Reg extends RWRegister {
     }
 
     /* 0x1E */
-    private class MAN_ID_0_Reg extends RWRegister {
+    protected class MAN_ID_0_Reg extends RWRegister {
     }
 
     /* 0x1F */
-    private class MAN_ID_1_Reg extends RWRegister {
+    protected class MAN_ID_1_Reg extends RWRegister {
     }
 
     /* 0x20 */
-    private class SHORT_ADDR_0_Reg extends RWRegister {
+    protected class SHORT_ADDR_0_Reg extends RWRegister {
     }
 
     /* 0x21 */
-    private class SHORT_ADDR_1_Reg extends RWRegister {
+    protected class SHORT_ADDR_1_Reg extends RWRegister {
     }
 
     /* 0x22 */
-    private class PAN_ID_0_Reg extends RWRegister {
+    protected class PAN_ID_0_Reg extends RWRegister {
     }
 
     /* 0x23 */
-    private class PAN_ID_1_Reg extends RWRegister {
+    protected class PAN_ID_1_Reg extends RWRegister {
     }
 
     /* 0x24 */
-    private class IEEE_ADDR_0_Reg extends RWRegister {
+    protected class IEEE_ADDR_0_Reg extends RWRegister {
     }
 
     /* 0x25 */
-    private class IEEE_ADDR_1_Reg extends RWRegister {
+    protected class IEEE_ADDR_1_Reg extends RWRegister {
     }
 
     /* 0x26 */
-    private class IEEE_ADDR_2_Reg extends RWRegister {
+    protected class IEEE_ADDR_2_Reg extends RWRegister {
     }
 
     /* 0x27 */
-    private class IEEE_ADDR_3_Reg extends RWRegister {
+    protected class IEEE_ADDR_3_Reg extends RWRegister {
     }
 
     /* 0x28 */
-    private class IEEE_ADDR_4_Reg extends RWRegister {
+    protected class IEEE_ADDR_4_Reg extends RWRegister {
     }
 
     /* 0x29 */
-    private class IEEE_ADDR_5_Reg extends RWRegister {
+    protected class IEEE_ADDR_5_Reg extends RWRegister {
     }
 
     /* 0x2A */
-    private class IEEE_ADDR_6_Reg extends RWRegister {
+    protected class IEEE_ADDR_6_Reg extends RWRegister {
     }
 
     /* 0x2B */
-    private class IEEE_ADDR_7_Reg extends RWRegister {
+    protected class IEEE_ADDR_7_Reg extends RWRegister {
     }
 
     /* 0x2C */
-    private class XAH_CTRL_0_Reg extends RWRegister {
+    protected class XAH_CTRL_0_Reg extends RWRegister {
         static final int SLOTTED_OPERATION    = 0;
         static final int MAX_CSMA_RETRIES_L   = 1;
         static final int MAX_CSMA_RETRIES_H   = 3;
@@ -491,11 +515,11 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x2F */
-    private class CSMA_SEED_0_Reg extends RWRegister {
+    protected class CSMA_SEED_0_Reg extends RWRegister {
     }
 
     /* 0x2E */
-    private class CSMA_SEED_1_Reg extends RWRegister {
+    protected class CSMA_SEED_1_Reg extends RWRegister {
         static final int CSMA_SEED_1_L    = 0;
         static final int CSMA_SEED_1_H    = 2;
         static final int AACK_I_AM_COORD  = 3;
@@ -512,7 +536,7 @@ public class AT86RF231Radio implements Radio {
     }
 
     /* 0x2F */
-    private class CSMA_BE_Reg extends RWRegister {
+    protected class CSMA_BE_Reg extends RWRegister {
         static final int MIN_BE_L = 0;
         static final int MIN_BE_H = 3;
         static final int MAX_BE_L = 4;
@@ -523,7 +547,7 @@ public class AT86RF231Radio implements Radio {
     }
 
 
-    //-- Registers
+    //-- Register instances ----------------------------------------------------
     final TRX_STATUS_Reg TRX_STATUS_reg = new TRX_STATUS_Reg();
     final TRX_STATE_Reg TRX_STATE_reg = new TRX_STATE_Reg();
     final TRX_CTRL_0_Reg TRX_CTRL_0_reg = new TRX_CTRL_0_Reg();
@@ -568,6 +592,7 @@ public class AT86RF231Radio implements Radio {
     final CSMA_SEED_1_Reg CSMA_SEED_1_reg = new CSMA_SEED_1_Reg();
     final CSMA_BE_Reg CSMA_BA_reg = new CSMA_BE_Reg();
 
+    //-- Register address mapping ----------------------------------------------
     final RWRegister[] regMap = {
         null, // 0x00
         TRX_STATUS_reg,
@@ -634,6 +659,73 @@ public class AT86RF231Radio implements Radio {
         null,
         null,
     };
+    
+    
+    final String[] regNames = new String[]{
+        "0x00",
+        "TRX_STATUS  ",
+        "TRX_STATE   ",
+        "TRX_CTRL_0  ",
+        "TRX_CTRL_1  ",
+        "PHY_TX_PWR  ",
+        "PHY_RSSI    ",
+        "PHY_ED_LEVEL",
+        "PHY_CC_CCA  ",
+        "CCA_THRES   ",
+        "RX_CTRL     ",
+        "SFD_VALUE   ",
+        "TRX_CTRL_2  ",
+        "ANT_DIV     ",
+        "IRQ_MASK    ",
+        "IRQ_STATUS  ",
+        "VREG_CTRL   ",
+        "BATMON      ",
+        "XOSC_CTRL   ",
+        "0x13",
+        "0x14",
+        "RX_SYN      ",
+        "0x16",
+        "XAH_CTRL_1  ",
+        "PLL_CF      ",
+        "0x19",
+        "PLL_DCU     ",
+        "PART_NUM    ",
+        "VERSION_NUM ",
+        "MAN_ID_0    ",
+        "MAN_ID_1    ",
+        "SHORT_ADDR_0",
+        "SHORT_ADDR_1",
+        "PAN_ID_0    ",
+        "PAN_ID_1    ",
+        "IEEE_ADDR_0 ",
+        "IEEE_ADDR_1 ",
+        "IEEE_ADDR_2 ",
+        "IEEE_ADDR_3 ",
+        "IEEE_ADDR_4 ",
+        "IEEE_ADDR_5 ",
+        "IEEE_ADDR_6 ",
+        "IEEE_ADDR_7 ",
+        "XAH_CTRL_0  ",
+        "CSMA_SEED_0 ",
+        "CSMA_SEED_1 ",
+        "CSMA_BE     ",
+        "0x30",
+        "0x31",
+        "0x32",
+        "0x33",
+        "0x34",
+        "0x35",
+        "0x36",
+        "0x37",
+        "0x38",
+        "0x39",
+        "0x3A",
+        "0x3B",
+        "0x3C",
+        "0x3D",
+        "0x3E",
+        "0x3F"
+    };
 
     //-- Other constants --------------------------------------------------
     private static final int NUM_REGISTERS = 0x3F;
@@ -655,7 +747,7 @@ public class AT86RF231Radio implements Radio {
     protected boolean sendAck;
     // Indicates that we are waiting for an incoming ACK for our latest Frame sent
     protected boolean waitingForAck;
-//    protected boolean handledAck;
+    // Retry counters for frame and csma retry
     protected int frame_rctr, csma_rctr;
     // The sequence number of the last received packet (required for ACK generation)
     protected byte lastRxSeqNo;
@@ -839,23 +931,24 @@ public class AT86RF231Radio implements Radio {
         }
         frameBuffer.clear();
         TRX_STATUS_reg._trx_status.setValue(STATE_TRX_OFF);
-        printer.println("RF231: STATE_TRX_OFF");
         txactive = rxactive = true;
         transmitter.shutdown();
         receiver.shutdown();
     }
     
     public void printRegisters() {
+        String out = "";
         for (int cntr = 0; cntr < NUM_REGISTERS; cntr++) {
            if (cntr % 16 == 0) {
                System.out.println();
            }
            if (regMap[cntr] == null) {
-               System.out.print("null ");
+               out += "null ";
            } else {
-               System.out.print(String.format("0x%02x ", regMap[cntr].read()));
+               out += String.format("0x%02x ", regMap[cntr].read());
            }
         }
+        if (printer != null) printer.println(out);
     }
 
     protected class BackOffDelayEvent implements Simulator.Event {
@@ -915,13 +1008,16 @@ public class AT86RF231Radio implements Radio {
             TRX_STATUS_reg._cca_status.setValue(ccaBusy ? 0 : 1);
             TRX_STATUS_reg._cca_done.setValue(true);
  
-            //TODO: Carrier sense
+            // XXX TODO: Carrier sense
             switch (PHY_CC_CCA_reg._cca_mode.getValue()) {
                 case 0: //Carrier sense OR energy above threshold
+                    break;
                 case 1: //Energy above threshold
+                    break;
                 case 2: //Carrier sense only
+                    break;
                 case 3: //Carrier sense AND energy above threshold
-                break;
+                    break;
             }
             
             // CCA Result
@@ -964,7 +1060,7 @@ public class AT86RF231Radio implements Radio {
     public byte readRegister(int addr) {
 
         if (regMap[addr] == null) {
-            printer.println("Invalid read access to addr " + addr);
+            if (DEBUGE && printer != null) printer.println("Invalid read access to addr " + addr);
             return 0x00;
         }
 
@@ -999,7 +1095,7 @@ public class AT86RF231Radio implements Radio {
             return;
         }
         
-        if (DEBUGV && printer!=null) printer.println("RF231 " + regName(addr) + " <= " + StringUtil.to0xHex(val, 2));
+        if (DEBUGV && printer!=null) printer.println("RF231 " + regNames[addr] + " <= " + StringUtil.to0xHex(val, 2));
         
         regMap[addr].setValue(val);
 
@@ -1058,6 +1154,112 @@ public class AT86RF231Radio implements Radio {
     }
 
     /**
+     * The <code>resetRegister()</code> method resets the specified register's value
+     * to its default.
+     *
+     * @param addr the address of the register to reset
+     */
+    void resetRegister(int addr) {
+
+        if (DEBUG && printer != null) printer.println("RF231: Reset registers");
+        byte val = 0x00;
+        switch (addr) {
+            case TRX_CTRL_0:
+                val = (byte) 0x19;
+                break;
+            case TRX_CTRL_1:
+                val = (byte) 0x20;//rf230 sets to zero
+                break;
+            case PHY_TX_PWR:
+                val = (byte) 0xC0;//rf230 sets to zero
+                break;
+            case PHY_ED_LEVEL:
+                val = (byte) 0xFF;//rf230 sets to zero
+                break;
+            case PHY_CC_CCA:
+                val = (byte) 0x2B;
+                break;
+            case CCA_THRES:
+                val = (byte) 0xC7;
+                break;
+            case RX_CTRL:
+                val = (byte) 0xB7;//rf230 sets to 0xBC
+                break;
+            case SFD_VALUE:
+                if (MSPSIM_SFD_COMPAT) {
+                    val = (byte) 0x7A;
+                } else {
+                    val = (byte) 0xA7;
+                }
+                break;
+            case TRX_CTRL_2:
+                val = (byte) 0x00;//rf230 sets to 0x04
+                break;
+            case ANT_DIV:
+                val = (byte) 0x03;//rf230 sets to zero
+                break;
+            case IRQ_MASK:
+                val = (byte) 0x00;//NB: rf230 sets to 0xFF
+                break;
+            case VREG_CTRL:
+                //val = (byte) 0x00;//reads as 4 when access is possible
+                break;
+            case BATMON:
+                val = (byte) 0x02;//reads as 0x22 when access is possible
+                break;
+            case XOSC_CTRL:
+                val = (byte) 0xF0;
+                break;
+            case 0x18:
+                val = (byte) 0x58;
+                break;
+            case 0x19:
+                val = (byte) 0x55;
+                break;
+            case PLL_CF:
+                val = (byte) 0x57;//rf230 sets to 0x5F
+                break;
+            case PLL_DCU:
+                val = (byte) 0x20;
+                break;
+            case PART_NUM:
+                val = (byte) 0x03;//rf230 sets of 0x02
+                break;
+            case VERSION_NUM:
+                val = (byte) 0x02;
+                break;
+            case MAN_ID_0:
+                val = (byte) 0x1F;
+                break;
+            case SHORT_ADDR_0:
+            case SHORT_ADDR_1:
+            case PAN_ID_0:
+            case PAN_ID_1:
+                val = (byte) 0xFF;//rf230 sets to zeros
+                break;
+            case XAH_CTRL_0:
+                val = (byte) 0x38;
+                break;
+            case CSMA_SEED_0:
+                val = (byte) 0xEA;
+                break;
+            case CSMA_SEED_1:
+                val = (byte) 0x42;//rf230 sets to 0xC2
+                break;
+            case CSMA_BE:
+                val = (byte) 0x53;//rf230 sets to zero
+                break;
+            case 0x39:
+               val = (byte) 0x40;
+               break;
+        }
+        
+        if (regMap[addr] != null) {
+            regMap[addr].write(val);
+        }
+    }
+
+    /**
      * The <code>newCommand()</code> method alters the radio state according to
      * the rules for possible state transitions.
      *
@@ -1067,8 +1269,6 @@ public class AT86RF231Radio implements Radio {
         
         int state = TRX_STATUS_reg._trx_status.getValue();
 
-//System.out.println("*** trxStatusUpdate(" + getCMDName(cmd) + ") in state: " + getStateName(state));
-        
         /* Handle forst transactions first */
         if (cmd == CMD_FORCE_TRX_OFF) {
             // Forces to TRX_OFF except when in SLEEP state
@@ -1081,12 +1281,12 @@ public class AT86RF231Radio implements Radio {
         }
         
         if (cmd == CMD_FORCE_PLL_ON) {
-            if ((state != STATE_SLEEP)
-                    && (state != STATE_P_ON)
-                    && (state != STATE_TRX_OFF)
-                    && (state != STATE_BUSY_RX_AACK_NOCLK)
-                    && (state != STATE_RX_AACK_ON_NOCLK)
-                    && (state != STATE_RX_ON_NOCLK)) {
+            if (state != STATE_SLEEP
+                    && state != STATE_P_ON
+                    && state != STATE_TRX_OFF
+                    && state != STATE_BUSY_RX_AACK_NOCLK
+                    && state != STATE_RX_AACK_ON_NOCLK
+                    && state != STATE_RX_ON_NOCLK) {
                 TRX_STATUS_reg._trx_status.setValue(STATE_PLL_ON);
                 // XXX what to perform here?
             }
@@ -1249,113 +1449,9 @@ public class AT86RF231Radio implements Radio {
         }
     }
 
-    /**
-     * The <code>resetRegister()</code> method resets the specified register's value
-     * to its default.
-     *
-     * @param addr the address of the register to reset
-     */
-    void resetRegister(int addr) {
+    /* ------------------------------------------IRQ Handling --------------------------------*/
 
-        if (DEBUG && printer!=null) printer.println("RF231: Reset registers");
-        byte val = 0x00;
-        switch (addr) {
-            case TRX_CTRL_0:
-                val = (byte) 0x19;
-                break;
-            case TRX_CTRL_1:
-                val = (byte) 0x20;//rf230 sets to zero
-                break;
-            case PHY_TX_PWR:
-                val = (byte) 0xC0;//rf230 sets to zero
-                break;
-            case PHY_ED_LEVEL:
-                val = (byte) 0xFF;//rf230 sets to zero
-                break;
-            case PHY_CC_CCA:
-                val = (byte) 0x2B;
-                break;
-            case CCA_THRES:
-                val = (byte) 0xC7;
-                break;
-            case RX_CTRL:
-                val = (byte) 0xB7;//rf230 sets to 0xBC
-                break;
-            case SFD_VALUE:
-                if (MSPSIM_SFD_COMPAT) {
-                    val = (byte) 0x7A;
-                } else {
-                    val = (byte) 0xA7;
-                }
-                break;
-            case TRX_CTRL_2:
-                val = (byte) 0x00;//rf230 sets to 0x04
-                break;
-            case ANT_DIV:
-                val = (byte) 0x03;//rf230 sets to zero
-                break;
-            case IRQ_MASK:
-                val = (byte) 0x00;//NB: rf230 sets to 0xFF
-                break;
-            case VREG_CTRL:
-                //val = (byte) 0x00;//reads as 4 when access is possible
-                break;
-            case BATMON:
-                val = (byte) 0x02;//reads as 0x22 when access is possible
-                break;
-            case XOSC_CTRL:
-                val = (byte) 0xF0;
-                break;
-            case 0x18:
-                val = (byte) 0x58;
-                break;
-            case 0x19:
-                val = (byte) 0x55;
-                break;
-            case PLL_CF:
-                val = (byte) 0x57;//rf230 sets to 0x5F
-                break;
-            case PLL_DCU:
-                val = (byte) 0x20;
-                break;
-            case PART_NUM:
-                val = (byte) 0x03;//rf230 sets of 0x02
-                break;
-            case VERSION_NUM:
-                val = (byte) 0x02;
-                break;
-            case MAN_ID_0:
-                val = (byte) 0x1F;
-                break;
-            case SHORT_ADDR_0:
-            case SHORT_ADDR_1:
-            case PAN_ID_0:
-            case PAN_ID_1:
-                val = (byte) 0xFF;//rf230 sets to zeros
-                break;
-            case XAH_CTRL_0:
-                val = (byte) 0x38;
-                break;
-            case CSMA_SEED_0:
-                val = (byte) 0xEA;
-                break;
-            case CSMA_SEED_1:
-                val = (byte) 0x42;//rf230 sets to 0xC2
-                break;
-            case CSMA_BE:
-                val = (byte) 0x53;//rf230 sets to zero
-                break;
-            case 0x39:
-               val = (byte) 0x40;
-               break;
-        }
-        
-        if (regMap[addr] != null) {
-            regMap[addr].write(val);
-        }
-    }
-
-     //The same bit numbering is used in the IRQ_MASK and IRQ_STATUS registers
+    // The same bit numbering is used in the IRQ_MASK and IRQ_STATUS registers
     protected static final byte INT_PLL_LOCK    = 0;
     protected static final byte INT_PLL_UNLOCK  = 1;
     protected static final byte INT_RX_START    = 2;
@@ -1392,7 +1488,7 @@ public class AT86RF231Radio implements Radio {
         // interrupt is posted only if enabled in mask and connected
         if (IRQ_MASK_reg.readBit(bitNum) && (RF231_interrupt > 0)) {
             interpreter.setPosted(RF231_interrupt, true);
-            if (DEBUGV && printer != null) printer.println("RF231: interrupt posted");
+            if (DEBUGV && printer != null) printer.println("RF231: Interrupt posted");
         }
     }
     
@@ -1557,7 +1653,6 @@ public class AT86RF231Radio implements Radio {
 
     public int getChannel() {
         if (DEBUGV && printer!=null) printer.println("RF231: getChannel returns "+ PHY_CC_CCA_reg._channel.getValue());
-//        return registers[PHY_CC_CCA] & 0x1F;
         return PHY_CC_CCA_reg._channel.getValue();
     }
 
@@ -1807,6 +1902,7 @@ public class AT86RF231Radio implements Radio {
             waitingForAck = false;
             if (DEBUG && printer != null) printer.println("RF2311: Timeout while waiting for AACK");
 
+            // If maximum number of frame retries reached, abort
             if (frame_rctr > XAH_CTRL_0_reg._max_frame_retries.getValue()) {
                 receiver.shutdown();
 
@@ -1952,7 +2048,6 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                     receiver.startup();
                     TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
                     // XXX always write to register!?!
-//                    if (DEBUG && printer!=null) printer.println("RF231: STATE_RX_AACK_ON");
                 } else {
                   //Set the TRAC status bits in the TRX_STATE register
                   //0 success 1 pending 2 waitforack 3 accessfail 5 noack 7 invalid
@@ -1961,7 +2056,6 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                       //Show waiting for ack, and switch to rx mode
                       waitingForAck = true;
 //                      handledAck = false;
-//                      registers[TRX_STATE] = (byte) (0x40 | (registers[TRX_STATE] & 0x1F));
                       TRX_STATE_reg._trac_status.setValue(TRAC_STATUS_SUCCESS_WAIT_FOR_ACK);
                       //wait 54 symbol periods (864 usec, 27 bytes) to receive the ack
                       clock.insertEvent(ackTimeOutEvent, 10*27*cyclesPerByte); // XXX testing
@@ -1992,7 +2086,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
         void startup() {
             // do not enable if active already
             if (txactive) {
-                printer.println("tx startup while active");
+                if (DEBUG && printer != null) printer.println("TX startup while active");
                 return;
             }
             
@@ -2009,7 +2103,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
         void shutdown() {
             // do not disable if inactive already
             if (!txactive) {
-                printer.println("tx shutdown while not active");
+                if (DEBUG && printer != null) printer.println("TX shutdown while not active");
                 return;
             }
             
@@ -2024,14 +2118,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
 
     /* ------------------------------------------Receiver------------------------------------*/
 
-    //Address recognition variables
-    protected byte[] PANId;
-    protected byte[] macPANId = new byte[2];
-    protected byte[] shortDestAddr, shortSrcAddr;
-    protected byte[] macShortAddr = new byte[2];
     protected static final byte[] SHORT_BROADCAST_ADDR = {-1, -1};
-    protected byte[] extDestAddr;
-    protected byte[] aExtendedAddress = new byte[8];
     protected static final byte[] LONG_BROADCAST_ADDR = {-1, -1, -1, -1, -1, -1, -1, -1};
 
     public class Receiver extends Medium.Receiver {
@@ -2044,6 +2131,14 @@ printer.println("Auto retry transmission: #" + frame_rctr);
         private static final int RECV_END_STATE = 6;
         private static final int RECV_OVERFLOW = 7;
         private static final int RECV_WAIT = 8;
+
+        //Address recognition variables
+        protected byte[] PANId;
+        protected byte[] macPANId = new byte[2];
+        protected byte[] shortDestAddr, shortSrcAddr;
+        protected byte[] macShortAddr = new byte[2];
+        protected byte[] extDestAddr;
+        protected byte[] aExtendedAddress = new byte[8];
 
         protected int rxstate;
         // counts number received of byte in packet
@@ -2253,13 +2348,13 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                     if (waitingForAck) {
                         if (rxByteCounter == 1 && fcfDecoder.getFrameType() != FCFDecoder.FRAME_TYPE_ACK) {
                             // Expected ACK but got something else --> abort
-                            printer.println("*** Error: Expected ACK but received something else...");
+                            if (DEBUGA && printer != null) printer.println("*** Error: Expected ACK but received something else...");
                             invalidAck = true;
                             break;
                         } else if (rxByteCounter == 3) {
                             // Check if received sequence number matches expected sequence number
                             if (b != lastTxSeqNo) {
-                                printer.println("*** ERROR: Received invalid ACK! Expected " + (lastTxSeqNo & 0xFF) + " but got " + (b & 0xFF));
+                                if (DEBUGA && printer != null) printer.println("*** ERROR: Received invalid ACK! Expected " + (lastTxSeqNo & 0xFF) + " but got " + (b & 0xFF));
                                 invalidAck = true;
                                 break;
                             }
@@ -2309,18 +2404,20 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                     if (crcResult == crc) lqi |= 0x80;// TODO: LQI increases when CRC valid?
                     frameBuffer.add(lqi);
                     
+                    // XXX Only updated when issuing TRX_END IRQ?
                     PHY_RSSI_reg._rx_crc_valid.setValue(crcResult == crc);
                     // If FCS is invalid
-                    // XXX handle ACK FCS check
                     if (crcResult != crc) {
                         if (DEBUGRX && printer != null) printer.println("RF231: FCS invalid");
                         
                         if (waitingForAck) {
+                            if (DEBUGA && printer != null) printer.println("RF231: ACK FCS invalid");
                             invalidAck = true;
                             break;
                         }
                         
                         // If not im promiscuous mode, a wrong FCS always leads to frame rejection
+                        // XXX really no TRX_END IRQ?
                         if (!XAH_CTRL_1_reg._aack_prom_mode.getValue()) {
                             if (TRX_STATUS_reg._trx_status.getValue() == STATE_BUSY_RX_AACK) {
                                 TRX_STATUS_reg._trx_status.setValue(STATE_RX_AACK_ON);
@@ -2333,13 +2430,12 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                     
                     // A valid ACK was received
                     if (waitingForAck) {// XXX place after IRQ?
-                        printer.println("Received valid ACK!");
+                        if (DEBUGA && printer != null) printer.println("Received valid ACK!");
                         clock.removeEvent(ackTimeOutEvent);
                         TRX_STATUS_reg._trx_status.setValue(STATE_TX_ARET_ON);
                         TRX_STATE_reg._trac_status.setValue(TRAC_STATUS_SUCCESS);
                         receiver.shutdown();
                         //  transmitter.startup();
-                        postInterrupt(INT_TRX_END);
                         return (b);
                     }
 
@@ -2390,16 +2486,14 @@ printer.println("Auto retry transmission: #" + frame_rctr);
 
             // finally handle inalidAck
             if (waitingForAck && invalidAck) {
+                
+                if (DEBUGA && printer != null) printer.println("Received Invalid ACK");
                             // XXX Invalid ACK, retry
 
                 /* XXX Check if this all is valid...
                  - Does this handle frame retry handling?
                  - Is INT_TRX_END ok?
                  */
-                // not an ack, show failure and abort rx
-                if (DEBUGA && printer != null) {
-                    printer.println("RF231: Expecting ack, got packet of length " + String.valueOf(packetLength));
-                }
                 //
                 clock.removeEvent(ackTimeOutEvent);
                 waitingForAck = false;
@@ -2442,12 +2536,12 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                 case 1:
                     /* 1. The Frame Type subfield shall not contain a reserved frame type. */
                     if (fcfDecoder.getFrameType() > FCFDecoder.FRAME_TYPE_MAC_CMD) {
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 1 (reserved)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 1 (reserved)");
                         return false;
                     }
                     /* 7. The frame type indicates that the frame is not an ACK frame. */
                     if (fcfDecoder.getFrameType() == FCFDecoder.FRAME_TYPE_ACK) {
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 7 (ACK)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 7 (ACK)");
                         return false;
                     }
                     return true;
@@ -2455,10 +2549,12 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                 case 2:
                     /* 2. The Frame Version subfield shall not contain a reserved value. */
                     if (fcfDecoder.getFrameVersion() > FCFDecoder.FRAME_VERSION_2006) {
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 2 (version)");
                         return false;
                     }
                     /* 8. At least one address field must be configured */
                     if (fcfDecoder.getDestAddrMode() == FCFDecoder.ADDR_MODE_NONE && fcfDecoder.getSrcAddrMode() == FCFDecoder.ADDR_MODE_NONE) {
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 8 (noaddr)");
                         return false;
                     }
                     return true;
@@ -2471,7 +2567,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                        it shall match macPANId or shall be the broadcast PAN identifier (0xFFFF).*/
                     if (fcfDecoder.getDestAddrMode() == FCFDecoder.ADDR_MODE_SHORT
                             || fcfDecoder.getDestAddrMode() == FCFDecoder.ADDR_MODE_EXTENDED) {
-                        if (DEBUGRX && printer != null) {
+                        if (DEBUGF && printer != null) {
                             printer.println(String.format("Packet PANId:  0x%02x%02x", PANId[0], PANId[1]));
                             printer.println(String.format("Node macPANId: 0x%02x%02x", macPANId[0], macPANId[1]));
                         }
@@ -2479,7 +2575,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                             return true;
                         }
                         
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 3 (destPanID)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 3 (destPanID)");
                         return false;
                     }
                     
@@ -2494,7 +2590,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                         if (Arrays.equals(PANId, macPANId)) {
                             return true;
                         }
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 5 (beacon)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 5 (beacon)");
                         return false;
                     }
                     break;
@@ -2506,14 +2602,14 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                         shortDestAddr = frameBuffer.getRelativeField(6, 8);
                         macShortAddr[0] = SHORT_ADDR_0_reg.read();
                         macShortAddr[1] = SHORT_ADDR_1_reg.read();
-                        if (DEBUGRX && printer != null) {
+                        if (DEBUGF && printer != null) {
                             printer.println(String.format("Packet shortaddr: 0x%02x%02x", shortDestAddr[0], shortDestAddr[1]));
                             printer.println(String.format("Node shortaddr:   0x%02x%02x", macShortAddr[0], macShortAddr[1]));
                         }
                         if (Arrays.equals(shortDestAddr, macShortAddr) || Arrays.equals(shortDestAddr, SHORT_BROADCAST_ADDR)) {
                             return true;
                         }
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 4 (destAddr)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 4 (destAddr)");
                         return false;
                     }
                     /* 6. If only source addressing fields are included in a data or MAC command frame,
@@ -2526,7 +2622,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                         if (CSMA_SEED_1_reg._aack_i_am_coord.getValue() && Arrays.equals(shortSrcAddr, macPANId)) {
                             return true;
                         }
-                        if (DEBUGRX && printer!=null) printer.println("RF231: Frame rejected by filter rule 6 (srcAddr)");
+                        if (DEBUGF && printer!=null) printer.println("RF231: Frame rejected by filter rule 6 (srcAddr)");
                         return false;
                     }
                         
@@ -2547,7 +2643,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                             IEEE_ADDR_6_reg.read(),
                             IEEE_ADDR_7_reg.read()
                         };
-                        if (DEBUGRX && printer != null) {
+                        if (DEBUGF && printer != null) {
                             printer.println(String.format("Packet longadr: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
                                     extDestAddr[0], extDestAddr[1], extDestAddr[2], extDestAddr[3], extDestAddr[4], extDestAddr[5], extDestAddr[6], extDestAddr[7]));
                             printer.println(String.format("Node IEEEAddr:  %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
@@ -2556,7 +2652,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
                         if (Arrays.equals(extDestAddr, aExtendedAddress) || Arrays.equals(extDestAddr, LONG_BROADCAST_ADDR)) {
                             return true;
                         }
-                        if (DEBUGRX && printer != null) printer.println("RF231: Frame rejected by filter rule 4 (destAddr)");
+                        if (DEBUGF && printer != null) printer.println("RF231: Frame rejected by filter rule 4 (destAddr)");
                         return false;
                     }
                     break;
@@ -2567,23 +2663,23 @@ printer.println("Auto retry transmission: #" + frame_rctr);
         void startup() {
             // do not activate if already active
             if (rxactive) {
-                printer.println("receiver startup while active");
+                if (DEBUG && printer != null) printer.println("RX startup while active");
                 return;
             }
             
             rxactive = true;
-            energyStateMachine.transition(3);//change to receive state TODO:low sensitivity state
+            energyStateMachine.transition(AT86RF231Energy.RX_ON_HS);//change to receive state TODO:low sensitivity state
             rxstate = RECV_SFD_SCAN;
             clearBER();
             beginReceive(getFrequency());
              //   clock.insertEvent(rssiValidEvent, 4*cyclesPerByte);  // 8 symbols = 4 bytes
-            if (DEBUGRX && printer!=null) printer.println("RF231: RX startup");
+            if (DEBUGRX && printer != null) printer.println("RF231: RX startup");
         }
 
         void shutdown() {
             // do not deactivate if already inactive
             if (!rxactive) {
-                printer.println("receiver shutdown while not active");
+                if (DEBUG && printer != null) printer.println("RX shutdown while not active");
                 return;
             }
             
@@ -2592,7 +2688,7 @@ printer.println("Auto retry transmission: #" + frame_rctr);
             rxstate = RECV_SFD_SCAN;
             energyStateMachine.transition(AT86RF231Energy.TRX_OFF);//change to idle state
              //   setRssiValid(false);
-            if (DEBUGRX && printer!=null) printer.println("RF231: RX shutdown");
+            if (DEBUGRX && printer != null) printer.println("RF231: RX shutdown");
         }
 
     /* -----------------------------------RSSI, LQI, PER------------------------------------*/
@@ -2784,97 +2880,6 @@ printer.println("Auto retry transmission: #" + frame_rctr);
         }
     }
 
-    public static String regName(int reg) {
-        switch (reg) {
-            case TRX_STATUS:
-                return "TRX_STATUS  ";
-            case TRX_STATE:
-                return "TRX_STATE   ";
-            case TRX_CTRL_0:
-                return "TRX_CTRL_0  ";
-            case TRX_CTRL_1:
-                return "TRX_CTRL_1  ";
-            case PHY_TX_PWR:
-                return "PHY_TX_PWR  ";
-            case PHY_RSSI:
-                return "PHY_RSSI    ";
-            case PHY_ED_LEVEL:
-                return "PHY_ED_LEVEL";
-            case PHY_CC_CCA:
-                return "PHY_CC_CCA  ";
-            case CCA_THRES:
-                return "CCA_THRES   ";
-            case RX_CTRL:
-                return "RX_CTRL     ";
-            case SFD_VALUE:
-                return "SFD_VALUE   ";
-            case TRX_CTRL_2:
-                return "TRX_CTRL_2  ";
-            case ANT_DIV:
-                return "ANT_DIV     ";
-            case IRQ_MASK:
-                return "IRQ_MASK    ";
-            case IRQ_STATUS:
-                return "IRQ_STATUS  ";
-            case VREG_CTRL:
-                return "VREG_CTRL   ";
-            case BATMON:
-                return "BATMON      ";
-            case XOSC_CTRL:
-                return "XOSC_CTRL   ";
-            case RX_SYN:
-                return "RX_SYN      ";
-            case XAH_CTRL_1:
-                return "XAH_CTRL_1  ";
-            case PLL_CF:
-                return "PLL_CF      ";
-            case PLL_DCU:
-                return "PLL_DCU     ";
-            case PART_NUM:
-                return "PART_NUM    ";
-            case VERSION_NUM:
-                return "VERSION_NUM ";
-            case MAN_ID_0:
-                return "MAN_ID_0    ";
-            case MAN_ID_1:
-                return "MAN_ID_1    ";
-            case SHORT_ADDR_0:
-                return "SHORT_ADDR_0";
-            case SHORT_ADDR_1:
-                return "SHORT_ADDR_1";
-            case PAN_ID_0:
-                return "PAN_ID_0    ";
-            case PAN_ID_1:
-                return "PAN_ID_1    ";
-            case IEEE_ADDR_0:
-                return "IEEE_ADDR_0 ";
-            case IEEE_ADDR_1:
-                return "IEEE_ADDR_1 ";
-            case IEEE_ADDR_2:
-                return "IEEE_ADDR_2 ";
-            case IEEE_ADDR_3:
-                return "IEEE_ADDR_3 ";
-            case IEEE_ADDR_4:
-                return "IEEE_ADDR_4 ";
-            case IEEE_ADDR_5:
-                return "IEEE_ADDR_5 ";
-            case IEEE_ADDR_6:
-                return "IEEE_ADDR_6 ";
-            case IEEE_ADDR_7:
-                return "IEEE_ADDR_7 ";
-            case XAH_CTRL_0:
-                return "XAH_CTRL_0  ";
-            case CSMA_SEED_0:
-                return "CSMA_SEED_0 ";
-            case CSMA_SEED_1:
-                return "CSMA_SEED_1 ";
-            case CSMA_BE:
-                return "CSMA_BE     ";
-            default:
-                return StringUtil.to0xHex(reg, 2) + "    ";
-        }
-    }
-    
     /**
      * Decodes Frame Control Field (FCF) information.
      */
