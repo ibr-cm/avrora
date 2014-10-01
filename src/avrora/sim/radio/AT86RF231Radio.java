@@ -29,11 +29,9 @@
 
 package avrora.sim.radio;
 
-import java.util.Arrays;
-import java.util.Random;
-
 import avrora.sim.AtmelInterpreter;
 import avrora.sim.FiniteStateMachine;
+import avrora.sim.RWRegister;
 import avrora.sim.Simulator;
 import avrora.sim.clock.Synchronizer;
 import avrora.sim.energy.Energy;
@@ -44,9 +42,21 @@ import avrora.sim.output.SimPrinter;
 import avrora.sim.state.BooleanRegister;
 import avrora.sim.state.BooleanView;
 import avrora.sim.state.ByteFIFO;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+
 
 /**
  * The <code>AT86RF231Radio</code> implements a simulation of the Atmel
@@ -131,6 +141,13 @@ public class AT86RF231Radio implements Radio {
     public static final int CSMA_SEED_0  = 0x2D;
     public static final int CSMA_SEED_1  = 0x2E;
     public static final int CSMA_BE      = 0x2F;//rf231
+    //-- AES RAM Addresses -----------------------------------------------------
+    public static final int AES_RAM_STATUS = 0x02;
+    public static final int AES_RAM_CONFIG = 0x03;
+    public static final int AES_RAM_DATA = 0x04;
+    public static final int AES_RAM_DATA_END = 0x13;
+    public static final int AES_RAM_CONFIG_SHADOW = 0x14;
+
     //-- Other constants --------------------------------------------------
     private static final int NUM_REGISTERS = 0x3F;
     private static final int FIFO_SIZE     = 128;
@@ -168,6 +185,8 @@ public class AT86RF231Radio implements Radio {
     public final RF231Output IRQ_pin = new RF231Output("IRQ", new BooleanRegister());
 
     public final SPIInterface spiInterface = new SPIInterface();
+
+    protected final AESModule aes = new AESModule();
 
     public int RF231_interrupt = -1;  //platform sets this to the correct interrupt number
 
@@ -693,14 +712,45 @@ public class AT86RF231Radio implements Radio {
                 case CMD_W_BUF:
                     return writeFIFO(trxFIFO, val, true);
                 case CMD_R_RAM:
-                    return trxFIFO.getAbsoluteByte(configRAMAddr++);
+                    return readRAM(configRAMAddr++);
                 case CMD_W_RAM:
-                     return trxFIFO.setAbsoluteByte(configRAMAddr++, val);
+                    return writeRAM(configRAMAddr++, val);
             }
         }
         return 0;
     }
 
+    protected byte readRAM(int addr) {
+        if (addr == AES_RAM_STATUS) {
+            return aes.getStatus();
+        }
+        return trxFIFO.getAbsoluteByte(addr);
+    }
+
+    protected byte writeRAM(int addr, byte val) {
+        byte return_val = trxFIFO.setAbsoluteByte(addr, val);
+        // Transfer of AES-data or AES-key done
+        switch (addr) {
+            case AES_RAM_CONFIG:
+                aes.setConfig(val);
+                break;
+            case AES_RAM_CONFIG_SHADOW:
+                aes.setConfigShadow(val);
+                break;
+            case AES_RAM_DATA_END:
+                byte[] data = new byte[16];
+                for (int i = 0; i < 16; i++) {
+                    data[i] = trxFIFO.getAbsoluteByte(AES_RAM_DATA + i);
+                }
+                aes.setData(data);
+                break;
+            default:
+        };
+
+        return return_val;
+    }
+
+    
     protected byte readFIFO(ByteFIFO fifo) {
         byte val = fifo.remove();
         if (DEBUGV && printer!=null) printer.println("RF231 Read FIFO -> " + StringUtil.toMultirepString(val, 8));
@@ -1835,4 +1885,141 @@ public class AT86RF231Radio implements Radio {
                 return StringUtil.to0xHex(reg, 2) + "    ";
         }
     }
+    /**
+     * Performs AES-Operations
+     */
+    protected class AESModule {
+
+        static final int AES_MODE_ECB = 0;
+        static final int AES_MODE_KEY = 1;
+        static final int AES_MODE_CBC = 2;
+
+        static final int AES_DIR_ENCRYPTION  = 0;
+        static final int AES_DIR_DECRYPTION = 1;
+
+        protected class AES_STATUS_reg extends RWRegister {
+
+            static final int AES_DONE = 7;
+            static final int AES_ER = 7;
+            final RegisterView _aes_done = RegisterUtil.bitView(this, AES_DONE);
+            final RegisterView _aes_er = RegisterUtil.bitView(this, AES_ER);
+        }
+
+        protected class AES_CTRL_reg extends RWRegister {
+            static final int AES_DIR = 3;
+            static final int AES_MODE0 = 4;
+            static final int AES_MODE1 = 6;
+            static final int AES_REQUEST = 7;
+
+            final RegisterView _aes_dir = RegisterUtil.bitView(this, AES_DIR);
+            final RegisterView _aes_mode = RegisterUtil.bitRangeView(this, AES_MODE0, AES_MODE1);
+            final RegisterView _aes_request = RegisterUtil.bitView(this, AES_REQUEST);
+            static final int write_mask = 0xf8;
+            static final int read_mask = 0x7f;
+
+            @Override
+            public void write(byte val) {
+                super.write((byte) ((this.value & ~write_mask) | (val & write_mask)));
+            }
+
+            @Override
+            public byte read() {
+                return (byte) (super.read() & read_mask);
+            }
+        }
+
+        AES_STATUS_reg AesStatusReg;
+        AES_CTRL_reg AesCtrlReg;
+        AES_CTRL_reg AesCtrlRegShadow;
+        SecretKeySpec aes_key;
+        Cipher aes_cipher;
+        byte[] aes_data;
+
+        public AESModule() {
+            AesStatusReg = new AES_STATUS_reg();
+            AesCtrlReg = new AES_CTRL_reg();
+            AesCtrlRegShadow = new AES_CTRL_reg();
+        }
+        
+        public byte getStatus() {
+            return AesStatusReg.value;
+        }
+
+        public void setConfig(byte config) {
+            AesCtrlReg.write(config);
+            if (AesCtrlReg._aes_mode.getValue() == AES_MODE_KEY && aes_key != null) {
+                for (int i = 0; i < 16; i++) {
+                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, aes_key.getEncoded()[i]);
+                }
+            }
+        }
+        public void setData(byte[] data) {
+            switch(AesCtrlReg._aes_mode.getValue()) {
+            case AES_MODE_KEY:
+                aes_key = new SecretKeySpec(data, "AES");
+                try {
+                    aes_cipher = Cipher.getInstance("AES/ECB/NoPadding");
+                } catch (NoSuchAlgorithmException | NoSuchPaddingException ex) {
+                }
+                break;
+            case AES_MODE_CBC:
+                // Make sure aes_data has size 16
+                if(aes_data.length < 16){
+                    byte[] pre_data = new byte[16];
+                    int i = 0;
+                    for(byte b : aes_data) {
+                        pre_data[i++] = b;
+                    }
+                    aes_data = pre_data;
+                }
+                for(int i = 0; i < 16; i++) {
+                    aes_data[i] ^= data[i];
+                }
+                break;
+            default:
+                aes_data = data;
+            };
+
+        }
+
+        public void setConfigShadow(byte config) {
+            AesCtrlRegShadow.write(config);
+            if (AesCtrlRegShadow._aes_request.getValue() != 0) {
+                if (AesCtrlReg._aes_dir.getValue() == AES_DIR_ENCRYPTION) {
+                    performEncryption();
+                } else {
+                    performDecryption();
+                }
+            }
+        }
+
+        private void performEncryption() {
+            try {
+                aes_cipher.init(Cipher.ENCRYPT_MODE, aes_key);
+                byte[] output = aes_cipher.doFinal(aes_data);
+                for (int i = 0; i < 16; i++) {
+                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, output[i]);
+                }
+                aes_data = output;
+
+            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void performDecryption() {
+            try {
+                aes_cipher.init(Cipher.DECRYPT_MODE, aes_key);
+                byte[] output = aes_cipher.doFinal(aes_data);
+                for (int i = 0; i < 16; i++) {
+                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, output[i]);
+                }
+                aes_data = output;
+
+            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }
