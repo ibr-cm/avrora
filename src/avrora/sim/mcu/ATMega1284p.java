@@ -38,6 +38,8 @@ import avrora.core.Program;
 import avrora.sim.*;
 import avrora.sim.clock.ClockDomain;
 import avrora.sim.energy.Energy;
+import avrora.sim.state.RegisterUtil;
+import avrora.sim.state.RegisterView;
 import cck.util.Arithmetic;
 import java.util.HashMap;
 
@@ -400,7 +402,12 @@ public class ATMega1284p extends ATMegaFamily {
     
     protected final void installDevices() {
         // set up the external interrupt mask and flag registers and interrupt range
-  //      EIFR_reg = buildInterruptRange(true, "EIMSK", "EIFR", 2, 8);
+        EIFR_reg = buildInterruptRange(true, "EIMSK", "EIFR", 2, 3);
+        RegisterView EICRA = (RegisterView)getIOReg("EICRA");
+        // set up the external interrupt pins
+        pins[11] = new INTPin(11, EIFR_reg, 0, RegisterUtil.bitRangeView(EICRA, 0, 1)); // INT0
+        pins[12] = new INTPin(12, EIFR_reg, 1, RegisterUtil.bitRangeView(EICRA, 2, 3)); // INT1
+        pins[42] = new INTPin(42, EIFR_reg, 2, RegisterUtil.bitRangeView(EICRA, 4, 5)); // INT2
 
         TIFR0_reg = buildInterruptRange(false, "TIMSK0", "TIFR0", 19, 3);
         TIMSK0_reg = (MaskRegister)getIOReg("TIMSK0");
