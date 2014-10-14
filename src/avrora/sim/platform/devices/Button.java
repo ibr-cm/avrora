@@ -45,9 +45,10 @@ import java.util.List;
  * @author Enrico Joerns
  */
 public class Button extends Sensor implements PushSensorSource.SensorSourceListener {
-    
+
+    private final boolean activeLow;
     private SensorSource source;
-    private boolean buttonPressed = false;
+    private boolean pinHigh = false;
     private List<Microcontroller.Pin.InputListener> listeners = new LinkedList<>();
 
     private final Channel[] channels = new Channel[]{
@@ -57,13 +58,14 @@ public class Button extends Sensor implements PushSensorSource.SensorSourceListe
     /**
      * Creates button.
      * 
-     * @param activeLow If set to true, button press pulls the outPushSensorSource.SensorSourceListenerput pin low,
+     * @param activeLow If set to true, button press (input > 0) pulls the outPushSensorSource.SensorSourceListenerput pin low,
      * if set to false, button press pulls the output pin hight.
      */
     public Button(boolean activeLow) {
+        this.activeLow = activeLow;
         source = new PushSensorSource();
     }
-    
+
     /**
      * Creates active low button.
      */
@@ -75,7 +77,7 @@ public class Button extends Sensor implements PushSensorSource.SensorSourceListe
     public Channel[] getChannels() {
         return channels;
     }
-    
+
     @Override
     public void setSensorSource(SensorSource src) {
         source = src;
@@ -89,7 +91,7 @@ public class Button extends Sensor implements PushSensorSource.SensorSourceListe
 
         @Override
         public boolean read() {
-            return buttonPressed;
+            return pinHigh;
         }
 
         @Override
@@ -108,10 +110,11 @@ public class Button extends Sensor implements PushSensorSource.SensorSourceListe
     /* Forward calls by sensor source to registered controller input pins */
     @Override
     public void onNewData(int idx, double value) {
+        pinHigh = activeLow ? (value == 0) : (value != 0);
         for (Microcontroller.Pin.InputListener l : listeners) {
             /* map double data input to boolean where 0.0 is false
              * and everything else is true */
-            l.onInputChanged(output, (value != 0.0));
+            l.onInputChanged(output, pinHigh);
         }
     }
 
