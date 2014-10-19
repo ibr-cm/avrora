@@ -103,18 +103,16 @@ public class Inga extends Platform {
      * the external (off-chip) devices to the platform.
      */
     private void addDevices() {
-        LED red = new LED(sim, Terminal.COLOR_RED, "Red");
         LED green = new LED(sim, Terminal.COLOR_GREEN, "Green");
-        LED blue = new LED(sim, Terminal.COLOR_BLUE, "Blue");
+        LED orange = new LED(sim, Terminal.COLOR_YELLOW, "Orange");
 
 
-        ledGroup = new LED.LEDGroup(sim, new LED[]{red, green, blue});
+        ledGroup = new LED.LEDGroup(sim, new LED[]{green, orange});
         addDevice("leds", ledGroup);
 
         //AtmelMicrocontroller amcu = (AtmelMicrocontroller)mcu;
-        mcu.getPin("PD5").connectOutput(blue);
-        mcu.getPin("PD6").connectOutput(green);
-        mcu.getPin("PD7").connectOutput(red);
+        mcu.getPin("PD5").connectOutput(green);
+        mcu.getPin("PD7").connectOutput(orange);
 
         // install the new AT86RF230 radio. Actually an AT86RF231.
         AT86RF231Radio radio = new AT86RF231Radio(mcu, MAIN_HZ * 2);
