@@ -343,7 +343,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataX1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(X)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 33 (DATAX1): {}", retval & 0xFF);
                 break;
             case 0x34: // DATAY0
@@ -358,7 +357,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataY1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(Y)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 35 (DATAY1): {}", retval & 0xFF);
                 break;
             case 0x36: // DATAZ0
@@ -373,7 +371,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataZ1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(Z)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 37 (DATAZ1): {}", retval & 0xFF);
                 break;
             case 0x38: // FIFO_CTL
