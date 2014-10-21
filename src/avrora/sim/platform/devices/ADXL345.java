@@ -291,11 +291,11 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
         logger.trace("Fetch new data from FIFO");
         Integer[] newData = fifo.remove();
         DataX0_reg.setValue(newData[0].intValue() & 0xFF);
-        DataX1_reg.setValue((newData[0].intValue() << 8) & 0xFF);
+        DataX1_reg.setValue((newData[0].intValue() >> 8) & 0xFF);
         DataY0_reg.setValue(newData[1].intValue() & 0xFF);
-        DataY1_reg.setValue((newData[1].intValue() << 8) & 0xFF);
+        DataY1_reg.setValue((newData[1].intValue() >> 8) & 0xFF);
         DataZ0_reg.setValue(newData[2].intValue() & 0xFF);
-        DataZ1_reg.setValue((newData[2].intValue() << 8) & 0xFF);
+        DataZ1_reg.setValue((newData[2].intValue() >> 8) & 0xFF);
     }
 
     private byte read(byte reg) {
