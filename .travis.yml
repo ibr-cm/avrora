@@ -1,0 +1,16 @@
+notifications:
+  email: false
+language: java
+
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7
+
+install:
+  - ant avrora
+  - ant jintgen
+
+script:
+  - ant -Dargs="" run
+  - ant test
