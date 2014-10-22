@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <project name="Avrora" default="avrora" basedir=".">
   <property name="src" location="src"/>
   <property name="build" location="build"/>
@@ -17,6 +16,8 @@
 
   <property name="jintgen_jar" value="${dist}/jintgen.jar"/>
   <property name="avrora_jar" value="${dist}/avrora.jar"/>
+
+  <property name="failed" value="0"/>
 
   <available file=".git" type="dir" property="git.present"/>
 
@@ -101,7 +102,7 @@
     </javac>
   </target>
 
-  <target name="run" depends="avrora-jar">
+  <target name="run" depends="avrora-jar, input-runargs">
     <java fork="yes" dir="${build}" classname="${avrora_main}" maxmemory="512m">
       <sysproperty key="user.language" value="en"/>
       <arg line="${args}"/>
@@ -114,6 +115,10 @@
         <pathelement location="lib/log4j-slf4j-impl-2.0-rc1.jar"/>
       </classpath>
     </java>
+  </target>
+
+  <target name="input-runargs" unless="args">
+    <input addProperty="args" message="Type the desired command line arguments:"/>
   </target>
 
   <target name="javadoc">
@@ -135,8 +140,8 @@
         <attribute name="Class-Path" value=". lib/slf4j-api-1.7.6.jar lib/log4j-core-2.0-rc1.jar lib/log4j-api-2.0-rc1.jar lib/log4j-slf4j-impl-2.0-rc1.jar"/>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Implementation-Version" 
-          value="${git.version}"/>   
-        <attribute name="Built-Date" value="${TODAY}"/>                 
+          value="${git.version}"/>
+        <attribute name="Built-Date" value="${TODAY}"/>
       </manifest>
     </jar>
   </target>
@@ -147,8 +152,8 @@
         <attribute name="Main-Class" value="${jintgen_main}"/>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Implementation-Version" 
-          value="${git.version}"/>   
-        <attribute name="Built-Date" value="${TODAY}"/>                 
+          value="${git.version}"/>
+        <attribute name="Built-Date" value="${TODAY}"/>
       </manifest>
     </jar>
   </target>
@@ -172,13 +177,22 @@
         fork="true"
         dir="${test}/@{testdir}"
         maxmemory="128m"
+        resultproperty="result.@{testdir}"
         >
         <arg value="-action=test" />
         <arg value="-detail" />
         <arg line="${testfiles.@{testdir}}" />
       </java>
+      <script language="javascript"><![CDATA[
+        var failed = parseInt(project.getProperty('failed'));
+        var exitCode = parseInt(project.getProperty('result.@{testdir}'));
+        if(exitCode != 0) {
+          failed++;
+          project.setProperty('failed', failed);
+        }
+      ]]></script>
     </sequential>
-  </macrodef>
+    </macrodef>
 
   <target name="test" depends="compile-avrora">
     <runtest testdir="interpreter"/>
@@ -186,11 +200,13 @@
     <runtest testdir="disassembler"/>
     <runtest testdir="interrupts"/>
     <runtest testdir="timers"/>
-    <!--
-    <exec executable="./runtests.bash">
-      <env key="CLASSPATH" value="${build}" />
-    </exec>
-    -->
+    <fail message="${failed} tests failed" status="1">
+      <condition>
+        <not>
+          <equals arg1="${failed}" arg2="0"/>
+        </not>
+      </condition>
+    </fail>
   </target>
 
 </project>
