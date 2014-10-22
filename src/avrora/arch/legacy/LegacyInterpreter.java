@@ -98,7 +98,8 @@ public class LegacyInterpreter extends AtmelInterpreter implements LegacyInstrVi
                 // an interrupt handler, because the hardware manual says
                 // that at least one instruction is executed after
                 // returning from an interrupt.
-                justReturnedFromInterrupt = false;
+                step();
+                continue;
             } else if (I) {
 
                 // check if there are any pending (posted) interrupts

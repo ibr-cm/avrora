@@ -497,10 +497,10 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     protected int getInterruptVectorAddress(int inum) {
         //tiny         0:	0e c0       	rjmp	.+28     	; 0x1e <__ctors_end>
         //mega         0:	0c 94 0c 01 	jmp	0x218	; 0x218 <__ctors_end>
-        if (getFlashByte(0) == 0x0c) {
-            return interruptBase + (inum - 1) * 4;
-        } else {
+        if (getFlashByte(0) == 0x0e) {
             return interruptBase + (inum - 1) * 2;
+        } else {
+            return interruptBase + (inum - 1) * 4;
         }
 
     }
@@ -1334,6 +1334,7 @@ public abstract class AtmelInterpreter extends Interpreter implements LegacyInst
     public void enableInterrupts() {
         I = true;
         innerLoop = false;
+        justReturnedFromInterrupt = true;
         interrupts.enableAll();
     }
 
