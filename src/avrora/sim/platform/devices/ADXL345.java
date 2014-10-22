@@ -39,6 +39,7 @@ import avrora.sim.mcu.SPIDevice;
 import avrora.sim.platform.sensors.NullSensorSource;
 import avrora.sim.platform.sensors.Sensor;
 import avrora.sim.platform.sensors.SensorSource;
+import avrora.sim.state.BooleanView;
 import avrora.sim.state.RegisterUtil;
 import avrora.sim.state.RegisterView;
 import java.util.LinkedList;
@@ -243,11 +244,11 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
         static final int SELF_TEST = 7;
 
         final RegisterView _range = RegisterUtil.bitRangeView(this, RANGE0, RANGE1);
-        final RegisterView _justify = RegisterUtil.bitView(this, JUSTIFY);
-        final RegisterView _full_res = RegisterUtil.bitView(this, FULL_RES);
-        final RegisterView _int_invert = RegisterUtil.bitView(this, INT_INVERT);
-        final RegisterView _spi = RegisterUtil.bitView(this, SPI);
-        final RegisterView _self_test = RegisterUtil.bitView(this, SELF_TEST);
+        final BooleanView _justify = RegisterUtil.booleanView(this, JUSTIFY);
+        final BooleanView _full_res = RegisterUtil.booleanView(this, FULL_RES);
+        final BooleanView _int_invert = RegisterUtil.booleanView(this, INT_INVERT);
+        final BooleanView _spi = RegisterUtil.booleanView(this, SPI);
+        final BooleanView _self_test = RegisterUtil.booleanView(this, SELF_TEST);
     }
     
     private class DataReg extends RWRegister {
@@ -262,7 +263,7 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
         static final int FIFO_MODE_H = 7;
         
         final RegisterView _samples = RegisterUtil.bitRangeView(this, SAMPLES_L, SAMPLES_H);
-        final RegisterView _trigger = RegisterUtil.bitView(this, TRIGGER);
+        final BooleanView _trigger = RegisterUtil.booleanView(this, TRIGGER);
         final RegisterView _mode = RegisterUtil.bitRangeView(this, FIFO_MODE_L, FIFO_MODE_H);
     }
     
@@ -289,12 +290,12 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
     private void fetchDataFromFifo() {
         logger.trace("Fetch new data from FIFO");
         Integer[] newData = fifo.remove();
-        DataX0_reg.setValue(newData[0].intValue() & 0xFF);
-        DataX1_reg.setValue((newData[0].intValue() << 8) & 0xFF);
-        DataY0_reg.setValue(newData[1].intValue() & 0xFF);
-        DataY1_reg.setValue((newData[1].intValue() << 8) & 0xFF);
-        DataZ0_reg.setValue(newData[2].intValue() & 0xFF);
-        DataZ1_reg.setValue((newData[2].intValue() << 8) & 0xFF);
+        DataX0_reg.setValue(newData[0] & 0xFF);
+        DataX1_reg.setValue((newData[0] >> 8) & 0xFF);
+        DataY0_reg.setValue(newData[1] & 0xFF);
+        DataY1_reg.setValue((newData[1] >> 8) & 0xFF);
+        DataZ0_reg.setValue(newData[2] & 0xFF);
+        DataZ1_reg.setValue((newData[2] >> 8) & 0xFF);
     }
 
     private byte read(byte reg) {
@@ -342,7 +343,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataX1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(X)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 33 (DATAX1): {}", retval & 0xFF);
                 break;
             case 0x34: // DATAY0
@@ -357,7 +357,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataY1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(Y)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 35 (DATAY1): {}", retval & 0xFF);
                 break;
             case 0x36: // DATAZ0
@@ -372,7 +371,6 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                     fetchDataFromFifo();
                 }
                 retval = DataZ1_reg.read();
-//                retval = (byte) (mg_to_raw((int) source.read(Z)) >> (8 * (reg % 2)));
                 logger.trace("Read reg 37 (DATAZ1): {}", retval & 0xFF);
                 break;
             case 0x38: // FIFO_CTL
@@ -496,7 +494,7 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
 
     private void applyDataFormat() {
         // evaluate FULL_RES bit
-        full_resolution = DataFormat_reg._full_res.getValue() != 0;
+        full_resolution = DataFormat_reg._full_res.getValue();
         // evaluate g range
         double lbound = 0.0, ubound = 0.0;
         int range = DataFormat_reg._range.getValue();
@@ -562,7 +560,7 @@ public class ADXL345 extends Sensor implements SPIDevice, InputListener {
                 logger.info("Set to Trigger mode");
                 break;
         }
-        boolean trigger = FifoCtl_reg._trigger.getValue() == 1;
+        boolean trigger = FifoCtl_reg._trigger.getValue();
         int samples = FifoCtl_reg._samples.getValue();
     }
     
