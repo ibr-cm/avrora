@@ -350,7 +350,7 @@ public class AT86RF231Radio implements Radio {
                 registers[addr] = 0;
                 break;
             case PHY_RSSI:
-                //TODO: Add random bits 5 and 6
+                val |= (random.nextInt() & 0x60);
                 break;
             }
 
