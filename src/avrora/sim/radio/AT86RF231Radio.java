@@ -750,7 +750,7 @@ public class AT86RF231Radio implements Radio {
         return return_val;
     }
 
-    
+
     protected byte readFIFO(ByteFIFO fifo) {
         byte val = fifo.remove();
         if (DEBUGV && printer!=null) printer.println("RF231 Read FIFO -> " + StringUtil.toMultirepString(val, 8));
@@ -1744,7 +1744,7 @@ public class AT86RF231Radio implements Radio {
      * The <code>RF231Pin</code>() class models pins that are inputs and outputs to the RF231 chip.
      */
     public class RF231Pin implements Microcontroller.Pin.Input, Microcontroller.Pin.Output {
-      
+
         protected LinkedList<Microcontroller.Pin.InputListener> listeners = new LinkedList<>();
         protected final String name;
         protected boolean level;
@@ -1885,6 +1885,9 @@ public class AT86RF231Radio implements Radio {
                 return StringUtil.to0xHex(reg, 2) + "    ";
         }
     }
+    enum AESKeyStatus {
+        INIT, ENCRYPT, DECRYPT;
+    }
     /**
      * Performs AES-Operations
      */
@@ -1928,19 +1931,72 @@ public class AT86RF231Radio implements Radio {
             }
         }
 
+        private final short[] sbox = {0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f,
+            0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82,
+            0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c,
+            0xa4, 0x72, 0xc0, 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc,
+            0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15, 0x04, 0xc7, 0x23,
+            0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27,
+            0xb2, 0x75, 0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52,
+            0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84, 0x53, 0xd1, 0x00, 0xed,
+            0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58,
+            0xcf, 0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9,
+            0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8, 0x51, 0xa3, 0x40, 0x8f, 0x92,
+            0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
+            0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e,
+            0x3d, 0x64, 0x5d, 0x19, 0x73, 0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a,
+            0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb, 0xe0,
+            0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62,
+            0x91, 0x95, 0xe4, 0x79, 0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e,
+            0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08, 0xba, 0x78,
+            0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b,
+            0xbd, 0x8b, 0x8a, 0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e,
+            0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e, 0xe1, 0xf8, 0x98,
+            0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55,
+            0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41,
+            0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16};
+
+        private final short[] rconst = {0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20,
+            0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e,
+            0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef,
+            0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25,
+            0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb,
+            0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36,
+            0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97,
+            0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72,
+            0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66,
+            0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04,
+            0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d,
+            0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3,
+            0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61,
+            0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a,
+            0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
+            0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc,
+            0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5,
+            0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a,
+            0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d,
+            0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c,
+            0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35,
+            0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4,
+            0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc,
+            0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb};
+
         AES_STATUS_reg AesStatusReg;
         AES_CTRL_reg AesCtrlReg;
         AES_CTRL_reg AesCtrlRegShadow;
         SecretKeySpec aes_key;
         Cipher aes_cipher;
         byte[] aes_data;
+        byte[] saved_aes_key;
+        byte[] readable_aes_key = new byte[16];
+        AESKeyStatus aes_key_status;
 
         public AESModule() {
             AesStatusReg = new AES_STATUS_reg();
             AesCtrlReg = new AES_CTRL_reg();
             AesCtrlRegShadow = new AES_CTRL_reg();
         }
-        
+
         public byte getStatus() {
             return AesStatusReg.value;
         }
@@ -1949,37 +2005,34 @@ public class AT86RF231Radio implements Radio {
             AesCtrlReg.write(config);
             if (AesCtrlReg._aes_mode.getValue() == AES_MODE_KEY && aes_key != null) {
                 for (int i = 0; i < 16; i++) {
-                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, aes_key.getEncoded()[i]);
+                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, readable_aes_key[i]);
                 }
             }
         }
-        public void setData(byte[] data) {
-            switch(AesCtrlReg._aes_mode.getValue()) {
-            case AES_MODE_KEY:
-                aes_key = new SecretKeySpec(data, "AES");
-                try {
-                    aes_cipher = Cipher.getInstance("AES/ECB/NoPadding");
-                } catch (NoSuchAlgorithmException | NoSuchPaddingException ex) {
-                }
-                break;
-            case AES_MODE_CBC:
-                // Make sure aes_data has size 16
-                if(aes_data.length < 16){
-                    byte[] pre_data = new byte[16];
-                    int i = 0;
-                    for(byte b : aes_data) {
-                        pre_data[i++] = b;
-                    }
-                    aes_data = pre_data;
-                }
-                for(int i = 0; i < 16; i++) {
-                    aes_data[i] ^= data[i];
-                }
-                break;
-            default:
-                aes_data = data;
-            };
 
+        public void setData(byte[] data) {
+            switch (AesCtrlReg._aes_mode.getValue()) {
+                case AES_MODE_KEY:
+                    saved_aes_key = data;
+                    aes_key_status = AESKeyStatus.INIT;
+                    break;
+                case AES_MODE_CBC:
+                    // Make sure aes_data has size 16
+                    if (aes_data.length < 16) {
+                        byte[] pre_data = new byte[16];
+                        int i = 0;
+                        for (byte b : aes_data) {
+                            pre_data[i++] = b;
+                        }
+                        aes_data = pre_data;
+                    }
+                    for (int i = 0; i < 16; i++) {
+                        aes_data[i] ^= data[i];
+                    }
+                    break;
+                default:
+                    aes_data = data;
+            }
         }
 
         public void setConfigShadow(byte config) {
@@ -1995,7 +2048,41 @@ public class AT86RF231Radio implements Radio {
 
         private void performEncryption() {
             try {
+                if (aes_key_status != AESKeyStatus.ENCRYPT) {
+                    aes_key_status = AESKeyStatus.ENCRYPT;
+                    aes_key = new SecretKeySpec(saved_aes_key, "AES");
+                    readable_aes_key = getLastRoundKey();
+                    try {
+                        aes_cipher = Cipher.getInstance("AES/ECB/NoPadding");
+                    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 aes_cipher.init(Cipher.ENCRYPT_MODE, aes_key);
+                byte[] output = aes_cipher.doFinal(aes_data);
+                for (int i = 0; i < 16; i++) {
+                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, output[i]);
+                }
+                aes_data = output;
+            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void performDecryption() {
+            try {
+                if (aes_key_status != AESKeyStatus.DECRYPT) {
+                    aes_key_status = AESKeyStatus.DECRYPT;
+                    readable_aes_key = getFirstRoundKey();
+                    aes_key = new SecretKeySpec(readable_aes_key, "AES");
+                    //readable_aes_key = getLastRoundKey();
+                    try {
+                        aes_cipher = Cipher.getInstance("AES/ECB/NoPadding");
+                    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                aes_cipher.init(Cipher.DECRYPT_MODE, aes_key);
                 byte[] output = aes_cipher.doFinal(aes_data);
                 for (int i = 0; i < 16; i++) {
                     trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, output[i]);
@@ -2007,18 +2094,61 @@ public class AT86RF231Radio implements Radio {
             }
         }
 
-        private void performDecryption() {
-            try {
-                aes_cipher.init(Cipher.DECRYPT_MODE, aes_key);
-                byte[] output = aes_cipher.doFinal(aes_data);
-                for (int i = 0; i < 16; i++) {
-                    trxFIFO.setAbsoluteByte(AES_RAM_DATA + i, output[i]);
-                }
-                aes_data = output;
+        private void aesExpandMix(byte[] word, int round) {
+            // rotate bytewise to left, apply sbox and round constant
+            byte tmp = word[0];
+            word[0] = (byte) ((sbox[word[1] & 0xff] ^ rconst[round]) & 0xff);
+            word[1] = (byte) (sbox[word[2] & 0xff] & 0xff);
+            word[2] = (byte) (sbox[word[3] & 0xff] & 0xff);
+            word[3] = (byte) (sbox[tmp & 0xff] & 0xff);
+        }
 
-            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-                throw new RuntimeException(e);
+        private byte[] getLastRoundKey() {
+            byte[] expanded_key = new byte[16 * 11];
+            byte[] temp = new byte[4];
+            int round = 1;
+            System.arraycopy(saved_aes_key, 0, expanded_key, 0, 16);
+            int position = 16;
+            while (position < 16 * 11) {
+                for (int i = 0; i < 4; i++) {
+                    temp[i] = expanded_key[position - 4 + i];
+                }
+                if (position % 16 == 0) {
+                    aesExpandMix(temp, round++);
+                }
+                for (int i = 0; i < 4; i++) {
+                    expanded_key[position] = (byte) ((expanded_key[position - 16] ^ temp[i]) & 0xff);
+                    position++;
+                }
             }
+            byte[] key = new byte[16];
+            System.arraycopy(expanded_key, 160, key, 0, 16);
+            return key;
+        }
+
+        private byte[] getFirstRoundKey() {
+            byte[] expanded_key = new byte[16 * 11];
+            byte[] temp1 = new byte[4];
+            byte[] temp2 = new byte[4];
+            int round = 10;
+            System.arraycopy(saved_aes_key, 0, expanded_key, 160, 16);
+            int position = 16 * 11;
+             while (position > 16) {
+                System.arraycopy(expanded_key, position - 4, temp1, 0, 4);
+                System.arraycopy(expanded_key, position - 8, temp2, 0, 4);
+                position -= 4;
+                if (position % 16 == 0) {
+                    aesExpandMix(temp2, round--);
+                }
+                for (int i = 0; i < 4; i++) {
+                    expanded_key[position - 16 + i] = (byte) ((temp1[i] ^ temp2[i]) & 0xff);
+                }
+            }
+
+            byte[] key = new byte[16];
+            System.arraycopy(expanded_key, 0, key, 0, 16);
+            return key;
+
         }
     }
 
