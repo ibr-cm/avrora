@@ -29,9 +29,6 @@
 
 package avrora.sim.radio;
 
-import java.util.Arrays;
-import java.util.Random;
-
 import avrora.sim.AtmelInterpreter;
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.Simulator;
@@ -46,7 +43,9 @@ import avrora.sim.state.BooleanView;
 import avrora.sim.state.ByteFIFO;
 import cck.text.StringUtil;
 import cck.util.Arithmetic;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
 
 /**
  * The <code>AT86RF231Radio</code> implements a simulation of the Atmel
@@ -327,7 +326,7 @@ public class AT86RF231Radio implements Radio {
         if (DEBUGV && printer!=null) printer.println("RF231 " + regName(addr) + " => " + StringUtil.to0xHex(val, 2));
         switch (addr) {
             case IRQ_STATUS:
-                //reading IEQ_STATUS clears all interrupts
+                // reading IRQ_STATUS clears all interrupts
                 registers[addr] = 0;
                 break;
             case PHY_RSSI:
@@ -1694,7 +1693,7 @@ public class AT86RF231Radio implements Radio {
      * The <code>RF231Pin</code>() class models pins that are inputs and outputs to the RF231 chip.
      */
     public class RF231Pin implements Microcontroller.Pin.Input, Microcontroller.Pin.Output {
-      
+
         protected LinkedList<Microcontroller.Pin.InputListener> listeners = new LinkedList<>();
         protected final String name;
         protected boolean level;
